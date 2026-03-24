@@ -1,16 +1,15 @@
 /**
- * Tool narration — agents describe what they're doing in natural language
- * instead of silent tool calls. Makes Theatre and TeamChat feel alive.
+ * Narration — the bridge between Theatre (actions) and TeamChat (conversations).
  *
- * Before: 🔍 researcher tool_calling — web_search
- * After:  Researcher: "Let me check Bessemer's latest report..."
- *         🔍 searching...
- *         Researcher: "Found it. Their Q4 data shows 34% PLG growth."
+ * Every agent action produces TWO synchronized events:
+ * 1. Activity event → Theatre shows what the agent is DOING
+ * 2. Message event  → TeamChat shows what the agent is SAYING about it
+ *
+ * Both share the same timestamp so they appear synchronized.
+ * This is the ONLY place that emits paired events.
  */
 
 import type { ACPEvent } from "@maia/acp";
-import { envelope, message, activity } from "@maia/acp";
-import { PERSONALITY_PROFILES } from "./personality";
 
 interface NarrationContext {
   agentId: string;
@@ -19,139 +18,205 @@ interface NarrationContext {
 }
 
 /**
- * Generate a pre-tool narration ("Let me check...") + activity event.
+ * Narrate a step starting — agent announces what they're about to do.
+ * Theatre: "thinking" activity. TeamChat: natural announcement.
  */
-export function narrateToolStart(
-  ctx: NarrationContext,
-  toolName: string,
-  detail: string,
-): ACPEvent[] {
-  const profile = PERSONALITY_PROFILES[ctx.agentRole];
-  const narration = generatePreToolLine(ctx.agentRole, toolName, detail);
+export function narrateStepStart(ctx: NarrationContext, task: string): ACPEvent[] {
+  const ts = new Date().toISOString();
+  const line = PRE_LINES[ctx.agentRole]?.start ?? `Working on this now...`;
 
-  const events: ACPEvent[] = [];
-
-  // Chat message: agent announces what they're about to do
-  if (narration) {
-    events.push(envelope(ctx.agentId, ctx.runId, "message", message({
-      from: ctx.agentId,
-      to: "agent://broadcast",
-      intent: "propose",
-      content: narration,
-      mood: "focused",
-    })));
-  }
-
-  // Activity event: the actual tool call
-  events.push(envelope(ctx.agentId, ctx.runId, "event", activity({
-    agentId: ctx.agentId,
-    activity: mapToolToActivity(toolName),
-    detail: detail.slice(0, 100),
-    tool: { tool_id: toolName, tool_name: toolName, status: "started" },
-  })));
-
-  return events;
+  return [
+    makeActivity(ctx, "thinking", `Working on: ${task.slice(0, 80)}`, ts),
+    makeMessage(ctx, line, "propose", "focused", ts),
+  ];
 }
 
 /**
- * Generate a post-tool narration ("Found it. Here's what I got...")
+ * Narrate a tool being used — "Let me search for..." + searching activity.
  */
-export function narrateToolResult(
-  ctx: NarrationContext,
-  toolName: string,
-  resultSummary: string,
-  success: boolean,
-): ACPEvent[] {
-  const events: ACPEvent[] = [];
+export function narrateToolUse(ctx: NarrationContext, toolName: string, detail: string): ACPEvent[] {
+  const ts = new Date().toISOString();
+  const act = mapToolToActivity(toolName);
+  const line = getPreToolLine(ctx.agentRole, act, detail);
 
-  // Activity: tool completed
-  events.push(envelope(ctx.agentId, ctx.runId, "event", activity({
-    agentId: ctx.agentId,
-    activity: mapToolToActivity(toolName),
-    detail: resultSummary.slice(0, 100),
-    tool: { tool_id: toolName, tool_name: toolName, status: success ? "completed" : "failed" },
-  })));
-
-  // Chat message: narrate the result
-  const narration = generatePostToolLine(ctx.agentRole, toolName, resultSummary, success);
-  if (narration) {
-    events.push(envelope(ctx.agentId, ctx.runId, "message", message({
-      from: ctx.agentId,
-      to: "agent://broadcast",
-      intent: "propose",
-      content: narration,
-      mood: success ? "confident" : "concerned",
-    })));
-  }
-
-  return events;
+  return [
+    makeActivity(ctx, act, detail.slice(0, 100), ts),
+    ...(line ? [makeMessage(ctx, line, "propose", "focused", ts)] : []),
+  ];
 }
 
-/** Map tool names to activity types for Theatre. */
+/**
+ * Narrate a tool completing — result activity + natural summary.
+ */
+export function narrateToolDone(
+  ctx: NarrationContext,
+  toolName: string,
+  summary: string,
+  success: boolean,
+): ACPEvent[] {
+  const ts = new Date().toISOString();
+  const act = mapToolToActivity(toolName);
+  const line = getPostToolLine(ctx.agentRole, summary, success);
+
+  return [
+    makeActivity(ctx, act, summary.slice(0, 100), ts, success ? "completed" : "failed"),
+    ...(line ? [makeMessage(ctx, line, "propose", success ? "confident" : "concerned", ts)] : []),
+  ];
+}
+
+/**
+ * Narrate a conversation response — agent reacts to what just happened.
+ * Activity: "thinking". Message: their actual response.
+ */
+export function narrateReply(
+  ctx: NarrationContext,
+  content: string,
+  intent: string,
+  thinking: string | undefined,
+  mood: string,
+): ACPEvent[] {
+  const ts = new Date().toISOString();
+  return [
+    makeActivity(ctx, "thinking", `Responding: ${content.slice(0, 60)}`, ts),
+    makeMessage(ctx, content, intent, mood, ts, thinking),
+  ];
+}
+
+/**
+ * Narrate Brain reviewing — activity + message synchronized.
+ */
+export function narrateReview(
+  ctx: NarrationContext,
+  authorId: string,
+  round: number,
+): ACPEvent[] {
+  const ts = new Date().toISOString();
+  const author = authorId.replace("agent://", "");
+  return [
+    makeActivity(ctx, "reviewing", `Reviewing ${author}'s output (round ${round})`, ts),
+  ];
+}
+
+/**
+ * Narrate Brain's review verdict — activity + message.
+ */
+export function narrateVerdict(
+  ctx: NarrationContext,
+  verdict: string,
+  feedback: string,
+): ACPEvent[] {
+  const ts = new Date().toISOString();
+  const line = verdict === "approve" ? "Looks good."
+    : verdict === "revise" ? feedback.slice(0, 100) || "Needs revision."
+    : verdict === "question" ? feedback.slice(0, 100) || "I have a question."
+    : "Stopping here.";
+
+  return [
+    makeMessage(ctx, line, verdict === "approve" ? "agree" : "review", verdict === "approve" ? "confident" : "concerned", ts),
+  ];
+}
+
+/**
+ * Narrate an agent revising their work.
+ */
+export function narrateRevision(ctx: NarrationContext, feedback: string): ACPEvent[] {
+  const ts = new Date().toISOString();
+  const line = REVISE_LINES[ctx.agentRole] ?? "Revising now...";
+  return [
+    makeActivity(ctx, "writing", `Revising based on feedback`, ts),
+    makeMessage(ctx, line, "propose", "focused", ts),
+  ];
+}
+
+/**
+ * Narrate a handoff between agents.
+ */
+export function narrateHandoff(
+  fromCtx: NarrationContext,
+  toAgentId: string,
+  task: string,
+): ACPEvent[] {
+  const ts = new Date().toISOString();
+  const toName = toAgentId.replace("agent://", "");
+  const line = `@${toName} — ${task.slice(0, 60)}`;
+  return [
+    makeMessage(fromCtx, line, "handoff", "confident", ts),
+  ];
+}
+
+// ── Internal Helpers ─────────────────────────────────────────────────────────
+
+function makeActivity(
+  ctx: NarrationContext, act: string, detail: string, ts: string, status?: string,
+): ACPEvent {
+  const payload: Record<string, any> = { agent_id: ctx.agentId, activity: act, detail };
+  if (status) payload.tool = { tool_id: act, tool_name: act, status };
+  return { acp_version: "1.0", run_id: ctx.runId, agent_id: ctx.agentId, event_type: "event", timestamp: ts, payload };
+}
+
+function makeMessage(
+  ctx: NarrationContext, content: string, intent: string, mood: string, ts: string, thinking?: string,
+): ACPEvent {
+  return {
+    acp_version: "1.0", run_id: ctx.runId, agent_id: ctx.agentId, event_type: "message", timestamp: ts,
+    payload: { from: ctx.agentId, to: "agent://broadcast", intent, content, mood, thinking },
+  };
+}
+
 function mapToolToActivity(tool: string): string {
-  const lower = tool.toLowerCase();
-  if (lower.includes("search") || lower.includes("google")) return "searching";
-  if (lower.includes("read") || lower.includes("document") || lower.includes("pdf")) return "reading";
-  if (lower.includes("write") || lower.includes("draft") || lower.includes("compose")) return "writing";
-  if (lower.includes("browse") || lower.includes("navigate") || lower.includes("click")) return "browsing";
-  if (lower.includes("code") || lower.includes("execute") || lower.includes("run")) return "coding";
-  if (lower.includes("analy") || lower.includes("calculat") || lower.includes("data")) return "analyzing";
+  const l = tool.toLowerCase();
+  if (l.includes("search") || l.includes("google")) return "searching";
+  if (l.includes("read") || l.includes("document") || l.includes("pdf")) return "reading";
+  if (l.includes("write") || l.includes("draft")) return "writing";
+  if (l.includes("browse") || l.includes("navigate")) return "browsing";
+  if (l.includes("code") || l.includes("execute")) return "coding";
+  if (l.includes("analy") || l.includes("calculat")) return "analyzing";
   return "tool_calling";
 }
 
-/** Generate natural pre-tool narration based on role personality. */
-function generatePreToolLine(role: string, tool: string, detail: string): string {
-  const lines: Record<string, Record<string, string>> = {
-    researcher: {
-      search: "Let me look that up...",
-      read: "Reading through the document...",
-      default: "Pulling the data now...",
-    },
-    analyst: {
-      search: "Let me verify that claim...",
-      analyze: "Running the numbers...",
-      default: "Checking the data...",
-    },
-    writer: {
-      write: "Drafting now...",
-      default: "Working on the text...",
-    },
-    browser: {
-      browse: `Navigating to the page...`,
-      default: "Opening the site...",
-    },
-    coder: {
-      code: "Writing the code...",
-      execute: "Running it...",
-      default: "Let me code that up...",
-    },
-    reviewer: {
-      default: "Let me check this...",
-    },
+function getPreToolLine(role: string, act: string, _detail: string): string {
+  const m: Record<string, Record<string, string>> = {
+    researcher: { searching: "Let me look that up...", reading: "Reading through this...", default: "Pulling the data..." },
+    analyst: { searching: "Let me verify that...", analyzing: "Running the numbers...", default: "Checking..." },
+    writer: { writing: "Drafting now...", default: "Working on the text..." },
+    browser: { browsing: "Navigating to the page...", default: "Opening the site..." },
+    coder: { coding: "Writing the code...", default: "Let me code that up..." },
+    reviewer: { default: "Checking this..." },
   };
-
-  const roleLines = lines[role] ?? lines.researcher ?? {};
-  const toolLower = tool.toLowerCase();
-  for (const [key, line] of Object.entries(roleLines)) {
-    if (key !== "default" && toolLower.includes(key)) return line;
-  }
-  return roleLines.default ?? "";
+  const roleMap = m[role] ?? {};
+  return roleMap[act] ?? roleMap.default ?? "";
 }
 
-/** Generate natural post-tool narration. */
-function generatePostToolLine(role: string, tool: string, summary: string, success: boolean): string {
+function getPostToolLine(role: string, summary: string, success: boolean): string {
   if (!success) {
-    const failLines: Record<string, string> = {
-      researcher: "Couldn't find what I was looking for.",
+    const f: Record<string, string> = {
+      researcher: "Couldn't find what I needed.",
       analyst: "The data isn't available.",
-      browser: "Page didn't load properly.",
-      coder: "Hit an error. Let me try a different approach.",
+      browser: "Page didn't load.",
+      coder: "Hit an error.",
       default: "That didn't work.",
     };
-    return failLines[role] ?? failLines.default;
+    return f[role] ?? f.default;
   }
-
-  // Keep it short — the actual result will be in the step output
-  if (summary.length > 60) return "";
+  // Only narrate short results — long ones speak for themselves
+  if (summary.length <= 80) return summary;
   return "";
 }
+
+const PRE_LINES: Record<string, { start: string }> = {
+  researcher: { start: "On it. Let me find the data..." },
+  analyst: { start: "Looking at the numbers..." },
+  writer: { start: "Starting the draft..." },
+  reviewer: { start: "Let me review this..." },
+  browser: { start: "Opening the page..." },
+  coder: { start: "Writing the code..." },
+  supervisor: { start: "Evaluating..." },
+};
+
+const REVISE_LINES: Record<string, string> = {
+  writer: "Got it. Revising the draft...",
+  coder: "Fixing that now...",
+  analyst: "Recalculating with the correction...",
+  researcher: "Pulling the updated data...",
+  default: "Revising now...",
+};
