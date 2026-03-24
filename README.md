@@ -2,148 +2,326 @@
 
 > The collaboration and observability layer for AI agents.
 
-**Agents need to communicate. Teams need to see what they're doing. Enterprises need to trust the output.**
+Build AI agent teams that talk to each other, watch them work live, and ship with confidence.
 
-Maia gives you:
-- **ACP** — Agent Collaboration Protocol. The open standard for agent-to-agent communication.
-- **Theatre** — Live visualization SDK. Watch agents collaborate in real-time.
-- **CLI** — Stream, replay, and validate agent events from the terminal.
-
-## Quick Start
-
-### JavaScript / TypeScript
+## Install
 
 ```bash
-npm install @maia/sdk
+npm install @maia/sdk    # JavaScript/TypeScript
+pip install maia-sdk     # Python
 ```
+
+## 30-Second Demo
+
+```ts
+import { Brain } from '@maia/brain';
+
+const brain = new Brain({
+  agents: [],  // Brain auto-assembles from 27 built-in roles
+  llm: { apiKey: process.env.OPENAI_API_KEY },
+});
+
+const result = await brain.run("Analyze SaaS pricing trends and write a client report");
+
+console.log(result.output);       // Final report
+console.log(result.totalCostUsd); // $0.0234
+console.log(result.steps);        // 3 steps: researcher → analyst → writer
+```
+
+Brain auto-picks the right agents, they discuss and challenge each other's work, Brain reviews every output, and you get a polished result.
+
+## Watch Agents Work
 
 ```tsx
-// Protocol — agent-to-agent communication
-import { ACPClient, message, handoff, review } from '@maia/sdk';
+import { Theatre, TeamChat } from '@maia/sdk/theatre';
 
-// Visualization — watch agents work live
-import { Theatre } from '@maia/sdk/theatre';
-
+// Theatre: see the actual work (browser pages, documents, dashboards)
 <Theatre streamUrl="/acp/events" />
+
+// TeamChat: see agent conversations (challenges, agreements, handoffs)
+<TeamChat streamUrl="/acp/events" showThinking />
 ```
 
-### Python
-
-```bash
-pip install maia-sdk
-```
-
-```python
-from maia_sdk import ACPClient, message, handoff, review
-
-# Wrap existing frameworks
-from maia_sdk.adapters.langchain import ACPLangChainAdapter
-from maia_sdk.adapters.crewai import ACPCrewAIAdapter
-from maia_sdk.adapters.autogen import ACPAutoGenAdapter
-```
-
-### CLI
+Or in the terminal:
 
 ```bash
 pip install maia-cli
-
-maia stream http://localhost:8000/acp/events   # Watch agents live
-maia replay events.jsonl --speed 2             # Replay recorded runs
-maia validate events.jsonl                     # Validate events
-maia init my-agent                             # Scaffold a new project
+maia stream http://localhost:8765/acp/events
 ```
 
-## Where Maia Fits
+## What's Inside
 
-```
-MCP  ->  Tools       (Anthropic - how agents use tools)
-ACP  ->  Agents      (Maia - how agents talk to each other)
-AG-UI -> UI          (CopilotKit - how agents stream to frontends)
-```
+### Core
 
-MCP solved tool connectivity. AG-UI solved frontend streaming. **Nobody solved agent-to-agent collaboration.** ACP fills that gap. Theatre makes it visible.
-
-## Packages
-
-| Package | Description | Install |
+| Package | What it does | Install |
 |---------|-------------|---------|
-| [`@maia/sdk`](packages/sdk-js/) | JS/TS bundle - ACP + Theatre | `npm install @maia/sdk` |
-| [`maia-sdk`](packages/sdk-py/) | Python bundle - ACP + adapters | `pip install maia-sdk` |
-| [`@maia/acp`](packages/acp-js/) | ACP TypeScript client | `npm install @maia/acp` |
-| [`maia-acp`](packages/acp-py/) | ACP Python client | `pip install maia-acp` |
-| [`@maia/theatre`](packages/theatre-react/) | React visualization SDK | `npm install @maia/theatre` |
-| [`@maia/cli`](packages/cli/) | Node.js CLI | `npx @maia/cli` |
-| [`maia-cli`](packages/cli-py/) | Python CLI | `pip install maia-cli` |
-| [`acp-spec`](packages/acp-spec/) | ACP v1 JSON Schema definitions | - |
+| `@maia/brain` | Agent orchestration — plan, execute, converse, review | `npm i @maia/brain` |
+| `@maia/acp` | Agent-to-agent protocol — types, client, SSE parser | `npm i @maia/acp` |
+| `@maia/theatre` | Live action visualization — 14 visual surfaces | `npm i @maia/theatre` |
+| `@maia/teamchat` | Agent conversation UI — chat bubbles, reviews | `npm i @maia/teamchat` |
+| `@maia/computer-use` | Browser automation with Playwright | `npm i @maia/computer-use` |
+| `@maia/connectors` | 40+ SaaS connectors (Gmail, Slack, Jira...) | `npm i @maia/connectors` |
+| `@maia/sdk` | Everything in one install | `npm i @maia/sdk` |
 
-## ACP Protocol - 6 Primitives
+### Python
 
-| Primitive | Purpose | Example |
-|-----------|---------|---------|
-| `message` | Agent talks to agent | Researcher asks Analyst to verify data |
-| `handoff` | Transfer task + context | Brain delegates "write report" to Writer |
-| `review` | Evaluate another's output | Brain reviews Writer's draft |
-| `artifact` | Pass work products | Analyst sends dataset to Writer |
-| `event` | Live work activity stream | Agent emits "searching web..." |
-| `capabilities` | Agent discovery | Brain queries available agents |
+| Package | Install |
+|---------|---------|
+| `maia-sdk` | `pip install maia-sdk` |
+| `maia-cli` | `pip install maia-cli` |
 
-## Theatre - Live Visualization
+## Brain — How It Works
+
+```
+brain.run("your goal")
+  │
+  ├── Plans steps (LLM picks from 27 roles)
+  ├── For each step:
+  │     ├── Agent executes with personality + memory
+  │     ├── Other agents can challenge/agree/clarify
+  │     ├── Brain reviews (approve/revise/question/reject)
+  │     └── Coverage check — are required facts satisfied?
+  ├── If gaps remain → injects revision steps
+  └── Synthesizes final response
+```
+
+### 27 Agent Roles
+
+Brain knows these roles and auto-assigns the best one for each task:
+
+**Executive:** supervisor, project_sponsor
+**Product:** product_manager, business_analyst
+**Project:** project_manager
+**Technical:** tech_lead, coder, data_scientist, designer, devops, it_infrastructure
+**Quality:** qa_tester, security_auditor, reviewer
+**Content:** writer, translator, researcher, document_reader, browser
+**Business:** sales, marketing, customer_support, email_specialist, delivery
+**Other:** analyst, finance, legal
+
+Each role has a distinct personality — vocabulary, directness, sentence length, and communication style.
+
+### Caching
+
+Save money on duplicate LLM calls:
+
+```ts
+import { createCache, setLLMCache } from '@maia/brain';
+
+setLLMCache(createCache({ ttlMs: 30 * 60 * 1000, maxEntries: 500 }));
+// Now identical prompts hit cache instead of the API
+```
+
+### Multi-Provider
+
+Use multiple LLM providers with automatic failover:
+
+```ts
+import { openai, anthropic, qwen, callWithProviderChain } from '@maia/brain';
+
+const result = await callWithProviderChain(
+  { providers: [openai("sk-..."), anthropic("sk-ant-..."), qwen("sk-...")] },
+  systemPrompt,
+  userPrompt,
+);
+// If OpenAI fails → tries Anthropic → tries Qwen
+```
+
+Per-agent model overrides:
+
+```ts
+{ providers: [...], roleModelOverrides: { analyst: "gpt-4o", writer: "claude-sonnet-4-20250514" } }
+```
+
+### Structured Output
+
+No more JSON parse failures:
+
+```ts
+import { schema, validateOutput } from '@maia/brain';
+
+const s = schema()
+  .string("answer", "The main answer", { required: true })
+  .number("confidence", "0-1 confidence score")
+  .string("verdict", "Decision", { enum: ["approve", "reject"] })
+  .build();
+
+const { data, valid, repairs } = validateOutput(llmResponse, s, fallback);
+// Auto-strips code fences, extracts JSON, coerces types, validates enums
+```
+
+### Guardrails
+
+Safety rails on input and output:
+
+```ts
+import { createGuardrails, injectionGuard, piiGuard, customGuard } from '@maia/brain';
+
+const rails = createGuardrails({
+  inputGuards: [injectionGuard()],
+  outputGuards: [piiGuard(), customGuard("no-competitors", (text) => !text.includes("competitor"))],
+});
+
+const input = await rails.checkInput(userMessage);
+if (!input.passed) return "Blocked: " + input.results.map(r => r.reason).join(", ");
+
+const output = await rails.checkOutput(agentResponse);
+// Blocks: prompt injection, PII (emails, SSNs, credit cards), custom rules
+```
+
+### Evaluation
+
+Measure agent quality with datasets:
+
+```ts
+import { evaluate, fuzzyMatch, containsKeywords, lengthRange } from '@maia/brain';
+
+const results = await evaluate(
+  (input) => brain.run(input),
+  {
+    name: "pricing-analysis",
+    examples: [
+      { input: "Analyze SaaS pricing", expected: "PLG grew 34%" },
+      { input: "Compare AWS vs GCP", expected: "AWS market share" },
+    ],
+  },
+  [fuzzyMatch(0.5), containsKeywords("pricing", "growth"), lengthRange(100, 5000)],
+);
+
+console.log(results.passRate);     // 0.85
+console.log(results.totalCostUsd); // $0.12
+console.log(results.byScorer);     // { fuzzy_match: { avg: 0.72 }, ... }
+```
+
+### Telemetry
+
+Auto-instrument every LLM call for Datadog, Jaeger, Honeycomb:
+
+```ts
+import { createTelemetry, setLLMTelemetry } from '@maia/brain';
+
+setLLMTelemetry(createTelemetry({ serviceName: "my-app" }));
+// Every callLLM() now creates an OpenTelemetry span with:
+// model, provider, tokens, cost, latency, cached, success
+```
+
+### Memory
+
+Agents remember past decisions across runs:
+
+```ts
+import { createMemoryStore, recallMemories, serializeMemoryStore } from '@maia/brain';
+
+const memory = createMemoryStore();
+// Brain auto-stores decisions during runs
+// "Last time we split ACV by segment — let's start there"
+
+// Persist to disk/DB
+const json = serializeMemoryStore(memory);
+```
+
+## Theatre — 14 Visual Surfaces
+
+Theatre doesn't just show text — it shows the actual work:
+
+| Surface | When it appears | What you see |
+|---------|----------------|-------------|
+| Browser | Agent browses web | URL bar + page screenshot |
+| Document | Agent reads PDF | Document with highlights |
+| Editor | Agent writes/codes | Live text with cursor |
+| Search | Agent searches | Results appearing |
+| Email | Agent drafts email | To/Subject/Body |
+| Terminal | Agent runs commands | Colored output |
+| Chat | Agent uses Slack/Teams | Message bubbles |
+| Dashboard | Agent analyzes data | KPI cards + charts |
+| Kanban | Agent manages tasks | Board with cards |
+| Database | Agent queries DB | SQL + table results |
+| CRM | Agent manages leads | Contact/deal cards |
+| Diff | Agent reviews code | Red/green lines |
+| API | Agent calls APIs | Request/response JSON |
+| Calendar | Agent schedules | Time grid + events |
 
 ```tsx
-// Live mode - connect to any SSE stream
-<Theatre streamUrl="/acp/events" />
+import { SurfaceRenderer } from '@maia/theatre';
 
-// Replay mode - DVR for past runs
-<Theatre recordedEvents={events} />
-
-// With budget tracking
-<Theatre streamUrl="/acp/events" budgetUsd={5.00} showThinking />
+// Auto-picks the right surface based on agent activity
+<SurfaceRenderer surface={currentSurface} />
 ```
 
-Theatre works with **any SSE stream** - not just ACP. Point it at your existing agent endpoint and it will intelligently render the events. No migration required.
+## TeamChat — Agent Conversations
 
-### Components
+See agents talk to each other with intent-colored bubbles:
 
-| Component | What it does |
-|-----------|-------------|
-| `<Theatre>` | Main component - team chat + activity + cost + replay |
-| `<TeamThread>` | Slack-like agent conversation view |
-| `<ActivityTimeline>` | Tool calls, browser actions, searches |
-| `<CostBar>` | Live running cost counter with budget gates |
-| `<ReplayControls>` | DVR controls - play/pause, speed, scrub |
-| `<AgentAvatar>` | Consistent agent identity with mood/activity indicators |
+```tsx
+import { TeamChat } from '@maia/teamchat';
 
-### Hooks
+<TeamChat streamUrl="/acp/events" showThinking />
+```
 
-| Hook | What it does |
-|------|-------------|
-| `useACPStream` | Connect to SSE, get typed events, track agents + cost |
-| `useReplay` | Variable-speed replay with timestamp-based delays |
+Features: agent avatars, intent badges (Proposes/Challenges/Agrees), thinking bubbles, review badges, typing indicators.
+
+## Embeddable Chat
+
+Add AI chat to any React app with one hook:
+
+```tsx
+import { useChat } from '@maia/theatre';
+
+function MyChat() {
+  const { messages, input, setInput, send, isLoading } = useChat({
+    url: "/api/chat",
+  });
+
+  return (
+    <div>
+      {messages.map((m, i) => <div key={i}>{m.role}: {m.content}</div>)}
+      <input value={input} onChange={(e) => setInput(e.target.value)} />
+      <button onClick={() => send()} disabled={isLoading}>Send</button>
+    </div>
+  );
+}
+```
+
+Handles SSE streaming, JSON responses, abort, error states automatically.
 
 ## Framework Adapters
 
+Wrap existing LangChain, CrewAI, or AutoGen agents:
+
 ```python
-# LangChain
 from maia_sdk.adapters.langchain import ACPLangChainAdapter
-acp_agent = ACPLangChainAdapter(agent=my_agent, agent_id="agent://researcher")
-for event in acp_agent.run("Find Q4 data"):
-    print(event.model_dump_json())
-
-# CrewAI
 from maia_sdk.adapters.crewai import ACPCrewAIAdapter
-acp_crew = ACPCrewAIAdapter(crew=my_crew)
-
-# AutoGen
 from maia_sdk.adapters.autogen import ACPAutoGenAdapter
-acp_chat = ACPAutoGenAdapter(group_chat=my_chat)
+```
+
+## CLI
+
+```bash
+maia stream http://localhost:8000/acp/events   # Watch agents live
+maia replay events.jsonl --speed 4             # Replay at 4x
+maia validate events.jsonl                     # Validate event format
+maia init my-agent                             # Scaffold a project
+maia serve events.jsonl                        # Serve as SSE endpoint
+maia info                                      # Version + environment
+```
+
+## Architecture
+
+```
+@maia/brain     → Orchestration (plan, execute, converse, review)
+@maia/acp       → Protocol (agent-to-agent communication)
+@maia/theatre   → Actions (14 visual surfaces + cost tracking)
+@maia/teamchat  → Conversations (chat bubbles + reviews)
+@maia/sdk       → Everything in one install
+```
+
+```
+MCP  →  Tools       (Anthropic — how agents use tools)
+ACP  →  Agents      (Maia — how agents talk to each other)
+AG-UI → UI          (CopilotKit — how agents stream to frontends)
 ```
 
 ## Open Source
 
-Everything in this repo is MIT licensed.
+MIT licensed. Everything is free.
 
-For advanced features - Brain orchestrator, Computer Use, Connectors, Marketplace, Enterprise governance - see [maia.dev](https://maia.dev).
-
-## License
-
-MIT
+For hosted infrastructure — managed LLMs, browser automation at scale, enterprise governance — see [maia.dev](https://maia.dev).
