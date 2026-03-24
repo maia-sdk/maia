@@ -1,21 +1,17 @@
 // ─── @maia/sdk/theatre ──────────────────────────────────────────────────────
 //
-// Live agent visualization. Import from '@maia/sdk/theatre' for React components.
+// Theatre (actions) + TeamChat (conversations) + Surfaces (visual work).
 //
 // Usage:
-//   import { Theatre, useACPStream, useReplay } from '@maia/sdk/theatre';
+//   import { Theatre, TeamChat, SurfaceRenderer } from '@maia/sdk/theatre';
 //
 //   <Theatre streamUrl="/acp/events" />
-//
-// ─────────────────────────────────────────────────────────────────────────────
+//   <TeamChat streamUrl="/acp/events" />
 
-// Main component
+// ── Theatre (actions + surfaces) ─────────────────────────────────────────────
+
 export { Theatre } from "@maia/theatre";
 export type { TheatreProps } from "@maia/theatre";
-
-// Sub-components
-export { TeamThread } from "@maia/theatre";
-export type { TeamThreadProps } from "@maia/theatre";
 
 export { ActivityTimeline } from "@maia/theatre";
 export type { ActivityTimelineProps } from "@maia/theatre";
@@ -29,9 +25,36 @@ export type { CostBarProps } from "@maia/theatre";
 export { ReplayControls } from "@maia/theatre";
 export type { ReplayControlsProps } from "@maia/theatre";
 
+// Surfaces
+export {
+  SurfaceRenderer,
+  BrowserSurface, DocumentSurface, EditorSurface,
+  SearchSurface, EmailSurface, TerminalSurface,
+  ChatSurface, DashboardSurface, KanbanSurface, DatabaseSurface,
+  CRMSurface, DiffSurface, APISurface, CalendarSurface,
+} from "@maia/theatre";
+export type { SurfaceState, SurfaceType } from "@maia/theatre";
+
 // Hooks
 export { useACPStream } from "@maia/theatre";
 export type { UseACPStreamOptions, ACPStreamState } from "@maia/theatre";
 
 export { useReplay } from "@maia/theatre";
 export type { UseReplayOptions, ReplayState } from "@maia/theatre";
+
+// ── TeamChat (conversations) ─────────────────────────────────────────────────
+
+export { TeamChat } from "@maia/teamchat";
+export type { TeamChatProps } from "@maia/teamchat";
+
+export { AgentBubble } from "@maia/teamchat";
+export type { AgentBubbleProps } from "@maia/teamchat";
+
+export { ReviewBadge } from "@maia/teamchat";
+export type { ReviewBadgeProps } from "@maia/teamchat";
+
+export { TypingIndicator } from "@maia/teamchat";
+export type { TypingIndicatorProps } from "@maia/teamchat";
+
+export { useConversationStream } from "@maia/teamchat";
+export type { UseConversationStreamOptions, ConversationStreamState } from "@maia/teamchat";

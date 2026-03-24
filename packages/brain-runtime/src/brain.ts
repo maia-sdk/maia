@@ -1,14 +1,10 @@
 /**
- * Brain — orchestration runtime with real agent conversations.
- *
- * Flow:
- * 1. Team Assembly — announce agents, decompose goal into steps
- * 2. Step Execution — execute, conversation loop, review loop
- * 3. Synthesis — Brain produces final cohesive response
+ * Brain — orchestration runtime. Plans, delegates, and synthesizes.
+ * All subsystem wiring happens in executor.ts.
  */
 
 import type { ACPEvent } from "@maia/acp";
-import { envelope, message, handoff, activity, capabilities } from "@maia/acp";
+import { envelope, message, capabilities } from "@maia/acp";
 import type {
   BrainOptions, BrainResult, BrainStep, AgentDefinition,
   SharedContext, ConversationThread,
@@ -16,8 +12,10 @@ import type {
 import { callLLM, callLLMJson } from "./llm";
 import type { LLMCallResult } from "./llm";
 import * as prompts from "./prompts";
-import { runConversation, runReviewLoop } from "./loops";
-import { getRole, formatRoleCatalogForPrompt, personalityPrompt } from "./roles/index";
+import { getRole, formatRoleCatalogForPrompt } from "./roles/index";
+import { createBrainState } from "./state";
+import { createMemoryStore } from "./memory";
+import { executeStepFull } from "./executor";
 
 export class Brain {
   private agents: AgentDefinition[];
@@ -46,184 +44,88 @@ export class Brain {
     this.totalCost = 0;
     this.totalTokens = 0;
 
-    const context: SharedContext = {
-      goal,
-      completedSteps: [],
-      decisions: [],
-      allConversations: [],
-    };
+    const context: SharedContext = { goal, completedSteps: [], decisions: [], allConversations: [] };
+    const state = createBrainState(goal);
+    const memory = createMemoryStore();
 
     // ── Phase 1: Team Assembly ─────────────────────────────────
     this.announceAgents();
     const plan = await this.planSteps(goal);
 
     this.emit(envelope("agent://brain", this.runId, "message", message({
-      from: "agent://brain",
-      to: "agent://broadcast",
-      intent: "propose",
+      from: "agent://brain", to: "agent://broadcast", intent: "propose",
       content: `Plan:\n${plan.map((s, i) => `${i + 1}. ${s.agentId.replace("agent://", "")} — ${s.task}`).join("\n")}`,
       mood: "confident",
     })));
 
-    // ── Phase 2: Step Execution ────────────────────────────────
+    // ── Phase 2: Step Execution (all subsystems wired) ─────────
     const completedSteps: BrainStep[] = [];
     const allThreads: ConversationThread[] = [];
-    const loopCtx = this.buildLoopContext();
+    const stepsToRun = [...plan];
 
-    for (const step of plan) {
+    const execCtx = {
+      agents: this.agents, llm: this.options.llm, runId: this.runId,
+      maxConversationTurns: this.options.maxConversationTurns,
+      maxReviewRounds: this.options.maxReviewRounds,
+      memory, state,
+      emit: (event: ACPEvent) => this.emit(event),
+      trackCost: (result: LLMCallResult) => this.trackCost(result),
+      findAgent: (agentId: string) => this.findAgent(agentId),
+    };
+
+    while (stepsToRun.length > 0) {
+      const step = stepsToRun.shift()!;
       if (this.totalCost >= this.options.budgetUsd) {
         this.emit(envelope("agent://brain", this.runId, "message", message({
-          from: "agent://brain",
-          to: "agent://broadcast",
-          intent: "escalate",
-          content: `Budget limit reached ($${this.totalCost.toFixed(4)} / $${this.options.budgetUsd}). Stopping.`,
-          mood: "concerned",
+          from: "agent://brain", to: "agent://broadcast", intent: "escalate",
+          content: `Budget reached ($${this.totalCost.toFixed(4)}). Stopping.`, mood: "concerned",
         })));
         break;
       }
 
-      // Handoff with context
-      const prevAgent = completedSteps.length > 0
-        ? completedSteps[completedSteps.length - 1].agentId
-        : "agent://brain";
-
-      this.emit(envelope(prevAgent, this.runId, "handoff", handoff({
-        from: prevAgent,
-        to: step.agentId,
-        task: { description: step.task, priority: "normal" as const },
-        context: { completedSteps: context.completedSteps, decisions: context.decisions },
-      })));
-
-      // Execute step
-      await this.executeStep(step, context);
-
-      // Conversation loop
-      const thread = await runConversation(step, loopCtx);
-      step.conversation = thread;
-      allThreads.push(thread);
-
-      // Review loop
-      await runReviewLoop(step, thread, loopCtx);
-
-      // Update shared context
-      context.completedSteps.push({
-        agentId: step.agentId,
-        task: step.task,
-        output: (step.output ?? "").slice(0, 500),
-        verdict: step.reviewVerdict ?? "approve",
-      });
-      context.allConversations.push(...thread.turns);
-
-      for (const turn of thread.turns) {
-        if (turn.intent === "challenge" || turn.intent === "agree" || turn.intent === "clarify") {
-          context.decisions.push(`${turn.agentId}: [${turn.intent}] ${turn.content.slice(0, 150)}`);
-        }
-      }
-
+      const { revisionsNeeded } = await executeStepFull(step, context, execCtx);
       completedSteps.push(step);
+      if (step.conversation) allThreads.push(step.conversation);
+      if (revisionsNeeded.length > 0) stepsToRun.unshift(...revisionsNeeded);
     }
 
     // ── Phase 3: Synthesis ─────────────────────────────────────
     const finalOutput = await this.synthesize(context, completedSteps);
-
     this.emit(envelope("agent://brain", this.runId, "message", message({
-      from: "agent://brain",
-      to: "agent://user",
-      intent: "summarize",
-      content: finalOutput,
-      mood: "confident",
+      from: "agent://brain", to: "agent://user", intent: "summarize",
+      content: finalOutput, mood: "confident",
     })));
 
     return {
-      steps: completedSteps,
-      output: finalOutput,
-      events: this.events,
-      conversations: allThreads,
-      totalCostUsd: this.totalCost,
-      totalTokens: this.totalTokens,
-      runId: this.runId,
+      steps: completedSteps, output: finalOutput, events: this.events,
+      conversations: allThreads, totalCostUsd: this.totalCost,
+      totalTokens: this.totalTokens, runId: this.runId,
     };
   }
 
-  // ── Plan ─────────────────────────────────────────────────────────────────
-
   private async planSteps(goal: string): Promise<BrainStep[]> {
-    this.emitActivity("agent://brain", "thinking", "Decomposing goal into agent steps...");
-
-    // Include full role catalog so the LLM can assign any of the 27 roles
-    const catalogContext = this.agents.length > 0
+    const ctx = this.agents.length > 0
       ? prompts.planUserPrompt(goal, this.agents)
-      : `Goal: ${goal}\n\nAvailable roles (pick the best for each step):\n${formatRoleCatalogForPrompt()}`;
-
+      : `Goal: ${goal}\n\nAvailable roles:\n${formatRoleCatalogForPrompt()}`;
     const { data, cost } = await callLLMJson<Array<{ agent_id: string; task: string }>>(
-      this.options.llm,
-      prompts.planSystemPrompt(),
-      catalogContext,
-      [],
+      this.options.llm, prompts.planSystemPrompt(), ctx, [],
     );
     this.trackCost(cost);
-
-    return (Array.isArray(data) ? data : [])
-      .slice(0, this.options.maxSteps)
-      .map((s, i) => ({
-        index: i,
-        agentId: s.agent_id ?? this.agents[0]?.id ?? "agent://unknown",
-        task: s.task ?? goal,
-      }));
+    return (Array.isArray(data) ? data : []).slice(0, this.options.maxSteps)
+      .map((s, i) => ({ index: i, agentId: s.agent_id ?? "agent://researcher", task: s.task ?? goal }));
   }
-
-  // ── Execute ──────────────────────────────────────────────────────────────
-
-  private async executeStep(step: BrainStep, context: SharedContext): Promise<void> {
-    const agent = this.findAgent(step.agentId);
-    const contextText = this.buildContextText(context);
-    const roleId = agent.role ?? step.agentId.replace("agent://", "");
-    const personality = personalityPrompt(roleId);
-    this.emitActivity(step.agentId, "thinking", `Working on: ${step.task.slice(0, 80)}`);
-
-    const result = await callLLM(
-      this.options.llm,
-      prompts.executeSystemPrompt(agent, contextText) + personality,
-      prompts.executeUserPrompt(step.task),
-    );
-    this.trackCost(result);
-
-    step.output = result.text;
-    step.costUsd = (step.costUsd ?? 0) + result.costUsd;
-    step.tokensUsed = (step.tokensUsed ?? 0) + result.tokensUsed;
-
-    this.emit(envelope(step.agentId, this.runId, "message", message({
-      from: step.agentId,
-      to: "agent://brain",
-      intent: "propose",
-      content: result.text,
-      mood: "confident",
-      threadId: `thread_step_${step.index}`,
-    })));
-  }
-
-  // ── Synthesis ────────────────────────────────────────────────────────────
 
   private async synthesize(context: SharedContext, steps: BrainStep[]): Promise<string> {
-    this.emitActivity("agent://brain", "writing", "Synthesizing final response...");
-
-    const result = await callLLM(
-      this.options.llm,
-      prompts.synthesizeSystemPrompt(),
-      prompts.synthesizeUserPrompt(context.goal, steps, context.allConversations),
-    );
+    const result = await callLLM(this.options.llm, prompts.synthesizeSystemPrompt(),
+      prompts.synthesizeUserPrompt(context.goal, steps, context.allConversations));
     this.trackCost(result);
     return result.text;
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
   private announceAgents(): void {
     for (const agent of this.agents) {
       this.emit(envelope(agent.id, this.runId, "capabilities", capabilities({
-        agentId: agent.id,
-        name: agent.name,
-        role: agent.role,
+        agentId: agent.id, name: agent.name, role: agent.role,
         personality: agent.personality,
         skills: (agent.tools ?? []).map((t) => ({ skill_id: t, description: t })),
       })));
@@ -231,65 +133,21 @@ export class Brain {
   }
 
   private findAgent(agentId: string): AgentDefinition {
-    // 1. Check user-provided agents
-    const userAgent = this.agents.find((a) => a.id === agentId);
-    if (userAgent) return userAgent;
-
-    // 2. Fall back to role catalog — build an AgentDefinition from the role
-    const roleId = agentId.replace("agent://", "");
-    const catalogRole = getRole(roleId);
+    const ua = this.agents.find((a) => a.id === agentId);
+    if (ua) return ua;
+    const r = getRole(agentId.replace("agent://", ""));
     return {
-      id: agentId,
-      name: catalogRole.role.name,
-      role: catalogRole.role.id,
-      instructions: catalogRole.role.systemPrompt,
-      tools: [],
-      personality: {
-        style: catalogRole.personality.directness > 0.7 ? "concise" : "detailed",
-        traits: catalogRole.role.defaultTraits,
-        avatar_color: catalogRole.role.avatarColor,
-        avatar_emoji: catalogRole.role.avatarEmoji,
+      id: agentId, name: r.role.name, role: r.role.id, instructions: r.role.systemPrompt,
+      tools: [], personality: {
+        style: r.personality.directness > 0.7 ? "concise" : "detailed",
+        traits: r.role.defaultTraits, avatar_color: r.role.avatarColor, avatar_emoji: r.role.avatarEmoji,
       },
-    };
-  }
-
-  private buildContextText(context: SharedContext): string {
-    if (context.completedSteps.length === 0) return "";
-    const steps = context.completedSteps
-      .map((s) => `${s.agentId.replace("agent://", "")} (${s.verdict}): ${s.output.slice(0, 300)}`)
-      .join("\n\n");
-    const decisions = context.decisions.length > 0
-      ? "\n\nKey decisions:\n" + context.decisions.slice(-5).join("\n")
-      : "";
-    return `Prior work:\n${steps}${decisions}`;
-  }
-
-  private buildLoopContext() {
-    return {
-      agents: this.agents,
-      llm: this.options.llm,
-      runId: this.runId,
-      maxConversationTurns: this.options.maxConversationTurns,
-      maxReviewRounds: this.options.maxReviewRounds,
-      emit: (event: ACPEvent) => this.emit(event),
-      emitActivity: (agentId: string, type: string, detail: string) => this.emitActivity(agentId, type, detail),
-      trackCost: (result: LLMCallResult) => this.trackCost(result),
-      findAgent: (agentId: string) => this.findAgent(agentId),
     };
   }
 
   private trackCost(result: LLMCallResult): void {
     this.totalCost += result.costUsd;
     this.totalTokens += result.tokensUsed;
-  }
-
-  private emitActivity(agentId: string, type: string, detail: string): void {
-    this.emit(envelope(agentId, this.runId, "event", activity({
-      agentId,
-      activity: type as any,
-      detail,
-      cost: { tokens_used: 0, cost_usd: this.totalCost, model: this.options.llm.model ?? "gpt-4o" },
-    })));
   }
 
   private emit(event: ACPEvent): void {

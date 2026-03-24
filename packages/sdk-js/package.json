@@ -27,7 +27,8 @@
   },
   "dependencies": {
     "@maia/acp": "workspace:*",
-    "@maia/theatre": "workspace:*"
+    "@maia/theatre": "workspace:*",
+    "@maia/teamchat": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
