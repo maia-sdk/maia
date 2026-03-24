@@ -77,3 +77,22 @@ export type {
   BrainSignal,
   BrainDirective,
 } from "./state";
+
+// Personality
+export { PERSONALITY_PROFILES, personalityPrompt, maxWordsForRole } from "./personality";
+export type { PersonalityProfile } from "./personality";
+
+// Memory
+export {
+  createMemoryStore,
+  recordMemory,
+  recallMemories,
+  memoryContextPrompt,
+  extractDecisions,
+  serializeMemoryStore,
+  deserializeMemoryStore,
+} from "./memory";
+export type { MemoryEntry, MemoryStore } from "./memory";
+
+// Narration
+export { narrateToolStart, narrateToolResult } from "./narration";

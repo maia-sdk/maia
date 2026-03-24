@@ -192,3 +192,67 @@ export function synthesizeUserPrompt(
 
   return `Goal: ${goal}\n\nTeam outputs:\n${stepSummaries}${convText}`;
 }
+
+// ── Quick-Fire Exchanges ─────────────────────────────────────────────────────
+
+export function quickFireInstruction(): string {
+  return (
+    "\nWhen you agree or the point is simple, respond in under 8 words. "
+    + "Examples: 'Verified.', 'Good. Next.', 'On it.', 'Checks out.', "
+    + "'Numbers are right.', 'Done — here it is.'\n"
+    + "Not every response needs to be a paragraph."
+  );
+}
+
+// ── Constructive Friction ────────────────────────────────────────────────────
+
+export function frictionInstruction(): string {
+  return (
+    "\nWhen you disagree, be specific and direct. Don't soften with 'I think maybe...' "
+    + "Instead: state the problem, cite evidence, propose the fix.\n"
+    + "Example: 'That 12% is wrong. Bessemer's appendix shows Enterprise +8%, SMB -18%. Split by segment.'\n"
+    + "Disagreements should take 2-3 exchanges to resolve, not 1."
+  );
+}
+
+// ── Proactive Sharing ────────────────────────────────────────────────────────
+
+export function proactiveInstruction(): string {
+  return (
+    "\nIf you notice something relevant that wasn't asked for, share it.\n"
+    + "Example: 'By the way — the dataset also has churn rates. Want me to include that?'\n"
+    + "Good teammates volunteer information."
+  );
+}
+
+// ── Natural Handoff ──────────────────────────────────────────────────────────
+
+export function handoffInstruction(): string {
+  return (
+    "\nWhen your part is done, hand off naturally to the next person.\n"
+    + "Instead of: 'My task is complete.'\n"
+    + "Say: '@Analyst — can you verify the growth numbers?' or "
+    + "'That\\'s everything. Writer, it\\'s yours.'"
+  );
+}
+
+// ── Decision Anchoring ───────────────────────────────────────────────────────
+
+export function decisionAnchoringInstruction(decisions: string[]): string {
+  if (!decisions.length) return "";
+  return (
+    "\nDecisions made so far (reference these naturally):\n"
+    + decisions.slice(-5).map((d) => `- ${d}`).join("\n")
+    + "\n\nUse phrases like 'per our earlier decision', 'as we agreed', 'like we discussed'."
+  );
+}
+
+// ── Conversation Compression ─────────────────────────────────────────────────
+
+export function compressionInstruction(): string {
+  return (
+    "\nWhen summarizing a discussion, use this format:\n"
+    + "'We\\'ve settled: (1) [decision], (2) [decision], (3) [decision]. Moving on.'\n"
+    + "Keep summaries under 3 bullet points. Don\\'t recap — compress."
+  );
+}
