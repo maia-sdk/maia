@@ -4,6 +4,9 @@
  */
 
 import type { LLMConfig } from "./types";
+import type { LLMCache } from "./cache";
+import { cacheKey } from "./cache";
+import type { Telemetry } from "./telemetry";
 
 export interface LLMCallResult {
   text: string;
@@ -11,23 +14,42 @@ export interface LLMCallResult {
   costUsd: number;
   model: string;
   success: boolean;
+  cached?: boolean;
 }
+
+/** Optional integrations — set once, used by all callLLM calls. */
+let _cache: LLMCache | null = null;
+let _telemetry: Telemetry | null = null;
+
+export function setLLMCache(cache: LLMCache | null): void { _cache = cache; }
+export function setLLMTelemetry(telemetry: Telemetry | null): void { _telemetry = telemetry; }
 
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
 
 /**
- * Call the LLM with retry logic and cost tracking.
- * Returns the response text + cost metadata.
+ * Call the LLM with retry logic, caching, telemetry, and cost tracking.
  */
 export async function callLLM(
   config: LLMConfig,
   systemPrompt: string,
   userPrompt: string,
 ): Promise<LLMCallResult> {
-  const baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
   const model = config.model ?? "gpt-4o";
+
+  // Cache check
+  if (_cache) {
+    const key = cacheKey(model, systemPrompt, userPrompt);
+    const cached = await _cache.get(key);
+    if (cached) {
+      return { text: cached.text, tokensUsed: cached.tokensUsed, costUsd: 0, model: cached.model, success: true, cached: true };
+    }
+  }
+
+  // Telemetry span
+  const span = _telemetry?.startSpan(model, config.baseUrl ?? "openai");
+  const baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
   const url = `${baseUrl}/chat/completions`;
 
   const body = {
@@ -84,13 +106,27 @@ export async function callLLM(
         return fail(model, "Empty response after retries");
       }
 
-      return { text, tokensUsed, costUsd, model, success: true };
+      // Cache the result
+      if (_cache) {
+        const key = cacheKey(model, systemPrompt, userPrompt);
+        await _cache.set(key, { text, tokensUsed, costUsd, model, cachedAt: Date.now() }).catch(() => {});
+      }
+
+      // End telemetry span
+      span?.end({
+        inputTokens: usage.prompt_tokens ?? 0,
+        outputTokens: usage.completion_tokens ?? 0,
+        costUsd, success: true, cached: false,
+      });
+
+      return { text, tokensUsed, costUsd, model, success: true, cached: false };
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
       if (attempt < MAX_RETRIES) continue;
     }
   }
 
+  span?.end({ inputTokens: 0, outputTokens: 0, costUsd: 0, success: false, error: lastError?.message });
   return fail(model, lastError?.message ?? "Unknown LLM error");
 }
 
@@ -169,8 +205,8 @@ function estimateCost(
   return (usage.total_tokens ?? 0) * 0.000005;
 }
 
-function fail(model: string, reason: string): LLMCallResult {
-  return { text: "", tokensUsed: 0, costUsd: 0, model, success: false };
+function fail(model: string, _reason: string): LLMCallResult {
+  return { text: "", tokensUsed: 0, costUsd: 0, model, success: false, cached: false };
 }
 
 function sleep(ms: number): Promise<void> {

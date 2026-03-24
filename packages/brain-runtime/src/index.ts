@@ -29,7 +29,7 @@ export type {
 } from "./types";
 
 // LLM
-export { callLLM, callLLMJson, safeParseJson } from "./llm";
+export { callLLM, callLLMJson, safeParseJson, setLLMCache, setLLMTelemetry } from "./llm";
 export type { LLMCallResult } from "./llm";
 
 // Coverage
@@ -94,4 +94,28 @@ export {
 export type { MemoryEntry, MemoryStore } from "./memory";
 
 // Narration
-export { narrateToolStart, narrateToolResult } from "./narration";
+export { narrateStepStart, narrateToolUse, narrateToolDone, narrateReply, narrateReview, narrateVerdict, narrateRevision, narrateHandoff } from "./narration";
+
+// Cache
+export { createCache, cacheKey } from "./cache";
+export type { LLMCache, CacheEntry, CacheOptions, CacheStats } from "./cache";
+
+// Providers
+export { openai, anthropic, qwen, custom, callWithProviderChain } from "./providers";
+export type { LLMProvider, ProviderChain } from "./providers";
+
+// Structured Output
+export { schema, schemaToPrompt, validateOutput } from "./structured";
+export type { OutputSchema, FieldDef } from "./structured";
+
+// Guardrails
+export { createGuardrails, runGuards, injectionGuard, piiGuard, toxicityGuard, lengthGuard, customGuard } from "./guardrails";
+export type { GuardrailConfig, GuardrailResult, GuardFn } from "./guardrails";
+
+// Evaluation
+export { evaluate, exactMatch, fuzzyMatch, containsKeywords, lengthRange, noHallucination } from "./eval";
+export type { EvalDataset, EvalExample, EvalResult, EvalSummary, Scorer, ScorerResult } from "./eval";
+
+// Telemetry
+export { createTelemetry } from "./telemetry";
+export type { Telemetry, TelemetryConfig, LLMSpan, TelemetrySummary } from "./telemetry";

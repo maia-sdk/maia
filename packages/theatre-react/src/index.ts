@@ -31,6 +31,9 @@ export type { UseACPStreamOptions, ACPStreamState } from "./hooks/useACPStream";
 export { useReplay } from "./hooks/useReplay";
 export type { UseReplayOptions, ReplayState } from "./hooks/useReplay";
 
+export { useChat } from "./hooks/useChat";
+export type { UseChatOptions, UseChatReturn, ChatMessage as UseChatMessage } from "./hooks/useChat";
+
 // Surfaces — 14 visual work renderers
 export {
   SurfaceRenderer,
