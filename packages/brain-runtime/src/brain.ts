@@ -17,6 +17,7 @@ import { callLLM, callLLMJson } from "./llm";
 import type { LLMCallResult } from "./llm";
 import * as prompts from "./prompts";
 import { runConversation, runReviewLoop } from "./loops";
+import { getRole, formatRoleCatalogForPrompt, personalityPrompt } from "./roles/index";
 
 export class Brain {
   private agents: AgentDefinition[];
@@ -149,10 +150,15 @@ export class Brain {
   private async planSteps(goal: string): Promise<BrainStep[]> {
     this.emitActivity("agent://brain", "thinking", "Decomposing goal into agent steps...");
 
+    // Include full role catalog so the LLM can assign any of the 27 roles
+    const catalogContext = this.agents.length > 0
+      ? prompts.planUserPrompt(goal, this.agents)
+      : `Goal: ${goal}\n\nAvailable roles (pick the best for each step):\n${formatRoleCatalogForPrompt()}`;
+
     const { data, cost } = await callLLMJson<Array<{ agent_id: string; task: string }>>(
       this.options.llm,
       prompts.planSystemPrompt(),
-      prompts.planUserPrompt(goal, this.agents),
+      catalogContext,
       [],
     );
     this.trackCost(cost);
@@ -171,11 +177,13 @@ export class Brain {
   private async executeStep(step: BrainStep, context: SharedContext): Promise<void> {
     const agent = this.findAgent(step.agentId);
     const contextText = this.buildContextText(context);
+    const roleId = agent.role ?? step.agentId.replace("agent://", "");
+    const personality = personalityPrompt(roleId);
     this.emitActivity(step.agentId, "thinking", `Working on: ${step.task.slice(0, 80)}`);
 
     const result = await callLLM(
       this.options.llm,
-      prompts.executeSystemPrompt(agent, contextText),
+      prompts.executeSystemPrompt(agent, contextText) + personality,
       prompts.executeUserPrompt(step.task),
     );
     this.trackCost(result);
@@ -223,11 +231,25 @@ export class Brain {
   }
 
   private findAgent(agentId: string): AgentDefinition {
-    return this.agents.find((a) => a.id === agentId) ?? {
+    // 1. Check user-provided agents
+    const userAgent = this.agents.find((a) => a.id === agentId);
+    if (userAgent) return userAgent;
+
+    // 2. Fall back to role catalog — build an AgentDefinition from the role
+    const roleId = agentId.replace("agent://", "");
+    const catalogRole = getRole(roleId);
+    return {
       id: agentId,
-      name: agentId.replace("agent://", ""),
-      role: "agent",
-      instructions: "You are a helpful AI agent.",
+      name: catalogRole.role.name,
+      role: catalogRole.role.id,
+      instructions: catalogRole.role.systemPrompt,
+      tools: [],
+      personality: {
+        style: catalogRole.personality.directness > 0.7 ? "concise" : "detailed",
+        traits: catalogRole.role.defaultTraits,
+        avatar_color: catalogRole.role.avatarColor,
+        avatar_emoji: catalogRole.role.avatarEmoji,
+      },
     };
   }
 
