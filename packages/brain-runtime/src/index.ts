@@ -12,8 +12,10 @@
  *   const result = await brain.run("Analyze SaaS pricing trends");
  */
 
+// Core
 export { Brain } from "./brain";
 
+// Types
 export type {
   AgentDefinition,
   BrainOptions,
@@ -26,5 +28,52 @@ export type {
   StepSummary,
 } from "./types";
 
+// LLM
 export { callLLM, callLLMJson, safeParseJson } from "./llm";
 export type { LLMCallResult } from "./llm";
+
+// Coverage
+export { checkCoverage } from "./coverage";
+export type { CoverageItem, CoverageResult } from "./coverage";
+
+// Revision
+export { buildRevisionSteps } from "./reviser";
+export type { RevisionResult } from "./reviser";
+
+// Dialogue
+export { detectDialogueNeeds, proposeSeedDialogue, evaluateFollowUp } from "./dialogue";
+export type { DialogueNeed, DialogueSeed, DialogueFollowUp } from "./dialogue";
+
+// Roles
+export { ROLE_CATALOG, getRole, getAllRoles, inferRole, formatRoleCatalogForPrompt } from "./roles";
+export type { RoleDefinition } from "./roles";
+
+// Chat Guidance
+export {
+  CHAT_INTENTS,
+  CONVERSATION_RULES,
+  antiRepetitionPrompt,
+  recentMessageOpenings,
+  moodInstruction,
+  isConversationRepetitive,
+  suggestPivot,
+} from "./guidance";
+export type { ChatIntent } from "./guidance";
+
+// State & Signals
+export {
+  createBrainState,
+  recordStepOutcome,
+  updateCoverage,
+  raiseSignal,
+  consumeRevisionBudget,
+} from "./state";
+export type {
+  BrainState,
+  TaskContract,
+  CoverageState,
+  StepOutcome,
+  StepVerdict,
+  BrainSignal,
+  BrainDirective,
+} from "./state";

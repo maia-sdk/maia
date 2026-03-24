@@ -5,9 +5,9 @@
  */
 
 import type { ACPEvent } from "@maia/acp";
-import { envelope, message, review, activity } from "@maia/acp";
+import { envelope, message, review } from "@maia/acp";
 import type {
-  AgentDefinition, BrainStep, ConversationThread, ConversationTurn, LLMConfig,
+  AgentDefinition, BrainStep, ConversationThread, LLMConfig,
 } from "./types";
 import { callLLMJson, callLLM } from "./llm";
 import type { LLMCallResult } from "./llm";
@@ -169,8 +169,44 @@ export async function runReviewLoop(
 
     if (verdict === "approve" || verdict === "reject" || verdict === "escalate") break;
 
+    // Verdict is "question" — Brain asks agent a follow-up question
+    if (verdict === "question" && rev.feedback && round < ctx.maxReviewRounds) {
+      ctx.emit(envelope("agent://brain", ctx.runId, "message", message({
+        from: "agent://brain",
+        to: step.agentId,
+        intent: "clarify" as any,
+        content: rev.feedback,
+        mood: "focused" as any,
+        threadId: `thread_step_${step.index}`,
+      })));
+
+      // Agent answers the question
+      const agent = ctx.findAgent(step.agentId);
+      ctx.emitActivity(step.agentId, "thinking", "Answering Brain's question...");
+      const answerResult = await callLLM(
+        ctx.llm,
+        `You are ${agent.name}. The Brain asked you a follow-up question about your work. Answer concisely.`,
+        `Your previous output:\n${(step.output ?? "").slice(0, 1500)}\n\nBrain's question: ${rev.feedback}`,
+      );
+      ctx.trackCost(answerResult);
+      step.costUsd = (step.costUsd ?? 0) + answerResult.costUsd;
+      step.tokensUsed = (step.tokensUsed ?? 0) + answerResult.tokensUsed;
+
+      // Append answer to output and re-review
+      step.output = `${step.output ?? ""}\n\n[Follow-up answer]: ${answerResult.text}`;
+      ctx.emit(envelope(step.agentId, ctx.runId, "message", message({
+        from: step.agentId,
+        to: "agent://brain",
+        intent: "clarify" as any,
+        content: answerResult.text,
+        mood: "focused" as any,
+        threadId: `thread_step_${step.index}`,
+      })));
+      continue; // Re-review with the new answer
+    }
+
     // Verdict is "revise" — agent tries again
-    if (round < ctx.maxReviewRounds) {
+    if ((verdict === "revise" || verdict === "question") && round < ctx.maxReviewRounds) {
       const agent = ctx.findAgent(step.agentId);
       ctx.emitActivity(step.agentId, "writing", "Revising based on Brain's feedback...");
 
