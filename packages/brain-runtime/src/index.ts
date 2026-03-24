@@ -44,9 +44,12 @@ export type { RevisionResult } from "./reviser";
 export { detectDialogueNeeds, proposeSeedDialogue, evaluateFollowUp } from "./dialogue";
 export type { DialogueNeed, DialogueSeed, DialogueFollowUp } from "./dialogue";
 
-// Roles
-export { ROLE_CATALOG, getRole, getAllRoles, inferRole, formatRoleCatalogForPrompt } from "./roles";
-export type { RoleDefinition } from "./roles";
+// Roles (27 roles, each in its own file under ./roles/)
+export {
+  ROLE_CATALOG, getRole, getAllRoles, inferRole,
+  formatRoleCatalogForPrompt, personalityPrompt,
+} from "./roles/index";
+export type { RoleDefinition, PersonalityProfile, AgentRole } from "./roles/types";
 
 // Chat Guidance
 export {
@@ -77,10 +80,6 @@ export type {
   BrainSignal,
   BrainDirective,
 } from "./state";
-
-// Personality
-export { PERSONALITY_PROFILES, personalityPrompt, maxWordsForRole } from "./personality";
-export type { PersonalityProfile } from "./personality";
 
 // Memory
 export {
