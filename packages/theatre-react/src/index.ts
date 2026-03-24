@@ -1,7 +1,5 @@
 // ─── @maia/theatre ──────────────────────────────────────────────────────────
-// Live agent action visualization — tool calls, browsing, searching, cost.
-//
-// For agent conversations, use @maia/teamchat instead.
+// Live agent visualization SDK
 //
 // Quick start:
 //   import { Theatre } from '@maia/theatre';
@@ -11,9 +9,15 @@
 export { Theatre } from "./components/Theatre";
 export type { TheatreProps } from "./components/Theatre";
 
-// Sub-components (actions only)
+// Sub-components
+export { TeamThread } from "./components/TeamThread";
+export type { TeamThreadProps } from "./components/TeamThread";
+
 export { ActivityTimeline } from "./components/ActivityTimeline";
 export type { ActivityTimelineProps } from "./components/ActivityTimeline";
+
+export { MessageBubble } from "./components/MessageBubble";
+export type { MessageBubbleProps } from "./components/MessageBubble";
 
 export { AgentAvatar } from "./components/AgentAvatar";
 export type { AgentAvatarProps } from "./components/AgentAvatar";
@@ -30,22 +34,3 @@ export type { UseACPStreamOptions, ACPStreamState } from "./hooks/useACPStream";
 
 export { useReplay } from "./hooks/useReplay";
 export type { UseReplayOptions, ReplayState } from "./hooks/useReplay";
-
-export { useChat } from "./hooks/useChat";
-export type { UseChatOptions, UseChatReturn, ChatMessage as UseChatMessage } from "./hooks/useChat";
-
-// Surfaces — 14 visual work renderers
-export {
-  SurfaceRenderer,
-  BrowserSurface, DocumentSurface, EditorSurface,
-  SearchSurface, EmailSurface, TerminalSurface,
-  ChatSurface, DashboardSurface, KanbanSurface, DatabaseSurface,
-  CRMSurface, DiffSurface, APISurface, CalendarSurface,
-} from "./surfaces/index";
-export type {
-  SurfaceState, SurfaceType, SurfaceRendererProps,
-  SearchResult, EmailDraft, TableData,
-  ChatMessage, DashboardWidget,
-  KanbanColumn, KanbanCard,
-  CRMRecord, DiffHunk, APICall, CalendarEvent,
-} from "./surfaces/index";
