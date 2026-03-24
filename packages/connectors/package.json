@@ -1,0 +1,23 @@
+{
+  "name": "@maia/connectors",
+  "version": "0.1.0",
+  "description": "50+ pre-built connectors for AI agents — Gmail, Slack, Jira, GitHub, and more",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch"
+  },
+  "dependencies": {
+    "@maia/acp": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  },
+  "keywords": ["ai", "agent", "connectors", "gmail", "slack", "jira", "github", "maia"],
+  "author": "Maia AI",
+  "license": "MIT"
+}
