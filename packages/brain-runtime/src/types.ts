@@ -1,7 +1,9 @@
 /**
- * Brain runtime types.
+ * Brain runtime types — agents, steps, conversations, context, results.
  */
 import type { ACPEvent, AgentPersonality } from "@maia/acp";
+
+// ── Agent ────────────────────────────────────────────────────────────────────
 
 export interface AgentDefinition {
   /** Agent ID (e.g., "agent://researcher"). */
@@ -18,6 +20,8 @@ export interface AgentDefinition {
   personality?: AgentPersonality;
 }
 
+// ── Configuration ────────────────────────────────────────────────────────────
+
 export interface BrainOptions {
   /** Agents available to the Brain. */
   agents: AgentDefinition[];
@@ -25,6 +29,8 @@ export interface BrainOptions {
   llm: LLMConfig;
   /** Maximum review rounds per step (default: 3). */
   maxReviewRounds?: number;
+  /** Maximum conversation turns per step (default: 8). */
+  maxConversationTurns?: number;
   /** Maximum total steps (default: 20). */
   maxSteps?: number;
   /** Budget limit in USD (default: no limit). */
@@ -46,6 +52,54 @@ export interface LLMConfig {
   maxTokens?: number;
 }
 
+// ── Conversation ─────────────────────────────────────────────────────────────
+
+export interface ConversationTurn {
+  /** Who spoke. */
+  agentId: string;
+  /** What intent. */
+  intent: string;
+  /** What they said. */
+  content: string;
+  /** Their internal reasoning (visible in Theatre if showThinking). */
+  thinking?: string;
+  /** Agent's mood. */
+  mood?: string;
+  /** ISO timestamp. */
+  timestamp: string;
+}
+
+export interface ConversationThread {
+  /** Unique thread ID. */
+  threadId: string;
+  /** Which step this conversation belongs to. */
+  stepIndex: number;
+  /** All turns in order. */
+  turns: ConversationTurn[];
+}
+
+// ── Shared Context ───────────────────────────────────────────────────────────
+
+export interface SharedContext {
+  /** The original user goal. */
+  goal: string;
+  /** Completed step summaries — grows after each step. */
+  completedSteps: StepSummary[];
+  /** Key decisions made during conversations. */
+  decisions: string[];
+  /** All conversation turns across all steps. */
+  allConversations: ConversationTurn[];
+}
+
+export interface StepSummary {
+  agentId: string;
+  task: string;
+  output: string;
+  verdict: string;
+}
+
+// ── Step ─────────────────────────────────────────────────────────────────────
+
 export interface BrainStep {
   /** Step index. */
   index: number;
@@ -53,15 +107,21 @@ export interface BrainStep {
   agentId: string;
   /** What the agent should do. */
   task: string;
-  /** Output from this step. */
+  /** Output from this step (updated after execution + revisions). */
   output?: string;
   /** Review verdict. */
   reviewVerdict?: "approve" | "revise" | "reject" | "escalate";
+  /** Review round reached. */
+  reviewRound?: number;
+  /** Conversation thread for this step. */
+  conversation?: ConversationThread;
   /** Cost for this step. */
   costUsd?: number;
   /** Tokens used. */
   tokensUsed?: number;
 }
+
+// ── Result ───────────────────────────────────────────────────────────────────
 
 export interface BrainResult {
   /** All steps executed. */
@@ -70,6 +130,8 @@ export interface BrainResult {
   output: string;
   /** All ACP events emitted. */
   events: ACPEvent[];
+  /** All conversation threads. */
+  conversations: ConversationThread[];
   /** Total cost. */
   totalCostUsd: number;
   /** Total tokens. */

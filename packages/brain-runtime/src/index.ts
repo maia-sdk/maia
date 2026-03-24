@@ -13,10 +13,18 @@
  */
 
 export { Brain } from "./brain";
+
 export type {
   AgentDefinition,
   BrainOptions,
   BrainResult,
   BrainStep,
   LLMConfig,
+  ConversationThread,
+  ConversationTurn,
+  SharedContext,
+  StepSummary,
 } from "./types";
+
+export { callLLM, callLLMJson, safeParseJson } from "./llm";
+export type { LLMCallResult } from "./llm";
