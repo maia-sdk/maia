@@ -1,5 +1,7 @@
 // ─── @maia/theatre ──────────────────────────────────────────────────────────
-// Live agent visualization SDK
+// Live agent action visualization — tool calls, browsing, searching, cost.
+//
+// For agent conversations, use @maia/teamchat instead.
 //
 // Quick start:
 //   import { Theatre } from '@maia/theatre';
@@ -9,15 +11,9 @@
 export { Theatre } from "./components/Theatre";
 export type { TheatreProps } from "./components/Theatre";
 
-// Sub-components
-export { TeamThread } from "./components/TeamThread";
-export type { TeamThreadProps } from "./components/TeamThread";
-
+// Sub-components (actions only)
 export { ActivityTimeline } from "./components/ActivityTimeline";
 export type { ActivityTimelineProps } from "./components/ActivityTimeline";
-
-export { MessageBubble } from "./components/MessageBubble";
-export type { MessageBubbleProps } from "./components/MessageBubble";
 
 export { AgentAvatar } from "./components/AgentAvatar";
 export type { AgentAvatarProps } from "./components/AgentAvatar";
