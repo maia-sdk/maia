@@ -3,13 +3,10 @@
  */
 
 export type SurfaceType =
-  | "browser"
-  | "document"
-  | "editor"
-  | "spreadsheet"
-  | "email"
-  | "terminal"
-  | "search"
+  | "browser" | "document" | "editor" | "spreadsheet"
+  | "email" | "terminal" | "search"
+  | "chat" | "dashboard" | "kanban" | "database"
+  | "crm" | "diff" | "api" | "calendar"
   | "idle";
 
 export interface SurfaceState {
@@ -17,36 +14,63 @@ export interface SurfaceState {
   agentId: string;
   agentName: string;
   title: string;
-  /** Browser: current URL. Document: file name. Editor: file name. */
   url?: string;
-  /** Browser: page screenshot (base64 or URL). */
   screenshot?: string;
-  /** Browser: page HTML snippet. Document: highlighted text. */
   content?: string;
-  /** Editor: code/text being written. */
   text?: string;
-  /** Editor: language for syntax highlighting. */
   language?: string;
-  /** Search: list of results. */
-  results?: SearchResult[];
-  /** Email: draft fields. */
-  email?: EmailDraft;
-  /** Terminal: command output lines. */
-  terminalLines?: string[];
-  /** Spreadsheet: table data. */
-  tableData?: string[][];
-  /** Status label shown at bottom. */
   status?: string;
+  results?: SearchResult[];
+  email?: EmailDraft;
+  terminalLines?: string[];
+  tableData?: TableData;
+  chatMessages?: ChatMessage[];
+  dashboardWidgets?: DashboardWidget[];
+  kanbanColumns?: KanbanColumn[];
+  crmRecords?: CRMRecord[];
+  diffHunks?: DiffHunk[];
+  apiCall?: APICall;
+  calendarEvents?: CalendarEvent[];
 }
 
-export interface SearchResult {
+// ── Existing ─────────────────────────────────────────────────
+export interface SearchResult { title: string; url: string; snippet: string; }
+export interface EmailDraft { to: string; subject: string; body: string; }
+
+// ── P0: New ──────────────────────────────────────────────────
+export interface TableData { headers: string[]; rows: string[][]; query?: string; }
+
+export interface ChatMessage { sender: string; text: string; time: string; avatar?: string; }
+
+export interface DashboardWidget {
+  type: "kpi" | "bar" | "line" | "pie" | "table";
   title: string;
-  url: string;
-  snippet: string;
+  value?: string;
+  change?: string;
+  direction?: "up" | "down" | "flat";
+  data?: number[];
+  labels?: string[];
 }
 
-export interface EmailDraft {
-  to: string;
-  subject: string;
-  body: string;
+export interface KanbanColumn { title: string; cards: KanbanCard[]; }
+export interface KanbanCard {
+  id: string; title: string; assignee?: string;
+  priority?: "low" | "medium" | "high" | "critical";
+  labels?: string[];
 }
+
+// ── P1: New ──────────────────────────────────────────────────
+export interface CRMRecord {
+  type: "contact" | "deal" | "lead";
+  name: string; company?: string; value?: string;
+  stage?: string; email?: string;
+}
+
+export interface DiffHunk { file: string; additions: string[]; deletions: string[]; }
+
+export interface APICall {
+  method: string; url: string; status?: number;
+  requestBody?: string; responseBody?: string; duration?: string;
+}
+
+export interface CalendarEvent { title: string; start: string; end: string; color?: string; }
