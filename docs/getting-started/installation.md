@@ -1,67 +1,72 @@
 # Installation
 
-## JavaScript / TypeScript
+## One install (recommended)
 
 ```bash
-npm install @maia/sdk
+npm install @maia/sdk          # JS/TS — everything
+pip install maia-sdk            # Python — everything
 ```
 
-This installs everything: ACP protocol, Theatre visualization, and all types.
+## Individual packages
 
-### Individual packages (if you only need specific parts)
+Install only what you need:
 
 ```bash
-npm install @maia/acp          # Protocol only
-npm install @maia/theatre      # Visualization only
-npm install @maia/brain        # Brain orchestrator only
-npm install @maia/computer-use # Browser automation only
-npm install @maia/connectors   # Connector catalog only
-npm install @maia/cli          # CLI tools
+# Core
+npm install @maia/brain         # Agent orchestration
+npm install @maia/acp           # Protocol types + client
+npm install @maia/theatre       # Action visualization (14 surfaces)
+npm install @maia/teamchat      # Conversation UI
+
+# Tools
+npm install @maia/computer-use  # Browser automation (needs playwright)
+npm install @maia/connectors    # 40+ SaaS connectors
+
+# CLI
+pip install maia-cli            # Terminal tools
 ```
 
-## Python
+## Python with framework adapters
 
 ```bash
-pip install maia-sdk
-```
-
-### With framework adapters
-
-```bash
-pip install maia-sdk[langchain]   # + LangChain support
-pip install maia-sdk[crewai]      # + CrewAI support
-pip install maia-sdk[autogen]     # + AutoGen support
+pip install maia-sdk[langchain]   # + LangChain
+pip install maia-sdk[crewai]      # + CrewAI
+pip install maia-sdk[autogen]     # + AutoGen
 pip install maia-sdk[all]         # Everything
-```
-
-### CLI
-
-```bash
-pip install maia-cli
 ```
 
 ## Requirements
 
-- **Node.js**: 18+
-- **Python**: 3.10+
-- **LLM API key**: OpenAI, Anthropic, Qwen, or any OpenAI-compatible API
-- **Playwright** (optional): only needed for Computer Use
+- **Node.js** 18+ or **Python** 3.10+
+- **LLM API key** — OpenAI, Anthropic, Qwen, or any OpenAI-compatible API
+- **Playwright** (optional) — only for `@maia/computer-use`
+- **React** 18+ (optional) — only for Theatre/TeamChat UI components
 
-## Verify installation
+## Verify
 
-### JavaScript
-```typescript
-import { ACPClient, message } from '@maia/sdk';
-console.log("Maia SDK installed!");
+```ts
+import { Brain } from '@maia/brain';
+console.log("Maia installed!");
 ```
 
-### Python
 ```python
-from maia_sdk import ACPClient, message
-print("Maia SDK installed!")
+from maia_sdk import ACPClient
+print("Maia installed!")
 ```
 
-### CLI
 ```bash
 maia info
+```
+
+## Environment variables
+
+```bash
+# Required: your LLM key
+OPENAI_API_KEY=sk-...
+
+# Optional: custom LLM endpoint
+OPENAI_API_BASE=https://api.openai.com/v1
+
+# Optional: specific model
+OPENAI_CHAT_MODEL=gpt-4o
 ```
