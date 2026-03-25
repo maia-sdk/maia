@@ -36,7 +36,8 @@ export async function callLLM(
   systemPrompt: string,
   userPrompt: string,
 ): Promise<LLMCallResult> {
-  const model = config.model ?? "gpt-4o";
+  const model = config.model;
+  if (!model) throw new Error("LLMConfig.model is required.");
 
   // Cache check
   if (_cache) {
@@ -54,7 +55,7 @@ export async function callLLM(
 
   const body = {
     model,
-    temperature: config.temperature ?? 0.3,
+    ...(config.temperature != null ? { temperature: config.temperature } : {}),
     max_tokens: config.maxTokens,
     messages: [
       { role: "system", content: systemPrompt },

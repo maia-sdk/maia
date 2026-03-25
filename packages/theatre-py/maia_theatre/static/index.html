@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maia Theatre</title>
+<style>
+  :root{--bg:#08080d;--s1:#0f0f18;--s2:#16162a;--bd:#252540;--t1:#e8e8f0;--t2:#8585a0;--t3:#55556a;--ac:#7c3aed;--ac2:#a78bfa;--g:#22c55e;--b:#3b82f6;--am:#f59e0b;--r:#ef4444}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .top{height:44px;background:var(--s1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 16px;gap:10px}
+  .logo{font-size:15px;font-weight:700}.logo span{color:var(--ac2)}
+  .live{width:7px;height:7px;border-radius:50%;background:var(--g);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .stats{margin-left:auto;font-size:11px;color:var(--t2)}
+  .main{flex:1;display:flex;overflow:hidden}
+  .theatre{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .tabs{display:flex;border-bottom:1px solid var(--bd);background:var(--s1)}
+  .tab{padding:8px 16px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent}
+  .tab.on{color:var(--ac2);border-bottom-color:var(--ac)}
+  .panel{flex:1;overflow-y:auto;padding:12px;display:none}.panel.on{display:block}
+  .sidebar{width:320px;background:var(--s1);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow-y:auto}
+  .sidebar-head{padding:8px 14px;border-bottom:1px solid var(--bd);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);font-weight:600}
+
+  /* Events */
+  .evt{display:flex;gap:6px;padding:4px 14px;font-size:10px;border-left:2px solid transparent}
+  .evt.message{border-left-color:var(--b)}.evt.handoff{border-left-color:var(--am)}.evt.review{border-left-color:var(--g)}.evt.event{border-left-color:var(--ac2)}.evt.capabilities{border-left-color:var(--ac)}
+  .evt-type{font-size:8px;padding:1px 4px;border-radius:3px;font-weight:700;text-transform:uppercase}
+  .evt-type.message{background:rgba(59,130,246,.15);color:var(--b)}.evt-type.handoff{background:rgba(245,158,11,.15);color:var(--am)}.evt-type.review{background:rgba(34,197,94,.15);color:var(--g)}.evt-type.event{background:rgba(167,139,250,.15);color:var(--ac2)}.evt-type.capabilities{background:rgba(124,58,237,.15);color:var(--ac)}
+  .evt-txt{color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* Chat */
+  .msg{display:flex;gap:8px;padding:8px 0}
+  .msg-av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+  .msg-name{font-size:11px;font-weight:600}.msg-int{font-size:8px;padding:1px 5px;border-radius:5px;margin-left:4px}
+  .msg-text{font-size:12px;color:var(--t2);margin-top:2px;line-height:1.5}
+
+  /* Activity */
+  .act{display:flex;gap:8px;padding:5px 0;font-size:11px}
+  .act-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+  .act-detail{color:var(--t2)}
+
+  /* Handoff */
+  .ho{padding:6px 10px;margin:4px 0;background:rgba(245,158,11,.06);border:1px dashed rgba(245,158,11,.25);border-radius:6px;font-size:10px;color:var(--am)}
+
+  ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">maia<span>.theatre</span></div>
+  <div class="live"></div>
+  <div class="stats"><span id="count">0</span> events</div>
+</div>
+<div class="main">
+  <div class="theatre">
+    <div class="tabs">
+      <div class="tab on" onclick="sw(this,'chat')">Team Chat</div>
+      <div class="tab" onclick="sw(this,'activity')">Activity</div>
+    </div>
+    <div class="panel on" id="p-chat"></div>
+    <div class="panel" id="p-activity"></div>
+  </div>
+  <div class="sidebar">
+    <div class="sidebar-head">Events</div>
+    <div id="events"></div>
+  </div>
+</div>
+
+<script>
+const AGENTS={};
+let count=0;
+const colors={orchestrator:'#8B5CF6',researcher:'#3B82F6',analyst:'#10B981',writer:'#F59E0B',designer:'#EC4899',devops:'#6366F1',qa:'#EF4444',security:'#14B8A6'};
+
+function sw(el,id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+}
+
+function handle(e){
+  count++;
+  document.getElementById('count').textContent=count;
+  logEvent(e);
+  const p=e.payload||{};
+
+  if(e.event_type==='capabilities'){
+    const emoji=p.personality?.avatar_emoji||'\uD83E\uDD16';
+    AGENTS[e.agent_id]={name:p.name||'Agent',emoji,color:colors[p.role]||'#666',role:p.role||''};
+  }
+  if(e.event_type==='message') addChat(e);
+  if(e.event_type==='handoff') addHandoff(e);
+  if(e.event_type==='event') addActivity(e);
+  if(e.event_type==='review') addReview(e);
+}
+
+function logEvent(e){
+  const el=document.createElement('div');
+  el.className='evt '+(e.event_type||'');
+  const p=e.payload||{};
+  let txt='';
+  if(e.event_type==='message') txt=(p.content||'').slice(0,60);
+  else if(e.event_type==='handoff') txt='→ '+(AGENTS[p.to]||{name:'?'}).name;
+  else if(e.event_type==='event') txt=(p.activity||'')+': '+(p.detail||'').slice(0,40);
+  else if(e.event_type==='capabilities') txt=(p.name||'')+' joined';
+  else if(e.event_type==='review') txt=(p.verdict||'')+' '+(((p.score||0)*100)|0)+'%';
+  el.innerHTML='<span class="evt-type '+(e.event_type||'')+'">'+(e.event_type||'')+'</span><span class="evt-txt">'+txt+'</span>';
+  document.getElementById('events').appendChild(el);
+  document.getElementById('events').scrollTop=1e6;
+}
+
+function addChat(e){
+  const a=AGENTS[e.agent_id]||{emoji:'\uD83E\uDD16',color:'#666',name:'Agent'};
+  const p=e.payload||{};
+  const el=document.createElement('div');el.className='msg';
+  el.innerHTML='<div class="msg-av" style="background:'+a.color+'20">'+a.emoji+'</div><div style="flex:1"><div><span class="msg-name" style="color:'+a.color+'">'+a.name+'</span><span class="msg-int" style="background:rgba(124,58,237,.1);color:var(--ac2)">'+(p.intent||'')+'</span></div><div class="msg-text">'+(p.content||'').replace(/\n/g,'<br>')+'</div></div>';
+  document.getElementById('p-chat').appendChild(el);
+  document.getElementById('p-chat').scrollTop=1e6;
+}
+
+function addHandoff(e){
+  const p=e.payload||{};
+  const f=AGENTS[p.from]||{name:'?',emoji:'→'},t=AGENTS[p.to]||{name:'?',emoji:'→'};
+  const el=document.createElement('div');el.className='ho';
+  el.innerHTML=f.emoji+' <b>'+f.name+'</b> → '+t.emoji+' <b>'+t.name+'</b> — '+(p.task?.description||'');
+  document.getElementById('p-chat').appendChild(el);
+  // Also in activity
+  addActivity(e);
+}
+
+function addActivity(e){
+  const a=AGENTS[e.agent_id]||{emoji:'⚡',color:'#666',name:'Agent'};
+  const p=e.payload||{};
+  if(p.activity==='cursor'||p.activity==='scroll'||p.activity==='narration'||p.activity==='roadmap'||p.activity==='cost_update') return;
+  const icons={searching:'\uD83D\uDD0D',browsing:'\uD83C\uDF10',thinking:'\uD83E\uDD14',analyzing:'\uD83D\uDCCA',writing:'\u270D\uFE0F',reviewing:'\uD83D\uDD0E',reading:'\uD83D\uDCD6',coding:'\uD83D\uDCBB',error:'\u274C'};
+  const el=document.createElement('div');el.className='act';
+  el.innerHTML='<div class="act-icon" style="background:'+a.color+'15">'+( icons[p.activity]||'⚡')+'</div><div><b style="color:'+a.color+';font-size:10px">'+a.name+'</b><div class="act-detail">'+(p.detail||p.activity||e.event_type||'')+'</div></div>';
+  document.getElementById('p-activity').appendChild(el);
+  document.getElementById('p-activity').scrollTop=1e6;
+}
+
+function addReview(e){
+  const p=e.payload||{};
+  const ok=p.verdict==='approve';
+  const el=document.createElement('div');
+  el.style.cssText='padding:8px 12px;margin:4px 0;background:'+(ok?'rgba(34,197,94,.06)':'rgba(245,158,11,.06)')+';border:1px solid '+(ok?'rgba(34,197,94,.2)':'rgba(245,158,11,.2)')+';border-radius:6px;font-size:11px';
+  el.innerHTML=(ok?'✅':'⚠️')+' <b>'+(p.verdict||'').toUpperCase()+'</b> ('+(((p.score||0)*100)|0)+'%) — '+(p.feedback||'');
+  document.getElementById('p-chat').appendChild(el);
+}
+
+// Connect to SSE
+const es=new EventSource('/acp/events');
+es.onmessage=function(e){
+  if(e.data==='[DONE]'){es.close();return;}
+  try{handle(JSON.parse(e.data));}catch{}
+};
+es.onerror=function(){es.close();};
+</script>
+</body>
+</html>

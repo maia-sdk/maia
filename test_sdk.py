@@ -1,13 +1,14 @@
-"""Full test suite for Maia Python SDK."""
+"""Full test suite for Maia Python SDK.
+
+Consumer-style imports: uses installed package names, not sys.path hacks.
+
+Run with:
+  pip install -e packages/acp-py -e packages/sdk-py -e packages/cli-py
+  python test_sdk.py
+"""
 import json
 import sys
 import os
-
-# Add packages to path
-base = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(base, "packages", "acp-py"))
-sys.path.insert(0, os.path.join(base, "packages", "sdk-py"))
-sys.path.insert(0, os.path.join(base, "packages", "cli-py"))
 
 results = []
 

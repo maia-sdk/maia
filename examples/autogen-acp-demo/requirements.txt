@@ -1,0 +1,3 @@
+maia-acp>=0.1.0
+maia-adapters>=0.1.0
+pyautogen>=0.3.0

@@ -135,7 +135,7 @@ function cmdInfo() {
   console.log(`    Node: ${process.version}`);
   console.log(`\n  ${BOLD}Links${RESET}`);
   console.log(`    Docs:   https://docs.maia.ai`);
-  console.log(`    GitHub: https://github.com/maia-ai/maia-sdk`);
+  console.log(`    GitHub: https://github.com/maia-sdk/maia`);
 }
 
 // ── Dispatch ─────────────────────────────────────────────────────────────────

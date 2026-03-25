@@ -6,23 +6,34 @@
     "maia": "dist/cli.js"
   },
   "main": "dist/cli.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsup src/cli.ts --format cjs --target node18 --clean",
-    "dev": "tsup src/cli.ts --format cjs --target node18 --watch"
+    "dev": "tsup src/cli.ts --format cjs --target node18 --watch",
+    "test": "vitest run"
   },
   "dependencies": {
     "@maia/acp": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.9"
   },
-  "keywords": ["ai", "agent", "cli", "acp", "maia"],
+  "keywords": [
+    "ai",
+    "agent",
+    "cli",
+    "acp",
+    "maia"
+  ],
   "author": "Maia AI",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/maia-ai/maia-sdk"
+    "url": "https://github.com/maia-sdk/maia"
   }
 }

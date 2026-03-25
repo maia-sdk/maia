@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maia ACP Playground</title>
+  <style>
+    :root{--bg:#0a0a0f;--s1:#111118;--s2:#1a1a25;--s3:#222233;--bd:#2a2a3a;--t1:#e4e4ef;--t2:#8888a0;--t3:#55556a;--ac:#7c3aed;--ac2:#a78bfa;--g:#22c55e;--b:#3b82f6;--am:#f59e0b;--r:#ef4444;--tl:#14b8a6;--pk:#ec4899}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--t1);height:100vh;overflow:hidden}
+    .app{display:grid;grid-template-columns:260px 1fr 380px;grid-template-rows:48px 1fr;height:100vh}
+
+    /* Top bar */
+    .top{grid-column:1/-1;background:var(--s1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 16px;gap:12px}
+    .logo{font-size:16px;font-weight:700}.logo span{color:var(--ac2)}
+    .pill{font-size:9px;background:var(--ac);color:#fff;padding:2px 8px;border-radius:10px;font-weight:600}
+    .top-r{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:11px;color:var(--t2)}
+    .top-r b{color:var(--g);font-family:monospace}
+
+    /* Left — controls */
+    .left{background:var(--s1);border-right:1px solid var(--bd);overflow-y:auto}
+    .sec{padding:12px;border-bottom:1px solid var(--bd)}
+    .sec h3{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:8px;font-weight:700}
+    label{display:block;font-size:10px;color:var(--t2);margin-bottom:3px;margin-top:6px}
+    label:first-child{margin-top:0}
+    select,input,textarea{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--t1);border-radius:5px;padding:6px 8px;font-size:11px;font-family:inherit;outline:none}
+    select:focus,input:focus,textarea:focus{border-color:var(--ac)}
+    textarea{resize:vertical;min-height:50px}
+    .btn{width:100%;padding:7px;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-top:6px;transition:filter .15s}
+    .btn:hover{filter:brightness(1.15)}
+    .btn-ac{background:var(--ac);color:#fff}.btn-b{background:var(--b);color:#fff}.btn-am{background:var(--am);color:#000}.btn-g{background:var(--g);color:#000}.btn-tl{background:var(--tl);color:#000}.btn-r{background:var(--r);color:#fff}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+    .qb{padding:5px;background:var(--s2);border:1px solid var(--bd);color:var(--t2);border-radius:5px;font-size:9px;cursor:pointer;text-align:center;transition:all .15s}
+    .qb:hover{background:var(--bd);color:var(--t1)}
+
+    /* Center — Theatre (full surface view) */
+    .center{display:flex;flex-direction:column;background:var(--bg)}
+    .theatre-head{padding:8px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px}
+    .theatre-head .live{width:7px;height:7px;border-radius:50%;background:var(--g);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .surface-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+    /* Surface chrome */
+    .surf-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t3);gap:8px}
+    .surf-empty .big{font-size:48px;opacity:.3}
+    .surf-empty p{font-size:12px}
+
+    /* Browser surface */
+    .surf-browser{display:flex;flex-direction:column;height:100%;background:#fff}
+    .browser-bar{height:36px;background:#f1f3f4;display:flex;align-items:center;padding:0 10px;gap:8px;border-bottom:1px solid #ddd}
+    .browser-dots{display:flex;gap:5px}.browser-dots span{width:10px;height:10px;border-radius:50%}
+    .browser-url{flex:1;background:#fff;border:1px solid #ddd;border-radius:16px;padding:4px 12px;font-size:11px;color:#333;font-family:inherit}
+    .browser-body{flex:1;overflow-y:auto;padding:20px;font-size:13px;color:#333;line-height:1.6}
+    .browser-status{height:24px;background:#f1f3f4;border-top:1px solid #ddd;display:flex;align-items:center;padding:0 10px;font-size:10px;color:#666;gap:6px}
+    .browser-status .dot{width:6px;height:6px;border-radius:50%;background:var(--g);animation:pulse 1.5s infinite}
+
+    /* Editor surface */
+    .surf-editor{display:flex;flex-direction:column;height:100%;background:#1e1e2e}
+    .editor-tabs{height:32px;background:#181825;display:flex;align-items:center;border-bottom:1px solid #313244}
+    .editor-tab{padding:4px 14px;font-size:11px;color:#cdd6f4;background:#1e1e2e;border-right:1px solid #313244;border-top:2px solid var(--ac);font-family:monospace}
+    .editor-body{flex:1;overflow-y:auto;padding:12px 16px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;line-height:1.7;color:#cdd6f4;white-space:pre-wrap}
+    .editor-body .ln{color:#585b70;user-select:none;display:inline-block;width:32px;text-align:right;margin-right:12px}
+    .editor-body .kw{color:#cba6f7}.editor-body .str{color:#a6e3a1}.editor-body .fn{color:#89b4fa}.editor-body .cm{color:#585b70;font-style:italic}.editor-body .num{color:#fab387}
+    .editor-status{height:24px;background:#181825;border-top:1px solid #313244;display:flex;align-items:center;padding:0 10px;font-size:10px;color:#585b70;gap:12px}
+    .editor-cursor{display:inline-block;width:2px;height:14px;background:#cba6f7;animation:blink .8s step-end infinite;vertical-align:text-bottom}
+    @keyframes blink{50%{opacity:0}}
+
+    /* Terminal surface */
+    .surf-terminal{display:flex;flex-direction:column;height:100%;background:#0d0d0d}
+    .term-bar{height:32px;background:#1a1a1a;display:flex;align-items:center;padding:0 10px;gap:6px;border-bottom:1px solid #333}
+    .term-bar span{font-size:11px;color:#888;margin-left:8px}
+    .term-body{flex:1;overflow-y:auto;padding:10px 14px;font-family:'SF Mono',monospace;font-size:12px;line-height:1.6;color:#4ade80}
+    .term-line{margin-bottom:2px}.term-prompt{color:#a78bfa}.term-err{color:#ef4444}.term-out{color:#9ca3af}
+
+    /* Database surface */
+    .surf-db{display:flex;flex-direction:column;height:100%;background:#fff}
+    .db-query{background:#1e1e2e;padding:10px 14px;font-family:monospace;font-size:12px;color:#89dceb;border-bottom:1px solid #ddd}
+    .db-table{flex:1;overflow:auto;padding:0}
+    .db-table table{width:100%;border-collapse:collapse;font-size:12px}
+    .db-table th{background:#f8f9fa;color:#333;padding:8px 12px;text-align:left;border-bottom:2px solid #dee2e6;font-weight:600;position:sticky;top:0}
+    .db-table td{padding:7px 12px;border-bottom:1px solid #eee;color:#555}
+    .db-table tr:hover td{background:#f0f7ff}
+    .db-status{height:24px;background:#f8f9fa;border-top:1px solid #ddd;display:flex;align-items:center;padding:0 10px;font-size:10px;color:#666}
+
+    /* Search surface */
+    .surf-search{display:flex;flex-direction:column;height:100%;background:#fff}
+    .search-bar{padding:14px;border-bottom:1px solid #eee}
+    .search-input{width:100%;padding:10px 14px 10px 36px;border:1px solid #ddd;border-radius:24px;font-size:13px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") 12px center no-repeat;color:#333}
+    .search-results{flex:1;overflow-y:auto;padding:8px 14px}
+    .search-result{padding:10px 0;border-bottom:1px solid #f0f0f0}
+    .search-result .url{font-size:11px;color:#1a73e8}
+    .search-result .title{font-size:14px;color:#1a0dab;font-weight:500;margin:2px 0}
+    .search-result .snippet{font-size:12px;color:#545454;line-height:1.4}
+
+    /* Email surface */
+    .surf-email{display:flex;flex-direction:column;height:100%;background:#fff}
+    .email-header{padding:14px;border-bottom:1px solid #eee}
+    .email-field{display:flex;align-items:center;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:12px}
+    .email-field .label{width:60px;color:#666;font-weight:500}.email-field .value{color:#333;flex:1}
+    .email-body-area{flex:1;padding:14px;font-size:13px;color:#333;line-height:1.6;overflow-y:auto}
+
+    /* Dashboard surface */
+    .surf-dash{display:flex;flex-direction:column;height:100%;background:#f8f9fa}
+    .dash-head{padding:12px 14px;background:#fff;border-bottom:1px solid #eee;font-size:13px;font-weight:600;color:#333}
+    .dash-grid{flex:1;overflow-y:auto;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .dash-card{background:#fff;border-radius:8px;padding:14px;border:1px solid #eee}
+    .dash-card .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px}.dash-card .value{font-size:22px;font-weight:700;color:#333;margin-top:4px}.dash-card .change{font-size:11px;margin-top:4px}
+    .dash-card .up{color:#16a34a}.dash-card .down{color:#dc2626}
+
+    /* Kanban surface */
+    .surf-kanban{display:flex;flex-direction:column;height:100%;background:#f0f1f3}
+    .kanban-head{padding:10px 14px;background:#fff;border-bottom:1px solid #ddd;font-size:13px;font-weight:600;color:#333}
+    .kanban-board{flex:1;overflow-x:auto;display:flex;gap:10px;padding:12px}
+    .kanban-col{min-width:200px;width:200px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;display:flex;flex-direction:column}
+    .kanban-col-head{padding:10px;font-size:12px;font-weight:600;color:#333;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:6px}
+    .kanban-col-head .cnt{font-size:10px;background:#e5e7eb;padding:1px 6px;border-radius:8px;color:#666}
+    .kanban-cards{flex:1;overflow-y:auto;padding:6px}
+    .kanban-card{padding:8px;margin-bottom:6px;border:1px solid #eee;border-radius:6px;font-size:11px;color:#444}
+    .kanban-card .pri{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px}
+
+    /* Right — event log + chat */
+    .right{background:var(--s1);border-left:1px solid var(--bd);display:flex;flex-direction:column}
+    .tabs{display:flex;border-bottom:1px solid var(--bd)}
+    .tab{flex:1;padding:8px;text-align:center;font-size:10px;font-weight:600;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;letter-spacing:.5px}
+    .tab.on{color:var(--ac2);border-bottom-color:var(--ac)}
+    .tab-body{flex:1;overflow-y:auto;display:none}.tab-body.on{display:flex;flex-direction:column}
+
+    /* Event log */
+    .evt{display:flex;gap:8px;padding:5px 12px;border-left:3px solid transparent;font-size:11px;transition:background .1s}
+    .evt:hover{background:var(--s2)}
+    .evt.t-message{border-left-color:var(--b)}.evt.t-handoff{border-left-color:var(--am)}.evt.t-review{border-left-color:var(--g)}.evt.t-event{border-left-color:var(--tl)}.evt.t-capabilities{border-left-color:var(--ac)}.evt.t-artifact{border-left-color:var(--ac2)}
+    .evt-icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+    .evt-info{flex:1;min-width:0}
+    .evt-head{display:flex;gap:4px;align-items:center}
+    .evt-tag{font-size:8px;padding:1px 5px;border-radius:4px;font-weight:700;text-transform:uppercase}
+    .evt-tag.message{background:rgba(59,130,246,.15);color:var(--b)}.evt-tag.handoff{background:rgba(245,158,11,.15);color:var(--am)}.evt-tag.review{background:rgba(34,197,94,.15);color:var(--g)}.evt-tag.event{background:rgba(20,184,166,.15);color:var(--tl)}.evt-tag.capabilities{background:rgba(124,58,237,.15);color:var(--ac)}.evt-tag.artifact{background:rgba(167,139,250,.15);color:var(--ac2)}
+    .evt-name{font-weight:600;font-size:10px}.evt-time{font-size:9px;color:var(--t3);margin-left:auto}
+    .evt-txt{color:var(--t2);font-size:10px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    /* Chat */
+    .ch{display:flex;gap:8px;padding:6px 12px}
+    .ch-av{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+    .ch-bd{flex:1;min-width:0}
+    .ch-nm{font-size:10px;font-weight:600}
+    .ch-int{font-size:8px;padding:1px 5px;border-radius:4px;margin-left:4px}
+    .ch-tx{font-size:11px;color:var(--t2);margin-top:2px;line-height:1.4}
+    .ch-ho{padding:5px 10px;margin:3px 12px;background:rgba(245,158,11,.06);border:1px dashed rgba(245,158,11,.3);border-radius:5px;font-size:10px;color:var(--am)}
+    .ch-rv{padding:5px 10px;margin:3px 12px;border-radius:5px;font-size:10px}
+
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="logo">maia<span>.playground</span></div>
+    <div class="pill">INTERACTIVE</div>
+    <div class="top-r"><b id="ec">0</b> events &nbsp; <span id="ac">4 agents</span></div>
+  </div>
+
+  <!-- Left -->
+  <div class="left">
+    <div class="sec">
+      <h3>Send Message</h3>
+      <label>From</label><select id="mf"><option value="agent://researcher">Researcher</option><option value="agent://analyst">Analyst</option><option value="agent://writer">Writer</option><option value="agent://brain">Brain</option></select>
+      <label>To</label><select id="mt"><option value="agent://analyst">Analyst</option><option value="agent://writer">Writer</option><option value="agent://brain">Brain</option><option value="agent://researcher">Researcher</option></select>
+      <label>Intent</label><select id="mi"><option>propose</option><option>challenge</option><option>agree</option><option>clarify</option><option>delegate</option><option>summarize</option></select>
+      <label>Message</label><textarea id="mc" placeholder="Type message..."></textarea>
+      <button class="btn btn-ac" onclick="sendMsg()">Send Message</button>
+    </div>
+    <div class="sec">
+      <h3>Trigger Surface</h3>
+      <label>Agent</label><select id="sa"><option value="agent://researcher">Researcher</option><option value="agent://analyst">Analyst</option><option value="agent://writer">Writer</option></select>
+      <label>Surface Type</label>
+      <select id="ss" onchange="updateSurfaceFields()">
+        <option value="browser">Browser</option><option value="editor">Code Editor</option><option value="terminal">Terminal</option>
+        <option value="database">Database</option><option value="search">Search</option><option value="email">Email</option>
+        <option value="dashboard">Dashboard</option><option value="kanban">Kanban</option>
+      </select>
+      <div id="sf"></div>
+      <button class="btn btn-b" onclick="triggerSurface()">Show Surface</button>
+    </div>
+    <div class="sec">
+      <h3>Quick Actions</h3>
+      <div class="grid2">
+        <div class="qb" onclick="qSearch()">🔍 Search</div>
+        <div class="qb" onclick="qBrowse()">🌐 Browse</div>
+        <div class="qb" onclick="qCode()">💻 Code</div>
+        <div class="qb" onclick="qTerminal()">⬛ Terminal</div>
+        <div class="qb" onclick="qDB()">📊 Database</div>
+        <div class="qb" onclick="qEmail()">📧 Email</div>
+        <div class="qb" onclick="qDash()">📈 Dashboard</div>
+        <div class="qb" onclick="qKanban()">📋 Kanban</div>
+      </div>
+      <div class="grid2" style="margin-top:4px">
+        <div class="qb" onclick="qHandoff()">→ Handoff</div>
+        <div class="qb" onclick="qReview()">✓ Review</div>
+        <div class="qb" onclick="qArtifact()">📄 Artifact</div>
+        <div class="qb" onclick="qAgent()">🤖 Add Agent</div>
+      </div>
+    </div>
+    <div class="sec">
+      <button class="btn btn-tl" onclick="exportJSONL()">Download events.jsonl</button>
+      <button class="btn btn-r" onclick="clearAll()">Clear All</button>
+    </div>
+  </div>
+
+  <!-- Center — Theatre surface -->
+  <div class="center">
+    <div class="theatre-head"><div class="live"></div>Theatre<span style="margin-left:auto;font-size:9px" id="surf-label">idle</span></div>
+    <div class="surface-area" id="stage">
+      <div class="surf-empty"><div class="big">🎭</div><p>Click a quick action or trigger a surface</p></div>
+    </div>
+  </div>
+
+  <!-- Right -->
+  <div class="right">
+    <div class="tabs">
+      <div class="tab on" onclick="switchTab(this,'events')">Events</div>
+      <div class="tab" onclick="switchTab(this,'chat')">Team Chat</div>
+    </div>
+    <div class="tab-body on" id="p-events"></div>
+    <div class="tab-body" id="p-chat"></div>
+  </div>
+</div>
+
+<script>
+const A={
+  'agent://brain':{n:'Brain',e:'🧠',c:'#8B5CF6'},
+  'agent://researcher':{n:'Researcher',e:'🔍',c:'#3B82F6'},
+  'agent://analyst':{n:'Analyst',e:'📊',c:'#10B981'},
+  'agent://writer':{n:'Writer',e:'✍️',c:'#F59E0B'},
+};
+const evts=[];let seq=0;const known=new Set();
+const uid=()=>Math.random().toString(36).slice(2,12);
+const now=()=>new Date().toISOString();
+
+function emit(aid,type,payload){
+  const e={acp_version:'1.0',run_id:'pg_'+uid(),event_id:'evt_'+uid(),agent_id:aid,event_type:type,timestamp:now(),sequence:++seq,payload};
+  evts.push(e);logEvent(e);
+  if(type==='message')renderChat(e);
+  if(type==='handoff'){renderChatHo(e);}
+  if(type==='review'){renderChatRv(e);}
+  document.getElementById('ec').textContent=evts.length;
+  return e;
+}
+
+/* ── Event log ─────────────────────────────────────────────────────── */
+function logEvent(e){
+  const a=A[e.agent_id]||{n:e.agent_id.split('://')[1],e:'🤖',c:'#666'};
+  const d=document.createElement('div');d.className='evt t-'+e.event_type;
+  d.innerHTML=`<div class="evt-icon" style="background:${a.c}18">${a.e}</div><div class="evt-info"><div class="evt-head"><span class="evt-tag ${e.event_type}">${e.event_type}</span><span class="evt-name" style="color:${a.c}">${a.n}</span><span class="evt-time">${new Date().toLocaleTimeString()}</span></div><div class="evt-txt">${summ(e)}</div></div>`;
+  const p=document.getElementById('p-events');p.appendChild(d);p.scrollTop=1e6;
+}
+function summ(e){
+  const p=e.payload;
+  if(e.event_type==='message')return`→ ${(A[p.to]||{n:'?'}).n}: ${(p.content||'').slice(0,80)}`;
+  if(e.event_type==='handoff')return`→ ${(A[p.to]||{n:'?'}).n}: ${(p.task?.description||'').slice(0,60)}`;
+  if(e.event_type==='review')return`${p.verdict} (${(p.score*100|0)}%) ${(p.feedback||'').slice(0,50)}`;
+  if(e.event_type==='event')return`${p.activity}: ${(p.detail||'').slice(0,60)}`;
+  if(e.event_type==='capabilities')return`${p.name} joined`;
+  if(e.event_type==='artifact')return`${p.kind}: ${p.title}`;
+  return JSON.stringify(p).slice(0,60);
+}
+
+/* ── Chat panel ────────────────────────────────────────────────────── */
+function renderChat(e){
+  const a=A[e.agent_id]||{e:'🤖',c:'#666',n:'Agent'};const p=e.payload;
+  const ic={propose:'rgba(59,130,246,.15)',challenge:'rgba(239,68,68,.15)',agree:'rgba(34,197,94,.15)',summarize:'rgba(124,58,237,.15)',delegate:'rgba(245,158,11,.15)',clarify:'rgba(20,184,166,.15)'};
+  const d=document.createElement('div');d.className='ch';
+  d.innerHTML=`<div class="ch-av" style="background:${a.c}20">${a.e}</div><div class="ch-bd"><div><span class="ch-nm" style="color:${a.c}">${a.n}</span><span class="ch-int" style="background:${ic[p.intent]||'var(--s2)'}">${p.intent}</span></div><div class="ch-tx">${(p.content||'').replace(/\n/g,'<br>')}</div></div>`;
+  const c=document.getElementById('p-chat');c.appendChild(d);c.scrollTop=1e6;
+}
+function renderChatHo(e){
+  const f=A[e.payload.from]||{n:'?',e:'→'},t=A[e.payload.to]||{n:'?',e:'→'};
+  const d=document.createElement('div');d.className='ch-ho';
+  d.innerHTML=`${f.e} <b>${f.n}</b> → ${t.e} <b>${t.n}</b> — ${e.payload.task?.description||''}`;
+  const c=document.getElementById('p-chat');c.appendChild(d);c.scrollTop=1e6;
+}
+function renderChatRv(e){
+  const v=e.payload.verdict,ok=v==='approve';
+  const d=document.createElement('div');d.className='ch-rv';
+  d.style.cssText=`background:${ok?'rgba(34,197,94,.06)':'rgba(245,158,11,.06)'};border:1px solid ${ok?'rgba(34,197,94,.2)':'rgba(245,158,11,.2)'}`;
+  d.innerHTML=`${ok?'✅':'⚠️'} <b>${v.toUpperCase()}</b> (${(e.payload.score*100|0)}%) — ${e.payload.feedback||''}`;
+  const c=document.getElementById('p-chat');c.appendChild(d);c.scrollTop=1e6;
+}
+
+/* ── Surface rendering ─────────────────────────────────────────────── */
+function showSurface(html,label){
+  document.getElementById('stage').innerHTML=html;
+  document.getElementById('surf-label').textContent=label;
+}
+
+function surfBrowser(url,title,content,agent){
+  const a=A[agent]||{n:'Agent'};
+  showSurface(`<div class="surf-browser">
+    <div class="browser-bar"><div class="browser-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#22c55e"></span></div><div class="browser-url">${url}</div></div>
+    <div class="browser-body">${content}</div>
+    <div class="browser-status"><div class="dot"></div>${a.n} is reading this page</div>
+  </div>`,'browser — '+title);
+}
+
+function surfEditor(filename,code,agent){
+  const a=A[agent]||{n:'Agent'};
+  const lines=code.split('\n').map((l,i)=>`<span class="ln">${i+1}</span>${colorize(l)}`).join('\n');
+  showSurface(`<div class="surf-editor">
+    <div class="editor-tabs"><div class="editor-tab">${filename}</div></div>
+    <div class="editor-body">${lines}<span class="editor-cursor"></span></div>
+    <div class="editor-status"><span>Ln ${code.split('\n').length}, Col 1</span><span>UTF-8</span><span>TypeScript</span><span style="margin-left:auto">${a.n} is editing</span></div>
+  </div>`,'editor — '+filename);
+}
+function colorize(line){
+  return line.replace(/\/\/.*/g,'<span class="cm">$&</span>').replace(/\b(import|from|export|const|let|function|return|if|else|async|await|new|class|interface|type)\b/g,'<span class="kw">$&</span>').replace(/'[^']*'|"[^"]*"|`[^`]*`/g,'<span class="str">$&</span>').replace(/\b(\d+\.?\d*)\b/g,'<span class="num">$&</span>');
+}
+
+function surfTerminal(lines,agent){
+  const a=A[agent]||{n:'Agent'};
+  const html=lines.map(l=>{
+    if(l.startsWith('$'))return`<div class="term-line"><span class="term-prompt">$ </span>${l.slice(2)}</div>`;
+    if(l.startsWith('ERROR'))return`<div class="term-line term-err">${l}</div>`;
+    return`<div class="term-line term-out">${l}</div>`;
+  }).join('');
+  showSurface(`<div class="surf-terminal">
+    <div class="term-bar"><div class="browser-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#22c55e"></span></div><span>terminal — ${a.n}</span></div>
+    <div class="term-body">${html}<div class="term-line"><span class="term-prompt">$ </span><span class="editor-cursor"></span></div></div>
+  </div>`,'terminal');
+}
+
+function surfDB(query,headers,rows,agent){
+  const a=A[agent]||{n:'Agent'};
+  const ths=headers.map(h=>`<th>${h}</th>`).join('');
+  const trs=rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+  showSurface(`<div class="surf-db">
+    <div class="db-query">${query}</div>
+    <div class="db-table"><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>
+    <div class="db-status">${rows.length} rows returned — ${a.n}</div>
+  </div>`,'database');
+}
+
+function surfSearch(query,results,agent){
+  const a=A[agent]||{n:'Agent'};
+  const rs=results.map(r=>`<div class="search-result"><div class="url">${r.url}</div><div class="title">${r.title}</div><div class="snippet">${r.snippet}</div></div>`).join('');
+  showSurface(`<div class="surf-search">
+    <div class="search-bar"><input class="search-input" value="${query}" readonly /></div>
+    <div class="search-results">${rs}</div>
+  </div>`,'search — '+query);
+}
+
+function surfEmail(to,subject,body,agent){
+  const a=A[agent]||{n:'Agent'};
+  showSurface(`<div class="surf-email">
+    <div class="email-header">
+      <div class="email-field"><span class="label">To:</span><span class="value">${to}</span></div>
+      <div class="email-field"><span class="label">Subject:</span><span class="value" style="font-weight:600">${subject}</span></div>
+    </div>
+    <div class="email-body-area">${body.replace(/\n/g,'<br>')}<span class="editor-cursor"></span></div>
+  </div>`,'email — '+subject);
+}
+
+function surfDash(title,cards,agent){
+  const cs=cards.map(c=>`<div class="dash-card"><div class="label">${c.label}</div><div class="value">${c.value}</div><div class="change ${c.up?'up':'down'}">${c.up?'↑':'↓'} ${c.change}</div></div>`).join('');
+  showSurface(`<div class="surf-dash"><div class="dash-head">📈 ${title}</div><div class="dash-grid">${cs}</div></div>`,'dashboard — '+title);
+}
+
+function surfKanban(title,cols,agent){
+  const cs=cols.map(c=>{
+    const cards=c.cards.map(k=>{
+      const pc={critical:'#ef4444',high:'#f97316',medium:'#eab308',low:'#9ca3af'};
+      return`<div class="kanban-card"><span class="pri" style="background:${pc[k.priority]||'#9ca3af'}"></span><b>${k.title}</b><br><span style="font-size:10px;color:#888">${k.assignee||''}</span></div>`;
+    }).join('');
+    return`<div class="kanban-col"><div class="kanban-col-head">${c.title}<span class="cnt">${c.cards.length}</span></div><div class="kanban-cards">${cards}</div></div>`;
+  }).join('');
+  showSurface(`<div class="surf-kanban"><div class="kanban-head">📋 ${title}</div><div class="kanban-board">${cs}</div></div>`,'kanban — '+title);
+}
+
+/* ── Surface field builder ─────────────────────────────────────────── */
+function updateSurfaceFields(){
+  const t=document.getElementById('ss').value;
+  const f=document.getElementById('sf');
+  const fields={
+    browser:'<label>URL</label><input id="s-url" value="https://github.com/maia-sdk/maia" /><label>Page Content</label><textarea id="s-body" placeholder="HTML content...">Loading repository overview...</textarea>',
+    editor:'<label>Filename</label><input id="s-file" value="brain.ts" /><label>Code</label><textarea id="s-code" style="min-height:80px;font-family:monospace">import { Brain } from \'@maia/brain\';\n\nconst brain = new Brain({\n  agents: [],\n  llm: { apiKey: process.env.KEY },\n});\n\nconst result = await brain.run(task);</textarea>',
+    terminal:'<label>Commands (one per line, prefix $ for prompt)</label><textarea id="s-lines" style="min-height:80px;font-family:monospace">$ npm install @maia/sdk\nadded 12 packages in 2.1s\n$ npx maia info\nMaia CLI v0.1.0\nNode: v20.11.0\nPackages: 8 installed</textarea>',
+    database:'<label>SQL Query</label><input id="s-query" value="SELECT name, stars, growth FROM frameworks ORDER BY stars DESC;" /><label>Headers (comma sep)</label><input id="s-hdrs" value="Name,Stars,npm/wk,Growth" /><label>Rows (semicolon sep rows, comma sep cols)</label><textarea id="s-rows">LangChain,82400,1.2M,+3%;CrewAI,18200,89k,+42%;AutoGen,29100,210k,+8%;Maia,2400,3.2k,+67%</textarea>',
+    search:'<label>Query</label><input id="s-sq" value="best AI agent framework 2026" />',
+    email:'<label>To</label><input id="s-eto" value="team@acme.com" /><label>Subject</label><input id="s-esub" value="Q4 SaaS Pricing Analysis" /><label>Body</label><textarea id="s-ebody">Hi team,\n\nAttached is the competitive analysis of AI agent frameworks.\n\nKey findings:\n- PLG grew 34% faster than sales-led\n- Usage-based pricing doubled since 2024\n\nBest,\nMaia Writer Agent</textarea>',
+    dashboard:'',
+    kanban:'',
+  };
+  f.innerHTML=fields[t]||'';
+}
+
+/* ── Trigger surface from form ─────────────────────────────────────── */
+function triggerSurface(){
+  const t=document.getElementById('ss').value;
+  const agent=document.getElementById('sa').value;
+  emit(agent,'event',{agent_id:agent,activity:t==='browser'?'browsing':t==='editor'?'coding':t==='terminal'?'executing':t==='database'?'querying':t==='search'?'searching':t==='email'?'emailing':t,detail:'Working on '+t+' surface...'});
+  if(t==='browser') surfBrowser(gv('s-url'),gv('s-url'),gv('s-body'),agent);
+  else if(t==='editor') surfEditor(gv('s-file'),gv('s-code'),agent);
+  else if(t==='terminal') surfTerminal(gv('s-lines').split('\n'),agent);
+  else if(t==='database'){const h=gv('s-hdrs').split(',');const r=gv('s-rows').split(';').map(x=>x.split(','));surfDB(gv('s-query'),h,r,agent);}
+  else if(t==='search') qSearch();
+  else if(t==='email') surfEmail(gv('s-eto'),gv('s-esub'),gv('s-ebody'),agent);
+  else if(t==='dashboard') qDash();
+  else if(t==='kanban') qKanban();
+}
+function gv(id){return(document.getElementById(id)||{}).value||'';}
+
+/* ── Quick actions with real surface data ───────────────────────────── */
+function qSearch(){
+  const agent='agent://researcher';
+  emit(agent,'event',{agent_id:agent,activity:'searching',detail:'Searching: best AI agent framework comparison 2026'});
+  surfSearch('best AI agent framework comparison 2026',[
+    {url:'https://github.com/maia-sdk/maia',title:'Maia SDK — The Collaboration Layer for AI Agents',snippet:'Open-source SDK with ACP protocol, Theatre visualization, 27 built-in agent roles, and adapters for LangChain, CrewAI, and AutoGen.'},
+    {url:'https://blog.langchain.dev/agent-frameworks-2026',title:'The State of AI Agent Frameworks in 2026 — LangChain Blog',snippet:'Comprehensive comparison of LangChain, CrewAI, AutoGen, and Maia. Observability emerges as the key differentiator...'},
+    {url:'https://dev.to/comparison-ai-agent-sdk',title:'I Tested 4 Agent Frameworks So You Don\'t Have To',snippet:'After building the same project in each framework, the winner depends on your needs. For observability: Maia. For ecosystem: LangChain...'},
+    {url:'https://arxiv.org/abs/2026.01234',title:'Multi-Agent Collaboration Protocols: A Survey',snippet:'We survey emerging protocols for agent-to-agent communication including ACP, A2A, and MCP...'},
+  ],agent);
+}
+
+function qBrowse(){
+  const agent='agent://researcher';
+  emit(agent,'event',{agent_id:agent,activity:'browsing',detail:'Reading GitHub repository overview',browser:{url:'https://github.com/maia-sdk/maia'}});
+  surfBrowser('https://github.com/maia-sdk/maia','Maia SDK — GitHub',`
+    <h2 style="color:#1a1a1a;margin-bottom:12px">maia-sdk / maia</h2>
+    <p style="color:#666;margin-bottom:16px">The collaboration and observability layer for AI agents.</p>
+    <div style="display:flex;gap:16px;margin-bottom:20px">
+      <span style="background:#f0f0f0;padding:4px 10px;border-radius:12px;font-size:12px">⭐ 2,847</span>
+      <span style="background:#f0f0f0;padding:4px 10px;border-radius:12px;font-size:12px">🍴 312</span>
+      <span style="background:#f0f0f0;padding:4px 10px;border-radius:12px;font-size:12px">MIT License</span>
+    </div>
+    <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="background:#f8f9fa"><td style="padding:8px 12px;border-bottom:1px solid #eee">📁 packages/acp-js</td><td style="color:#666;padding:8px;border-bottom:1px solid #eee">Agent Collaboration Protocol — TypeScript</td></tr>
+        <tr><td style="padding:8px 12px;border-bottom:1px solid #eee">📁 packages/brain-runtime</td><td style="color:#666;padding:8px;border-bottom:1px solid #eee">Multi-agent orchestration with 27 roles</td></tr>
+        <tr style="background:#f8f9fa"><td style="padding:8px 12px;border-bottom:1px solid #eee">📁 packages/theatre-react</td><td style="color:#666;padding:8px;border-bottom:1px solid #eee">Live agent visualization — 15 surfaces</td></tr>
+        <tr><td style="padding:8px 12px;border-bottom:1px solid #eee">📁 packages/connectors</td><td style="color:#666;padding:8px;border-bottom:1px solid #eee">49 pre-built SaaS connectors</td></tr>
+        <tr style="background:#f8f9fa"><td style="padding:8px 12px">📁 packages/teamchat</td><td style="color:#666;padding:8px">Agent conversation UI</td></tr>
+      </table>
+    </div>`,agent);
+}
+
+function qCode(){
+  const agent='agent://writer';
+  emit(agent,'event',{agent_id:agent,activity:'coding',detail:'Editing competitive-brief.ts'});
+  surfEditor('competitive-brief.ts',`import { Brain } from '@maia/brain';
+import { Theatre } from '@maia/theatre';
+
+// Initialize the brain with auto-assembled team
+const brain = new Brain({
+  agents: [],  // picks from 27 built-in roles
+  llm: {
+    apiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o',
+  },
+});
+
+// Run the competitive analysis task
+const result = await brain.run(
+  'Analyze top 4 AI agent frameworks and write a brief'
+);
+
+console.log('Output:', result.output);
+console.log('Agents used:', result.steps.length);
+console.log('Cost: $' + result.totalCostUsd.toFixed(4));`,agent);
+}
+
+function qTerminal(){
+  const agent='agent://analyst';
+  emit(agent,'event',{agent_id:agent,activity:'executing',detail:'Running npm install and test suite'});
+  surfTerminal([
+    '$ cd maia && pnpm install',
+    'Packages: +847',
+    'Progress: resolved 847, reused 812, downloaded 35, added 847, done',
+    '',
+    '$ pnpm -r build',
+    '✓ @maia/acp built in 1.2s',
+    '✓ @maia/brain built in 2.8s',
+    '✓ @maia/theatre built in 1.9s',
+    '✓ @maia/connectors built in 1.1s',
+    '✓ @maia/sdk built in 0.4s',
+    '',
+    '$ pnpm -r test',
+    ' ✓ acp-js/src/index.test.ts (8 tests) 142ms',
+    ' ✓ brain-runtime/src/brain.test.ts (12 tests) 891ms',
+    ' ✓ connectors/src/catalog.test.ts (6 tests) 234ms',
+    ' ✓ theatre-react/src/index.test.ts (7 tests) 167ms',
+    '',
+    ' Test Files  4 passed (4)',
+    ' Tests       33 passed (33)',
+    ' Duration    1.43s',
+  ],agent);
+}
+
+function qDB(){
+  const agent='agent://analyst';
+  emit(agent,'event',{agent_id:agent,activity:'querying',detail:'Querying framework comparison data'});
+  surfDB('SELECT name, stars, npm_weekly, discord_members, has_observability\nFROM frameworks ORDER BY stars DESC;',
+    ['Framework','Stars','npm/wk','Discord','Observability'],
+    [['LangChain','82,400','1.2M','42k','❌ No'],['AutoGen','29,100','210k','15k','❌ No'],['CrewAI','18,200','89k','8k','❌ No'],['Maia','2,400','3.2k','1.2k','✅ Yes']],
+    agent);
+}
+
+function qEmail(){
+  const agent='agent://writer';
+  emit(agent,'event',{agent_id:agent,activity:'emailing',detail:'Composing competitive analysis email to team'});
+  surfEmail('leadership@acme.com','Competitive Brief: AI Agent Frameworks 2026',
+    'Hi Leadership,\n\nPlease find attached the competitive analysis of AI agent frameworks.\n\nKey Findings:\n\n1. LangChain dominates ecosystem (82k stars, 1.2M npm/wk)\n2. CrewAI is the fastest growing (+42% MoM)\n3. Maia is the ONLY framework with observability (Theatre + TeamChat)\n\nRecommendation: Position as the observability layer, not a replacement.\nThe adapter strategy (works with LangChain, CrewAI, AutoGen) is the moat.\n\nBest regards,\nWriter Agent',agent);
+}
+
+function qDash(){
+  const agent='agent://analyst';
+  emit(agent,'event',{agent_id:agent,activity:'analyzing',detail:'Building SaaS metrics dashboard'});
+  surfDash('SaaS Framework Metrics',[
+    {label:'Total Stars',value:'132,100',change:'12% MoM',up:true},
+    {label:'npm Downloads',value:'1.5M/wk',change:'8% MoM',up:true},
+    {label:'Active Contributors',value:'2,847',change:'3% MoM',up:true},
+    {label:'Avg. Issue Response',value:'4.2 hrs',change:'15% faster',up:true},
+    {label:'Maia Growth',value:'+67%',change:'vs +3% LangChain',up:true},
+    {label:'Observability Gap',value:'3 / 4',change:'frameworks lack it',up:false},
+  ],agent);
+}
+
+function qKanban(){
+  const agent='agent://brain';
+  emit(agent,'event',{agent_id:agent,activity:'planning',detail:'Managing competitive analysis workflow'});
+  surfKanban('Competitive Analysis Sprint',[
+    {title:'To Do',cards:[{title:'Analyze pricing models',priority:'high',assignee:'Analyst'},{title:'Draft press release',priority:'medium',assignee:'Writer'}]},
+    {title:'In Progress',cards:[{title:'Framework comparison',priority:'critical',assignee:'Researcher'},{title:'Community metrics',priority:'high',assignee:'Analyst'}]},
+    {title:'Review',cards:[{title:'Executive summary v1',priority:'high',assignee:'Writer'}]},
+    {title:'Done',cards:[{title:'GitHub stars audit',priority:'medium',assignee:'Researcher'},{title:'npm download analysis',priority:'medium',assignee:'Analyst'},{title:'Stakeholder brief',priority:'low',assignee:'Brain'}]},
+  ],agent);
+}
+
+function qHandoff(){
+  emit('agent://brain','handoff',{from:'agent://brain',to:'agent://researcher',task:{description:'Research the top 4 AI agent frameworks and compare features',constraints:[],priority:'high'},context:{},artifacts:[],prior_steps:[]});
+}
+function qReview(){
+  const v=['approve','revise'][Math.random()*2|0];
+  emit('agent://brain','review',{reviewer:'agent://brain',author:'agent://writer',verdict:v,score:v==='approve'?.92:.65,feedback:v==='approve'?'Excellent work. Clear data, actionable recommendations.':'Needs segment-level breakdown (Enterprise vs SMB).',strengths:['Clear structure','Data-backed'],issues:[],round:1});
+}
+function qArtifact(){
+  emit('agent://writer','artifact',{artifact_id:'art_'+uid(),kind:'document',title:'Competitive Brief v'+(evts.filter(e=>e.event_type==='artifact').length+1),content:'AI Agent Framework Competitive Analysis...',mime_type:'text/markdown',metadata:{},version:1});
+}
+function qAgent(){
+  const pool=[
+    {id:'agent://designer',n:'Designer',e:'🎨',c:'#EC4899',r:'design'},
+    {id:'agent://devops',n:'DevOps',e:'🔧',c:'#6366F1',r:'devops'},
+    {id:'agent://qa',n:'QA Tester',e:'🧪',c:'#EF4444',r:'qa'},
+    {id:'agent://security',n:'Security',e:'🔒',c:'#14B8A6',r:'security'},
+  ];
+  const avail=pool.filter(a=>!known.has(a.id));
+  const pick=avail.length?avail[0]:pool[Math.random()*pool.length|0];
+  A[pick.id]={n:pick.n,e:pick.e,c:pick.c};known.add(pick.id);
+  emit(pick.id,'capabilities',{agent_id:pick.id,name:pick.n,role:pick.r,skills:[{skill_id:pick.r,description:pick.n+' capabilities'}],connectors:[]});
+  document.querySelectorAll('select').forEach(sel=>{if(![...sel.options].some(o=>o.value===pick.id)){const o=document.createElement('option');o.value=pick.id;o.textContent=pick.n;sel.appendChild(o);}});
+  document.getElementById('ac').textContent=Object.keys(A).length+' agents';
+}
+
+/* ── Messages ──────────────────────────────────────────────────────── */
+function sendMsg(){
+  const from=document.getElementById('mf').value,to=document.getElementById('mt').value,intent=document.getElementById('mi').value,content=document.getElementById('mc').value.trim();
+  if(!content)return;
+  emit(from,'message',{from,to,intent,content,mood:'confident',artifacts:[],context:{thread_id:'t_'+uid()}});
+  document.getElementById('mc').value='';
+}
+document.getElementById('mc').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}});
+
+/* ── Utils ─────────────────────────────────────────────────────────── */
+function switchTab(el,id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-body').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');document.getElementById('p-'+id).classList.add('on');
+}
+function exportJSONL(){
+  const b=new Blob([evts.map(e=>JSON.stringify(e)).join('\n')],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='events.jsonl';a.click();
+}
+function clearAll(){
+  evts.length=0;seq=0;known.clear();
+  document.getElementById('p-events').innerHTML='';
+  document.getElementById('p-chat').innerHTML='';
+  document.getElementById('stage').innerHTML='<div class="surf-empty"><div class="big">🎭</div><p>Click a quick action or trigger a surface</p></div>';
+  document.getElementById('surf-label').textContent='idle';
+  document.getElementById('ec').textContent='0';
+}
+
+// Init surface fields
+updateSurfaceFields();
+</script>
+</body>
+</html>

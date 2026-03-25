@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maia-connectors"
+version = "0.1.0"
+description = "Pre-built SaaS connectors for AI agents — Gmail, Slack, GitHub, Jira, Stripe, and more"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = ["maia-acp>=0.1.0", "httpx>=0.25.0"]
+keywords = ["ai", "agent", "connectors", "saas", "maia"]
+authors = [{name = "Maia AI"}]
+
+[project.urls]
+Homepage = "https://github.com/maia-sdk/maia"
+Repository = "https://github.com/maia-sdk/maia"
+
+[project.optional-dependencies]
+postgres = ["asyncpg>=0.29.0"]
+aws = ["boto3>=1.34.0"]
+all = ["asyncpg>=0.29.0", "boto3>=1.34.0"]

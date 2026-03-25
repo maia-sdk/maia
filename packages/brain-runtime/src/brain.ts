@@ -16,6 +16,7 @@ import { getRole, formatRoleCatalogForPrompt } from "./roles/index";
 import { createBrainState } from "./state";
 import { createMemoryStore } from "./memory";
 import { executeStepFull } from "./executor";
+import { resolveApiKey } from "./env";
 
 export class Brain {
   private agents: AgentDefinition[];
@@ -27,12 +28,15 @@ export class Brain {
 
   constructor(opts: BrainOptions) {
     this.agents = opts.agents;
+    // Resolve API key from .env or environment
+    const resolvedLlm = { ...opts.llm, apiKey: resolveApiKey(opts.llm.apiKey) };
     this.options = {
       agents: opts.agents,
-      llm: opts.llm,
-      maxReviewRounds: opts.maxReviewRounds ?? 3,
-      maxConversationTurns: opts.maxConversationTurns ?? 8,
-      maxSteps: opts.maxSteps ?? 20,
+      llm: resolvedLlm,
+      research: opts.research ?? {},
+      maxReviewRounds: opts.maxReviewRounds ?? Infinity,
+      maxConversationTurns: opts.maxConversationTurns ?? Infinity,
+      maxSteps: opts.maxSteps ?? Infinity,
       budgetUsd: opts.budgetUsd ?? Infinity,
       onEvent: opts.onEvent,
     };

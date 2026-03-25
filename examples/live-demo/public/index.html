@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maia — Live Agent Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#08080d;--s1:#0f0f18;--s2:#16162a;--s3:#1e1e35;--bd:#252540;--t1:#e8e8f0;--t2:#8585a0;--t3:#55556a;--ac:#7c3aed;--ac2:#a78bfa;--g:#22c55e;--b:#3b82f6;--am:#f59e0b;--r:#ef4444;--tl:#14b8a6;--pk:#ec4899}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);height:100vh;overflow:hidden}
+
+    /* Setup overlay */
+    .setup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:flex;align-items:center;justify-content:center}
+    .setup-card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:32px;width:420px;max-width:90vw}
+    .setup-card h1{font-size:22px;font-weight:700;margin-bottom:4px}.setup-card h1 span{color:var(--ac2)}
+    .setup-card .sub{font-size:13px;color:var(--t2);margin-bottom:24px}
+    .setup-card label{display:block;font-size:11px;color:var(--t2);margin-bottom:4px;margin-top:14px;font-weight:500}
+    .setup-card select,.setup-card input{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--t1);border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none}
+    .setup-card select:focus,.setup-card input:focus{border-color:var(--ac)}
+    .setup-card .hint{font-size:10px;color:var(--t3);margin-top:4px}
+    .setup-card .start-btn{width:100%;padding:12px;background:var(--ac);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:20px;transition:background .2s}
+    .setup-card .start-btn:hover{background:#6d28d9}
+    .setup-card .start-btn:disabled{background:var(--s3);color:var(--t3);cursor:not-allowed}
+    .conn-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .conn-chip{padding:4px 10px;border-radius:16px;font-size:10px;cursor:pointer;border:1px solid var(--bd);background:var(--s2);color:var(--t2);transition:all .15s;user-select:none}
+    .conn-chip.on{border-color:var(--ac);background:rgba(124,58,237,.15);color:var(--ac2)}
+
+    /* Main app */
+    .app{display:grid;grid-template-columns:1fr 380px;grid-template-rows:48px 1fr 56px;height:100vh}
+    .app.hidden{display:none}
+
+    /* Top */
+    .top{grid-column:1/-1;background:var(--s1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 16px;gap:12px}
+    .logo{font-size:16px;font-weight:700}.logo span{color:var(--ac2)}
+    .live-dot{width:7px;height:7px;border-radius:50%;background:var(--g);animation:pulse 2s infinite;display:none}
+    .live-dot.on{display:block}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .top-status{font-size:11px;color:var(--t2);flex:1}
+    .top-cost{font-size:11px;color:var(--g);font-family:monospace}
+    .top-tokens{font-size:11px;color:var(--t2)}
+    .new-task-btn{padding:6px 14px;background:var(--s2);border:1px solid var(--bd);color:var(--t2);border-radius:6px;font-size:11px;cursor:pointer}
+    .new-task-btn:hover{border-color:var(--ac);color:var(--t1)}
+
+    /* Theatre (center) */
+    .theatre{display:flex;flex-direction:column;overflow:hidden;position:relative}
+    .theatre-tabs{display:flex;border-bottom:1px solid var(--bd);background:var(--s1)}
+    .theatre-tab{padding:10px 16px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent}
+    .theatre-tab.on{color:var(--ac2);border-bottom-color:var(--ac)}
+    .surface-view{flex:1;overflow:hidden;display:none}.surface-view.on{display:flex;flex-direction:column}
+    .activity-view{flex:1;overflow-y:auto;padding:12px;display:none}.activity-view.on{display:block}
+    .chat-view{flex:1;overflow-y:auto;padding:12px;display:none}.chat-view.on{display:block}
+
+    /* Surface rendering */
+    .surface-view{position:relative}
+    .surface-frame{flex:1;overflow:hidden;position:relative}
+    .surface-frame iframe{width:100%;height:100%;border:none}
+
+    /* Ghost Cursor overlay */
+    .ghost-cursor{position:absolute;z-index:30;pointer-events:none;transition:left .25s cubic-bezier(.4,0,.2,1),top .25s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+    .ghost-cursor svg{width:20px;height:20px}
+
+    /* Click ripple */
+    .click-ripple{position:absolute;z-index:20;pointer-events:none;transform:translate(-50%,-50%)}
+    .click-ripple .ring{position:absolute;inset:-8px;border:2px solid rgba(255,255,255,.7);border-radius:50%;animation:ripple-expand .6s cubic-bezier(.2,.8,.4,1) forwards}
+    .click-ripple .ring2{position:absolute;inset:-8px;border:1px solid rgba(255,255,255,.4);border-radius:50%;animation:ripple-expand2 .8s cubic-bezier(.2,.8,.4,1) forwards}
+    .click-ripple .flash{position:absolute;inset:-4px;background:rgba(255,255,255,.5);border-radius:50%;animation:ripple-flash .25s ease-out forwards}
+    @keyframes ripple-expand{from{transform:scale(1);opacity:1}to{transform:scale(4.5);opacity:0}}
+    @keyframes ripple-expand2{from{transform:scale(1);opacity:.6}to{transform:scale(7);opacity:0}}
+    @keyframes ripple-flash{from{transform:scale(1);opacity:.5}to{transform:scale(2.5);opacity:0}}
+
+    /* Scroll indicator */
+    .scroll-meter{position:absolute;right:6px;top:40px;bottom:40px;width:4px;background:rgba(255,255,255,.08);border-radius:2px;z-index:20;pointer-events:none}
+    .scroll-thumb{position:absolute;width:4px;height:24px;background:rgba(255,255,255,.4);border-radius:2px;transition:top .3s ease;left:0}
+    .scroll-label{position:absolute;right:12px;font-size:9px;color:rgba(255,255,255,.4);transition:top .3s ease;transform:translateY(-50%)}
+
+    /* Thought bubble / Narration */
+    .thought-bubble{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:40;pointer-events:none;animation:thought-anim 2.8s ease-in-out forwards}
+    .thought-pill{background:rgba(0,0,0,.82);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 14px;display:flex;align-items:center;gap:8px;white-space:nowrap;backdrop-filter:blur(8px)}
+    .thought-pill .dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.7)}
+    .thought-pill .text{font-size:11px;color:rgba(255,255,255,.85);font-weight:500}
+    @keyframes thought-anim{0%{opacity:0;transform:translateX(-50%) translateY(10px)}12%{opacity:1;transform:translateX(-50%) translateY(0)}75%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-6px)}}
+
+    /* Roadmap overlay */
+    .roadmap{position:absolute;top:12px;left:12px;z-index:20;pointer-events:none;display:flex;flex-direction:column;gap:3px}
+    .roadmap-step{display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:6px;font-size:10px;transition:all .3s ease}
+    .roadmap-step.done{background:rgba(255,255,255,.04);color:rgba(255,255,255,.35)}
+    .roadmap-step.done .step-dot{background:var(--g)}
+    .roadmap-step.active{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
+    .roadmap-step.active .step-dot{background:var(--ac2);animation:pulse 1.5s infinite}
+    .roadmap-step.pending{background:rgba(255,255,255,.02);color:rgba(255,255,255,.3)}
+    .roadmap-step.pending .step-dot{background:rgba(255,255,255,.2)}
+    .step-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+    /* Connector skin wrapper */
+    .skin-wrap{display:flex;flex-direction:column;height:100%}
+    .skin-bar{height:36px;display:flex;align-items:center;padding:0 14px;gap:8px;font-size:12px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.1)}
+    .skin-bar .brand{opacity:.7;font-size:10px;font-weight:400}
+    .skin-bar .status{margin-left:auto;font-size:10px;padding:2px 8px;border-radius:10px}
+    .skin-body{flex:1;overflow:auto}
+
+    /* Browser surface */
+    .s-browser{display:flex;flex-direction:column;height:100%;background:#fff}
+    .brow-bar{height:38px;background:#f1f3f4;display:flex;align-items:center;padding:0 12px;gap:8px;border-bottom:1px solid #ddd}
+    .brow-dots{display:flex;gap:5px}.brow-dots span{width:10px;height:10px;border-radius:50%}
+    .brow-url{flex:1;background:#fff;border:1px solid #ddd;border-radius:18px;padding:5px 14px;font-size:12px;color:#333}
+    .brow-body{flex:1;overflow-y:auto;padding:20px;font-size:13px;color:#333;line-height:1.7}
+    .brow-status{height:24px;background:#f1f3f4;border-top:1px solid #ddd;display:flex;align-items:center;padding:0 12px;font-size:10px;color:#666;gap:6px}
+    .brow-status .dot{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 1.5s infinite}
+
+    /* Search surface */
+    .s-search{display:flex;flex-direction:column;height:100%;background:#fff}
+    .srch-bar{padding:16px;background:#fff;border-bottom:1px solid #eee}
+    .srch-input{width:100%;padding:11px 14px 11px 38px;border:1px solid #ddd;border-radius:24px;font-size:14px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") 12px center no-repeat;color:#333}
+    .srch-results{flex:1;overflow-y:auto;padding:10px 16px}
+    .srch-r{padding:12px 0;border-bottom:1px solid #f0f0f0}.srch-r .u{font-size:12px;color:#1a73e8}.srch-r .t{font-size:15px;color:#1a0dab;font-weight:500;margin:2px 0}.srch-r .s{font-size:12px;color:#545454;line-height:1.5}
+
+    /* Editor surface */
+    .s-editor{display:flex;flex-direction:column;height:100%;background:#1e1e2e}
+    .ed-tabs{height:32px;background:#181825;display:flex;align-items:center;border-bottom:1px solid #313244}
+    .ed-tab{padding:4px 14px;font-size:11px;color:#cdd6f4;background:#1e1e2e;border-right:1px solid #313244;border-top:2px solid var(--ac);font-family:monospace}
+    .ed-body{flex:1;overflow-y:auto;padding:14px 16px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;line-height:1.7;color:#cdd6f4;white-space:pre-wrap}
+    .ed-status{height:24px;background:#181825;border-top:1px solid #313244;display:flex;align-items:center;padding:0 12px;font-size:10px;color:#585b70;gap:12px}
+    .ed-cursor{display:inline-block;width:2px;height:14px;background:#cba6f7;animation:blink .8s step-end infinite;vertical-align:text-bottom}
+    @keyframes blink{50%{opacity:0}}
+    .kw{color:#cba6f7}.str{color:#a6e3a1}.fn{color:#89b4fa}.cm{color:#585b70;font-style:italic}.num{color:#fab387}
+
+    /* Database surface */
+    .s-db{display:flex;flex-direction:column;height:100%;background:#fff}
+    .db-q{background:#1e1e2e;padding:10px 14px;font-family:monospace;font-size:12px;color:#89dceb;border-bottom:1px solid #ddd}
+    .db-tbl{flex:1;overflow:auto}
+    .db-tbl table{width:100%;border-collapse:collapse;font-size:12px}
+    .db-tbl th{background:#f8f9fa;color:#333;padding:8px 12px;text-align:left;border-bottom:2px solid #dee2e6;font-weight:600;position:sticky;top:0}
+    .db-tbl td{padding:7px 12px;border-bottom:1px solid #eee;color:#555}
+    .db-tbl tr:hover td{background:#f0f7ff}
+
+    /* Activity log */
+    .act-row{display:flex;align-items:flex-start;gap:10px;padding:6px 0;font-size:12px}
+    .act-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+    .act-agent{font-weight:600;font-size:11px}.act-detail{color:var(--t2);margin-top:1px;font-size:11px}
+    .act-time{font-size:9px;color:var(--t3);margin-left:auto;white-space:nowrap}
+
+    /* Handoff banner */
+    .ho-banner{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:4px 0;background:rgba(245,158,11,.06);border:1px dashed rgba(245,158,11,.25);border-radius:8px;font-size:11px;color:var(--am)}
+
+    /* Review card */
+    .rv-card{margin:6px 0;padding:10px 12px;border-radius:8px;font-size:12px}
+    .rv-card.approve{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2)}
+    .rv-card.revise{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2)}
+    .rv-verdict{font-weight:700;text-transform:uppercase;font-size:11px}
+    .rv-card.approve .rv-verdict{color:var(--g)}.rv-card.revise .rv-verdict{color:var(--am)}
+    .rv-score{font-size:20px;font-weight:700;margin-top:2px}
+    .rv-fb{color:var(--t2);margin-top:4px;line-height:1.4}
+    .rv-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+    .rv-tag{font-size:9px;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:8px;color:var(--t2)}
+
+    /* Chat bubbles */
+    .ch-bubble{display:flex;gap:10px;padding:8px 0}
+    .ch-av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+    .ch-body{flex:1;min-width:0}
+    .ch-meta{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+    .ch-name{font-size:11px;font-weight:600}
+    .ch-int{font-size:8px;padding:1px 6px;border-radius:6px;font-weight:500}
+    .ch-int.propose{background:rgba(59,130,246,.15);color:var(--b)}.ch-int.challenge{background:rgba(239,68,68,.15);color:var(--r)}.ch-int.agree{background:rgba(34,197,94,.15);color:var(--g)}.ch-int.summarize{background:rgba(124,58,237,.15);color:var(--ac2)}.ch-int.delegate{background:rgba(245,158,11,.15);color:var(--am)}
+    .ch-time{font-size:9px;color:var(--t3);margin-left:auto}
+    .ch-think{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12);border-radius:6px;padding:5px 8px;font-size:10px;font-style:italic;color:var(--am);margin-bottom:4px;line-height:1.4}
+    .ch-text{font-size:12px;color:var(--t2);line-height:1.5}
+    .ch-text strong{color:var(--t1)}
+
+    /* Right panel */
+    .right{background:var(--s1);border-left:1px solid var(--bd);display:flex;flex-direction:column}
+    .right-head{padding:10px 14px;border-bottom:1px solid var(--bd);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);font-weight:600;display:flex;align-items:center;gap:8px}
+    .agents-list{padding:8px 14px;border-bottom:1px solid var(--bd)}
+    .ag-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+    .ag-av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px}
+    .ag-info{flex:1}.ag-name{font-size:11px;font-weight:600}.ag-role{font-size:9px;color:var(--t3)}
+    .ag-status{font-size:9px;color:var(--ac2);font-style:italic}
+    .events-log{flex:1;overflow-y:auto;padding:8px 14px}
+    .ev-row{display:flex;gap:6px;padding:3px 0;font-size:10px;border-left:2px solid transparent;padding-left:6px}
+    .ev-row.t-message{border-left-color:var(--b)}.ev-row.t-handoff{border-left-color:var(--am)}.ev-row.t-review{border-left-color:var(--g)}.ev-row.t-event{border-left-color:var(--tl)}.ev-row.t-capabilities{border-left-color:var(--ac)}.ev-row.t-artifact{border-left-color:var(--ac2)}
+    .ev-type{font-size:8px;padding:1px 4px;border-radius:3px;font-weight:700;text-transform:uppercase;flex-shrink:0}
+    .ev-type.message{background:rgba(59,130,246,.15);color:var(--b)}.ev-type.handoff{background:rgba(245,158,11,.15);color:var(--am)}.ev-type.review{background:rgba(34,197,94,.15);color:var(--g)}.ev-type.event{background:rgba(20,184,166,.15);color:var(--tl)}.ev-type.capabilities{background:rgba(124,58,237,.15);color:var(--ac)}.ev-type.artifact{background:rgba(167,139,250,.15);color:var(--ac2)}
+    .ev-txt{color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* Bottom — task input */
+    .bottom{grid-column:1/-1;background:var(--s1);border-top:1px solid var(--bd);display:flex;align-items:center;padding:0 16px;gap:10px}
+    .task-input{flex:1;background:var(--s2);border:1px solid var(--bd);color:var(--t1);border-radius:10px;padding:12px 16px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+    .task-input:focus{border-color:var(--ac)}
+    .task-input::placeholder{color:var(--t3)}
+    .run-btn{padding:10px 24px;background:var(--ac);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
+    .run-btn:hover{background:#6d28d9}
+    .run-btn:disabled{background:var(--s3);color:var(--t3);cursor:not-allowed}
+
+    /* Loading */
+    .spinner{width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<!-- Setup screen -->
+<div class="setup-overlay" id="setup">
+  <div class="setup-card">
+    <h1>maia<span>.live</span></h1>
+    <div class="sub">Real multi-agent orchestration — powered by your LLM.</div>
+
+    <label>LLM Provider</label>
+    <select id="cfg-provider" onchange="updateModelOptions()">
+      <option value="openai">OpenAI</option>
+      <option value="anthropic">Anthropic</option>
+    </select>
+
+    <label>API Key</label>
+    <input id="cfg-key" type="password" placeholder="sk-... or sk-ant-..." />
+    <div class="hint">Stored locally in your browser. Never sent to our servers.</div>
+
+    <label>Model</label>
+    <select id="cfg-model">
+      <option value="gpt-4o-mini">GPT-4o Mini (fast, cheap)</option>
+      <option value="gpt-4o">GPT-4o (best quality)</option>
+    </select>
+
+    <label>Connectors (optional — shown as skins in Theatre)</label>
+    <div class="conn-grid" id="conn-grid"></div>
+
+    <!-- Research settings configured in code, not UI. See server.js -->
+
+    <button class="start-btn" id="start-btn" onclick="startApp()">Launch Demo</button>
+  </div>
+</div>
+
+<!-- Main app -->
+<div class="app hidden" id="main-app">
+  <div class="top">
+    <div class="logo">maia<span>.live</span></div>
+    <div class="live-dot" id="live-dot"></div>
+    <div class="top-status" id="top-status">Ready</div>
+    <div class="top-cost" id="top-cost">$0.0000</div>
+    <div class="top-tokens" id="top-tokens">0 tokens</div>
+    <button class="new-task-btn" onclick="document.getElementById('setup').style.display='flex'">Settings</button>
+  </div>
+
+  <!-- Theatre -->
+  <div class="theatre">
+    <div class="theatre-tabs">
+      <div class="theatre-tab on" onclick="switchTheatre(this,'surface')">Surface</div>
+      <div class="theatre-tab" onclick="switchTheatre(this,'activity')">Activity</div>
+      <div class="theatre-tab" onclick="switchTheatre(this,'teamchat')">Team Chat</div>
+    </div>
+    <div class="surface-view on" id="v-surface">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t3);gap:8px">
+        <div style="font-size:48px;opacity:.3">🎭</div>
+        <p style="font-size:13px">Type a task below and press Run</p>
+        <p style="font-size:11px">Agents will show their work here — browser, code, data, search</p>
+      </div>
+    </div>
+    <div class="activity-view" id="v-activity"></div>
+    <div class="chat-view" id="v-teamchat"></div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="right">
+    <div class="right-head">Agents</div>
+    <div class="agents-list" id="agents-list"></div>
+    <div class="right-head">Events <span style="margin-left:auto;font-size:9px;font-weight:400" id="ev-count">0</span></div>
+    <div class="events-log" id="events-log"></div>
+  </div>
+
+  <!-- Bottom — task bar -->
+  <div class="bottom">
+    <input class="task-input" id="task-input" placeholder="Ask anything — e.g. 'Compare React vs Vue for a startup'" autofocus />
+    <button class="run-btn" id="run-btn" onclick="runTask()">Run ▶</button>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────
+let config = { provider:'openai', apiKey:'', model:'gpt-4o-mini', connectors:[] };
+let running = false;
+let totalCost = 0, totalTokens = 0, evtCount = 0;
+
+const CONNECTORS = [
+  {id:'gmail',name:'Gmail',emoji:'📧',color:'#EA4335'},
+  {id:'slack',name:'Slack',emoji:'💬',color:'#4A154B'},
+  {id:'github',name:'GitHub',emoji:'🐙',color:'#333'},
+  {id:'jira',name:'Jira',emoji:'🔷',color:'#0052CC'},
+  {id:'notion',name:'Notion',emoji:'📝',color:'#000'},
+  {id:'stripe',name:'Stripe',emoji:'💳',color:'#635BFF'},
+  {id:'salesforce',name:'Salesforce',emoji:'☁️',color:'#00A1E0'},
+  {id:'google_drive',name:'Drive',emoji:'📁',color:'#0F9D58'},
+  {id:'linear',name:'Linear',emoji:'🔮',color:'#5E6AD2'},
+  {id:'hubspot',name:'HubSpot',emoji:'🟠',color:'#FF7A59'},
+];
+
+const AGENTS = {};
+const SKINS = {};
+
+// ── Setup ─────────────────────────────────────────────────────────────────
+function initSetup(){
+  const grid = document.getElementById('conn-grid');
+  CONNECTORS.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'conn-chip';
+    chip.textContent = c.emoji + ' ' + c.name;
+    chip.dataset.id = c.id;
+    chip.onclick = () => { chip.classList.toggle('on'); };
+    grid.appendChild(chip);
+  });
+}
+
+function updateModelOptions(){
+  const p = document.getElementById('cfg-provider').value;
+  const m = document.getElementById('cfg-model');
+  if(p === 'openai'){
+    m.innerHTML = '<option value="gpt-4o-mini">GPT-4o Mini (fast, cheap)</option><option value="gpt-4o">GPT-4o (best quality)</option>';
+  } else {
+    m.innerHTML = '<option value="claude-sonnet-4-20250514">Claude Sonnet 4 (balanced)</option><option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (fast)</option>';
+  }
+}
+
+function startApp(){
+  config.provider = document.getElementById('cfg-provider').value;
+  config.apiKey = document.getElementById('cfg-key').value.trim();
+  config.model = document.getElementById('cfg-model').value;
+  config.connectors = [...document.querySelectorAll('.conn-chip.on')].map(c => c.dataset.id);
+  // Research config is set in code, not UI — Brain decides automatically
+  config.research = { depth: 0, searchCount: 0, preferSources: [], blockSources: [] };
+
+  if(!config.apiKey){alert('Please enter your API key');return;}
+
+  // Store connector skins
+  config.connectors.forEach(id => {
+    const c = CONNECTORS.find(x => x.id === id);
+    if(c) SKINS[id] = c;
+  });
+
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('main-app').classList.remove('hidden');
+  document.getElementById('task-input').focus();
+}
+
+// ── Run task ──────────────────────────────────────────────────────────────
+async function runTask(){
+  const task = document.getElementById('task-input').value.trim();
+  if(!task || running) return;
+
+  running = true;
+  totalCost = 0; totalTokens = 0; evtCount = 0;
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('run-btn').innerHTML = '<span class="spinner"></span> Running...';
+  document.getElementById('live-dot').classList.add('on');
+  document.getElementById('top-status').textContent = 'Running...';
+  clearPanels();
+
+  try {
+    const resp = await fetch('/api/run', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ task, apiKey:config.apiKey, provider:config.provider, model:config.model, connectors:config.connectors, research:config.research }),
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      buffer += decoder.decode(value, {stream:true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for(const line of lines){
+        const t = line.trim();
+        if(!t || !t.startsWith('data: ')) continue;
+        const d = t.slice(6);
+        if(d === '[DONE]') break;
+        try {
+          const event = JSON.parse(d);
+          if(event.type === 'done'){
+            totalCost = event.totalCost || totalCost;
+            totalTokens = event.totalTokens || totalTokens;
+            continue;
+          }
+          handleEvent(event);
+        } catch{}
+      }
+    }
+  } catch(err) {
+    document.getElementById('top-status').textContent = 'Error: ' + err.message;
+    showSurfaceHTML('<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--r);gap:12px"><div style="font-size:36px">❌</div><div style="font-size:14px;font-weight:600">Error</div><div style="font-size:12px;color:var(--t2);max-width:400px;text-align:center">' + esc(err.message || 'Unknown error') + '</div><div style="font-size:11px;color:var(--t3)">Check your API key and try again</div></div>');
+  }
+
+  running = false;
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('run-btn').innerHTML = 'Run ▶';
+  document.getElementById('live-dot').classList.remove('on');
+  document.getElementById('top-status').textContent = 'Done';
+  updateCosts();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('task-input').addEventListener('keydown', e => {
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); runTask(); }
+  });
+});
+
+// ── Event handler ─────────────────────────────────────────────────────────
+function handleEvent(e){
+  evtCount++;
+  document.getElementById('ev-count').textContent = evtCount;
+
+  // Log to events panel
+  logEvent(e);
+
+  // Route by type
+  switch(e.event_type){
+    case 'capabilities': onCaps(e); break;
+    case 'message': onMessage(e); break;
+    case 'handoff': onHandoff(e); break;
+    case 'event': onActivity(e); break;
+    case 'review': onReview(e); break;
+    case 'artifact': onArtifact(e); break;
+  }
+
+  // Update cost from event
+  if(e.payload?.cost){
+    totalCost += e.payload.cost.cost_usd || 0;
+    totalTokens += e.payload.cost.tokens_used || 0;
+  }
+  updateCosts();
+}
+
+function updateCosts(){
+  document.getElementById('top-cost').textContent = '$' + totalCost.toFixed(4);
+  document.getElementById('top-tokens').textContent = totalTokens.toLocaleString() + ' tokens';
+}
+
+// ── Event log ─────────────────────────────────────────────────────────────
+function logEvent(e){
+  const a = AGENTS[e.agent_id] || {name:e.agent_id.split('://')[1],emoji:'🤖',color:'#666'};
+  const row = document.createElement('div');
+  row.className = 'ev-row t-' + e.event_type;
+  row.innerHTML = `<span class="ev-type ${e.event_type}">${e.event_type}</span><span class="ev-txt">${summEvent(e)}</span>`;
+  const log = document.getElementById('events-log');
+  log.appendChild(row);
+  log.scrollTop = 1e6;
+}
+
+function summEvent(e){
+  const p = e.payload;
+  if(e.event_type==='message') return `${(AGENTS[p.to]||{name:'?'}).name}: ${(p.content||'').slice(0,60)}`;
+  if(e.event_type==='handoff') return `→ ${(AGENTS[p.to]||{name:'?'}).name}: ${(p.task?.description||'').slice(0,50)}`;
+  if(e.event_type==='review') return `${p.verdict} (${((p.score||0)*100).toFixed(0)}%)`;
+  if(e.event_type==='event') return `${p.activity}: ${(p.detail||'').slice(0,50)}`;
+  if(e.event_type==='capabilities') return `${p.name} joined`;
+  if(e.event_type==='artifact') return p.title;
+  return '';
+}
+
+// ── Capabilities ──────────────────────────────────────────────────────────
+function onCaps(e){
+  const p = e.payload;
+  AGENTS[e.agent_id] = { name:p.name, emoji:p.personality?.avatar_emoji||'🤖', color:agentColor(p.role), role:p.role };
+  renderAgents();
+}
+
+function agentColor(role){
+  const m = {orchestrator:'#8B5CF6',researcher:'#3B82F6',analyst:'#10B981',writer:'#F59E0B'};
+  return m[role] || '#666';
+}
+
+function renderAgents(){
+  const list = document.getElementById('agents-list');
+  list.innerHTML = '';
+  for(const [id, a] of Object.entries(AGENTS)){
+    const row = document.createElement('div');
+    row.className = 'ag-row';
+    row.innerHTML = `<div class="ag-av" style="background:${a.color}20">${a.emoji}</div><div class="ag-info"><div class="ag-name" style="color:${a.color}">${a.name}</div><div class="ag-role">${a.role}</div>${a.currentStatus ? `<div class="ag-status" style="color:${a.color};opacity:.7">${a.currentStatus}</div>` : ''}</div>`;
+    list.appendChild(row);
+  }
+}
+
+// ── Messages → TeamChat ───────────────────────────────────────────────────
+function onMessage(e){
+  const a = AGENTS[e.agent_id] || {emoji:'🤖',color:'#666',name:'Agent'};
+  const p = e.payload;
+  const el = document.createElement('div');
+  el.className = 'ch-bubble';
+  el.innerHTML = `
+    <div class="ch-av" style="background:${a.color}20">${a.emoji}</div>
+    <div class="ch-body">
+      <div class="ch-meta">
+        <span class="ch-name" style="color:${a.color}">${a.name}</span>
+        <span class="ch-int ${p.intent||'propose'}">${p.intent||'propose'}</span>
+        <span class="ch-time">${fmtTime()}</span>
+      </div>
+      ${p.thinking ? `<div class="ch-think">💡 ${p.thinking}</div>` : ''}
+      <div class="ch-text">${md(p.content||'')}</div>
+    </div>`;
+  document.getElementById('v-teamchat').appendChild(el);
+  document.getElementById('v-teamchat').scrollTop = 1e6;
+  autoSwitchTab('teamchat');
+}
+
+// ── Handoff ───────────────────────────────────────────────────────────────
+function onHandoff(e){
+  const p = e.payload;
+  const f = AGENTS[p.from]||{name:'?',emoji:'→'}, t = AGENTS[p.to]||{name:'?',emoji:'→'};
+
+  // Activity panel
+  addActivityRow(p.from, '→', `Handoff to ${t.name}: ${p.task?.description||''}`);
+
+  // Chat panel
+  const el = document.createElement('div');
+  el.className = 'ho-banner';
+  el.innerHTML = `${f.emoji} <b>${f.name}</b> → ${t.emoji} <b>${t.name}</b> — ${p.task?.description||''}`;
+  document.getElementById('v-teamchat').appendChild(el);
+  document.getElementById('v-teamchat').scrollTop = 1e6;
+
+  // Update status
+  document.getElementById('top-status').textContent = `${t.name} working...`;
+}
+
+// ── Activity → Theatre surface + activity log ─────────────────────────────
+function onActivity(e){
+  const p = e.payload;
+
+  // Handle rich interaction events
+  if(p.activity === 'cost_update' && p.cost) { return; } // cost handled by handleEvent
+  if(p.activity === 'cursor' && p.cursor) { moveCursor(p.cursor.x, p.cursor.y, p.cursor.isClick); return; }
+  if(p.activity === 'scroll' && p.scroll) { updateScroll(p.scroll.percent, p.scroll.direction); return; }
+  if(p.activity === 'narration' && p.narration) { showNarration(p.narration); return; }
+  if(p.activity === 'roadmap' && p.roadmap) { showRoadmap(p.roadmap.steps, p.roadmap.activeIndex); return; }
+
+  const icons = {searching:'🔍',browsing:'🌐',thinking:'🤔',analyzing:'📊',writing:'✍️',reviewing:'🔎',coding:'💻',querying:'📊',emailing:'📧',executing:'⬛',planning:'📋',error:'❌'};
+  addActivityRow(e.agent_id, icons[p.activity]||'⚡', p.detail || p.activity);
+  document.getElementById('top-status').textContent = `${(AGENTS[e.agent_id]||{name:'Agent'}).name}: ${p.activity}`;
+  if(p.surface) { renderSurface(e.agent_id, p.surface); autoSwitchTab('surface'); }
+
+  // Update agent status in sidebar
+  updateAgentStatus(e.agent_id, p.activity || p.detail || '');
+}
+
+// Ghost Cursor
+function moveCursor(x, y, isClick) {
+  const stage = document.getElementById('v-surface');
+  let cursor = stage.querySelector('.ghost-cursor');
+  if (!cursor) {
+    cursor = document.createElement('div');
+    cursor.className = 'ghost-cursor';
+    cursor.innerHTML = '<svg viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="1"><path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 01.35-.15h6.87a.5.5 0 00.35-.85L6.35 2.86a.5.5 0 00-.85.35z"/></svg>';
+    stage.appendChild(cursor);
+  }
+  cursor.style.left = x + '%';
+  cursor.style.top = y + '%';
+  if (isClick) {
+    const ripple = document.createElement('div');
+    ripple.className = 'click-ripple';
+    ripple.style.left = x + '%';
+    ripple.style.top = y + '%';
+    ripple.innerHTML = '<div class="ring"></div><div class="ring2"></div><div class="flash"></div>';
+    stage.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 900);
+  }
+}
+
+// Scroll Indicator
+function updateScroll(percent) {
+  const stage = document.getElementById('v-surface');
+  let meter = stage.querySelector('.scroll-meter');
+  if (!meter) {
+    meter = document.createElement('div');
+    meter.className = 'scroll-meter';
+    meter.innerHTML = '<div class="scroll-thumb"></div><div class="scroll-label"></div>';
+    stage.appendChild(meter);
+  }
+  const thumb = meter.querySelector('.scroll-thumb');
+  const label = meter.querySelector('.scroll-label');
+  const trackH = meter.offsetHeight || 400;
+  const pos = Math.max(0, Math.min(100, percent));
+  thumb.style.top = (pos / 100 * (trackH - 24)) + 'px';
+  label.style.top = (pos / 100 * (trackH - 24) + 12) + 'px';
+  label.textContent = Math.round(pos) + '%';
+}
+
+// Thought Bubble / Narration
+function showNarration(text) {
+  const stage = document.getElementById('v-surface');
+  const old = stage.querySelector('.thought-bubble');
+  if (old) old.remove();
+  const bubble = document.createElement('div');
+  bubble.className = 'thought-bubble';
+  bubble.innerHTML = '<div class="thought-pill"><div class="dot"></div><div class="text">' + text + '</div></div>';
+  stage.appendChild(bubble);
+  setTimeout(() => bubble.remove(), 2800);
+}
+
+// Roadmap Overlay
+function showRoadmap(steps, activeIndex) {
+  const stage = document.getElementById('v-surface');
+  let roadmap = stage.querySelector('.roadmap');
+  if (!roadmap) { roadmap = document.createElement('div'); roadmap.className = 'roadmap'; stage.appendChild(roadmap); }
+  roadmap.innerHTML = steps.map((s, i) => {
+    const state = i < activeIndex ? 'done' : i === activeIndex ? 'active' : 'pending';
+    return '<div class="roadmap-step ' + state + '"><div class="step-dot"></div>' + s.title + '</div>';
+  }).join('');
+}
+
+function addActivityRow(agentId, icon, detail){
+  const a = AGENTS[agentId] || {emoji:'🤖',color:'#666',name:'Agent'};
+  const el = document.createElement('div');
+  el.className = 'act-row';
+  el.innerHTML = `<div class="act-icon" style="background:${a.color}15;color:${a.color}">${icon}</div><div><div class="act-agent" style="color:${a.color}">${a.name}</div><div class="act-detail">${detail}</div></div><span class="act-time">${fmtTime()}</span>`;
+  document.getElementById('v-activity').appendChild(el);
+  document.getElementById('v-activity').scrollTop = 1e6;
+}
+
+// ── Review ────────────────────────────────────────────────────────────────
+function onReview(e){
+  const p = e.payload;
+  const ok = p.verdict === 'approve';
+
+  // Activity panel
+  const el = document.createElement('div');
+  el.className = `rv-card ${p.verdict}`;
+  el.innerHTML = `<div class="rv-verdict">${ok?'✅':'⚠️'} ${p.verdict}</div><div class="rv-score">${((p.score||0)*100).toFixed(0)}%</div><div class="rv-fb">${p.feedback||''}</div><div class="rv-tags">${(p.strengths||[]).map(s=>`<span class="rv-tag">${s}</span>`).join('')}</div>`;
+  document.getElementById('v-activity').appendChild(el);
+
+  // Chat panel
+  const ch = document.createElement('div');
+  ch.className = 'ch-rv';
+  ch.style.cssText = `padding:8px 12px;margin:4px 0;background:${ok?'rgba(34,197,94,.06)':'rgba(245,158,11,.06)'};border:1px solid ${ok?'rgba(34,197,94,.2)':'rgba(245,158,11,.2)'};border-radius:6px;font-size:11px`;
+  ch.innerHTML = `${ok?'✅':'⚠️'} <b>${p.verdict.toUpperCase()}</b> (${((p.score||0)*100).toFixed(0)}%) — ${p.feedback||''}`;
+  document.getElementById('v-teamchat').appendChild(ch);
+
+  // Show in surface
+  showSurfaceHTML(`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:var(--s1);gap:12px">
+    <div style="font-size:48px">${ok?'✅':'⚠️'}</div>
+    <div style="font-size:36px;font-weight:700;color:${ok?'var(--g)':'var(--am)'}">${((p.score||0)*100).toFixed(0)}%</div>
+    <div style="font-size:16px;font-weight:600;color:var(--t1)">${p.verdict.toUpperCase()}</div>
+    <div style="font-size:13px;color:var(--t2);max-width:400px;text-align:center;line-height:1.5">${p.feedback||''}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px">${(p.strengths||[]).map(s=>`<span style="font-size:10px;background:rgba(255,255,255,.06);padding:3px 10px;border-radius:12px;color:var(--t2)">${s}</span>`).join('')}</div>
+  </div>`);
+}
+
+// ── Artifact ──────────────────────────────────────────────────────────────
+function onArtifact(e){
+  const p = e.payload;
+  addActivityRow(e.agent_id, '📄', `Artifact: ${p.title}`);
+
+  // Show as editor surface
+  renderSurface(e.agent_id, { type:'editor', title:p.title, content:p.content });
+}
+
+// ── Surface renderer ──────────────────────────────────────────────────────
+function renderSurface(agentId, surface){
+  const a = AGENTS[agentId] || {name:'Agent',emoji:'🤖',color:'#666'};
+  const type = surface.type;
+
+  // Find matching connector skin
+  let skin = null;
+  if(type === 'search') skin = SKINS['google_drive'] ? null : null; // search has its own look
+  // Try to match by activity
+  for(const [id, s] of Object.entries(SKINS)){
+    if(type === 'email' && id === 'gmail'){ skin = s; break; }
+    if(type === 'kanban' && (id === 'jira' || id === 'linear')){ skin = s; break; }
+    if(type === 'browser' && id === 'github'){ skin = s; break; }
+  }
+
+  let html = '';
+
+  if(type === 'search'){
+    const results = (surface.results||[]).map(r => `<div class="srch-r"><div class="u">${esc(r.url)}</div><div class="t">${esc(r.title)}</div><div class="s">${esc(r.snippet)}</div></div>`).join('');
+    html = `<div class="s-search"><div class="srch-bar"><input class="srch-input" value="${esc(surface.query||'')}" readonly /></div><div class="srch-results">${results}</div></div>`;
+  }
+
+  else if(type === 'browser'){
+    if(surface.screenshot) {
+      // Real screenshot from Playwright
+      html = `<div class="s-browser"><div class="brow-bar"><div class="brow-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#22c55e"></span></div><div class="brow-url">${esc(surface.url||'')}</div></div><div style="flex:1;overflow:hidden;position:relative"><img src="${surface.screenshot}" style="width:100%;display:block" /></div><div class="brow-status"><div class="dot"></div>${a.name} is browsing live</div></div>`;
+    } else {
+      const content = md(surface.content || 'Loading...');
+      html = `<div class="s-browser"><div class="brow-bar"><div class="brow-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#22c55e"></span></div><div class="brow-url">${esc(surface.url||'')}</div></div><div class="brow-body">${content}</div><div class="brow-status"><div class="dot"></div>${a.name} is reading</div></div>`;
+    }
+  }
+
+  else if(type === 'editor'){
+    const lines = (surface.content||'').split('\n').map((l,i) => `<span style="color:#585b70;user-select:none;display:inline-block;width:32px;text-align:right;margin-right:12px">${i+1}</span>${colorize(esc(l))}`).join('\n');
+    html = `<div class="s-editor"><div class="ed-tabs"><div class="ed-tab">${esc(surface.title||'output.md')}</div></div><div class="ed-body">${lines}<span class="ed-cursor"></span></div><div class="ed-status"><span>Ln ${(surface.content||'').split('\n').length}</span><span>${a.name} editing</span></div></div>`;
+  }
+
+  else if(type === 'database'){
+    html = `<div class="s-db"><div class="db-q">${esc(surface.query||surface.content||'')}</div><div style="flex:1;overflow:auto;padding:16px;font-size:13px;color:#333;line-height:1.6;background:#fff">${md(surface.content||'')}</div></div>`;
+  }
+
+  else {
+    html = `<div style="padding:20px;font-size:13px;color:var(--t2);line-height:1.6">${md(surface.content||JSON.stringify(surface,null,2))}</div>`;
+  }
+
+  // Wrap with connector skin if available
+  if(skin){
+    html = `<div class="skin-wrap">
+      <div class="skin-bar" style="background:${skin.color}18;color:${skin.color}">
+        ${skin.emoji} ${skin.name} <span class="brand">via Maia</span>
+        <span class="status" style="background:${skin.color}20;color:${skin.color}">Live</span>
+      </div>
+      <div class="skin-body">${html}</div>
+    </div>`;
+  }
+
+  showSurfaceHTML(html);
+}
+
+function showSurfaceHTML(html){
+  const stage = document.getElementById('v-surface');
+  // Preserve overlay elements (cursor, scroll, narration, roadmap)
+  const overlays = [];
+  stage.querySelectorAll('.ghost-cursor,.scroll-meter,.thought-bubble,.roadmap,.click-ripple').forEach(el => {
+    overlays.push(el);
+    el.remove();
+  });
+  stage.innerHTML = html;
+  overlays.forEach(el => stage.appendChild(el));
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function md(s){
+  return esc(s)
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^### (.+)$/gm,'<h3 style="font-size:14px;font-weight:600;margin:12px 0 4px">$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2 style="font-size:16px;font-weight:700;margin:14px 0 6px">$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1 style="font-size:18px;font-weight:700;margin:16px 0 8px">$1</h1>')
+    .replace(/^- (.+)$/gm,'<div style="padding-left:16px">• $1</div>')
+    .replace(/^\d+\. (.+)$/gm,'<div style="padding-left:16px">$&</div>')
+    .replace(/\n/g,'<br>');
+}
+function colorize(line){
+  return line.replace(/\/\/.*/g,'<span class="cm">$&</span>').replace(/\b(import|from|export|const|let|function|return|if|else|async|await|new|class|interface|type)\b/g,'<span class="kw">$&</span>').replace(/&#x27;[^&]*&#x27;|&quot;[^&]*&quot;/g,'<span class="str">$&</span>').replace(/\b(\d+\.?\d*)\b/g,'<span class="num">$&</span>');
+}
+function fmtTime(){ const d=new Date(); return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0'); }
+
+function switchTheatre(el, view){
+  document.querySelectorAll('.theatre-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  ['surface','activity','teamchat'].forEach(v => {
+    document.getElementById('v-'+v).classList.toggle('on', v===view);
+  });
+}
+
+// Smart tab switching — auto-switch to the relevant tab
+let lastTabSwitch = 0;
+function autoSwitchTab(tab) {
+  const now = Date.now();
+  // Don't switch too fast (debounce 800ms) and don't interrupt manual tab choice
+  if (now - lastTabSwitch < 800) return;
+  lastTabSwitch = now;
+  const tabs = document.querySelectorAll('.theatre-tab');
+  const views = { surface: 0, activity: 1, teamchat: 2 };
+  tabs.forEach(t => t.classList.remove('on'));
+  tabs[views[tab] || 0].classList.add('on');
+  ['surface', 'activity', 'teamchat'].forEach(v => {
+    document.getElementById('v-' + v).classList.toggle('on', v === tab);
+  });
+}
+
+// Update agent status in sidebar
+function updateAgentStatus(agentId, status) {
+  const a = AGENTS[agentId];
+  if (!a) return;
+  a.currentStatus = status;
+  renderAgents();
+}
+
+function clearPanels(){
+  document.getElementById('v-surface').innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t3);gap:8px"><div class="spinner" style="width:24px;height:24px"></div><p style="font-size:12px">Starting agents...</p></div>';
+  document.getElementById('v-activity').innerHTML = '';
+  document.getElementById('v-teamchat').innerHTML = '';
+  document.getElementById('events-log').innerHTML = '';
+  document.getElementById('agents-list').innerHTML = '';
+  Object.keys(AGENTS).forEach(k => delete AGENTS[k]);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+initSetup();
+</script>
+</body>
+</html>

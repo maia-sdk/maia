@@ -1,5 +1,10 @@
 # Maia
 
+[![CI](https://github.com/maia-sdk/maia/actions/workflows/ci.yml/badge.svg)](https://github.com/maia-sdk/maia/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@maia/sdk?label=npm)](https://www.npmjs.com/package/@maia/sdk)
+[![PyPI](https://img.shields.io/pypi/v/maia-sdk?label=pypi)](https://pypi.org/project/maia-sdk/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 > The collaboration and observability layer for AI agents.
 
 Build AI agent teams that talk to each other, watch them work live, and ship with confidence.
@@ -17,7 +22,7 @@ pip install maia-sdk     # Python
 import { Brain } from '@maia/brain';
 
 const brain = new Brain({
-  agents: [],  // Brain auto-assembles from 27 built-in roles
+  agents: [],  // empty = Brain picks from 27 built-in roles during planning
   llm: { apiKey: process.env.OPENAI_API_KEY },
 });
 
@@ -28,7 +33,7 @@ console.log(result.totalCostUsd); // $0.0234
 console.log(result.steps);        // 3 steps: researcher → analyst → writer
 ```
 
-Brain auto-picks the right agents, they discuss and challenge each other's work, Brain reviews every output, and you get a polished result.
+When `agents` is empty, the planner selects roles from the built-in catalog at plan time. The selected agents discuss and challenge each other's work, Brain reviews every output, and you get a polished result. Pass explicit `AgentDefinition[]` to override.
 
 ## Watch Agents Work
 
@@ -319,6 +324,45 @@ MCP  →  Tools       (Anthropic — how agents use tools)
 ACP  →  Agents      (Maia — how agents talk to each other)
 AG-UI → UI          (CopilotKit — how agents stream to frontends)
 ```
+
+## Contributing
+
+```bash
+git clone https://github.com/maia-sdk/maia.git && cd maia
+```
+
+### JavaScript / TypeScript
+
+```bash
+npm install          # or: pnpm install
+npm run build        # builds all packages (workspace order)
+npm test             # runs all tests
+npm run lint         # lints all packages
+```
+
+Build order: `@maia/acp` → `@maia/theatre`, `@maia/teamchat`, `@maia/brain`, ... → `@maia/sdk`
+
+### Python
+
+```bash
+pip install -e packages/acp-py               # core protocol
+pip install -e packages/connector-adapters    # framework adapters
+pip install -e packages/sdk-py               # bundle (depends on acp)
+pip install -e packages/cli-py               # CLI (depends on sdk)
+python test_sdk.py                           # run tests
+```
+
+Install order matters — `acp-py` first, then `sdk-py`, then `cli-py`.
+
+### Both at once
+
+```bash
+make install   # JS + Python
+make build     # JS + Python wheels
+make test      # JS + Python tests
+```
+
+Run `make help` for all targets.
 
 ## Open Source
 

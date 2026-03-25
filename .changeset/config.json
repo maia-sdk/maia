@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+  "changelog": "@changesets/changelog-github",
+  "commit": false,
+  "fixed": [],
+  "linked": [
+    ["@maia/acp", "@maia/brain", "@maia/theatre", "@maia/teamchat", "@maia/sdk", "@maia/connectors", "@maia/computer-use", "@maia/cli"]
+  ],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

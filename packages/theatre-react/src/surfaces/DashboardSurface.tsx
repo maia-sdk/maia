@@ -1,81 +1,52 @@
 /**
- * DashboardSurface — charts, KPI cards, metrics.
- * Shows when agents work with Google Analytics, BigQuery, data analysis.
+ * DashboardSurface — KPI cards and metrics in Theatre.
+ * 2-column grid, large values, change arrows, bar visualizations.
  */
-import React from "react";
-import type { SurfaceState, DashboardWidget } from "./types";
+import type { SurfaceState } from "./types";
 
 export function DashboardSurface({ surface }: { surface: SurfaceState }) {
-  const widgets = surface.dashboardWidgets ?? [];
+  const widgets = surface.dashboardWidgets || [];
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
-      {/* Header */}
-      <div className="flex items-center gap-2 border-b border-gray-100 bg-white px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
-        <span className="text-[14px]">{"\uD83D\uDCCA"}</span>
-        <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">
-          {surface.title || "Dashboard"}
-        </span>
+      <div className="flex items-center gap-2 border-b border-gray-100 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+        <svg className="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">{surface.title || "Dashboard"}</span>
+        <span className="ml-auto text-[10px] text-gray-400">{surface.agentName}</span>
       </div>
 
-      {/* Widgets grid */}
-      <div className="flex-1 overflow-auto p-4">
-        {widgets.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-[13px] text-gray-400">
-            Loading dashboard...
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {widgets.map((w, i) => <WidgetCard key={i} widget={w} />)}
-          </div>
-        )}
-      </div>
-
-      {/* Status */}
-      <div className="border-t border-gray-100 bg-white px-3 py-1 dark:border-gray-700 dark:bg-gray-800">
-        <span className="text-[11px] text-gray-400">{surface.agentName} {surface.status || "is analyzing"}</span>
-      </div>
-    </div>
-  );
-}
-
-function WidgetCard({ widget }: { widget: DashboardWidget }) {
-  if (widget.type === "kpi") {
-    const arrow = widget.direction === "up" ? "\u2191" : widget.direction === "down" ? "\u2193" : "";
-    const color = widget.direction === "up" ? "text-green-600" : widget.direction === "down" ? "text-red-600" : "text-gray-500";
-    return (
-      <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
-        <div className="text-[11px] text-gray-500">{widget.title}</div>
-        <div className="mt-1 text-[22px] font-bold text-gray-900 dark:text-gray-100">{widget.value}</div>
-        {widget.change && <div className={`mt-0.5 text-[12px] ${color}`}>{arrow} {widget.change}</div>}
-      </div>
-    );
-  }
-
-  if (widget.type === "bar" || widget.type === "line") {
-    const data = widget.data ?? [];
-    const max = Math.max(...data, 1);
-    return (
-      <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
-        <div className="text-[11px] text-gray-500">{widget.title}</div>
-        <div className="mt-2 flex items-end gap-1" style={{ height: 60 }}>
-          {data.map((v, i) => (
-            <div key={i} className="flex-1 rounded-t bg-blue-500 transition-all" style={{ height: `${(v / max) * 100}%` }} />
+      <div className="flex-1 overflow-y-auto p-3">
+        <div className="grid grid-cols-2 gap-3">
+          {widgets.map((w, i) => (
+            <div key={i} className="rounded-xl border border-gray-100 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{w.title}</p>
+              {w.type === "kpi" || !w.type ? (
+                <>
+                  <p className="mt-1 text-[24px] font-bold text-gray-800 dark:text-gray-100">{w.value || "—"}</p>
+                  {w.change && (
+                    <p className={`mt-1 text-[11px] font-medium ${w.direction === "up" ? "text-green-600" : w.direction === "down" ? "text-red-500" : "text-gray-400"}`}>
+                      {w.direction === "up" ? "\u2191" : w.direction === "down" ? "\u2193" : "\u2192"} {w.change}
+                    </p>
+                  )}
+                </>
+              ) : (w.type === "bar" || w.type === "line") && w.data ? (
+                <div className="mt-2 flex items-end gap-1" style={{ height: 48 }}>
+                  {w.data.map((v, j) => {
+                    const max = Math.max(...(w.data || [1]));
+                    const h = max > 0 ? (v / max) * 100 : 0;
+                    return <div key={j} className="flex-1 rounded-t bg-purple-500 transition-all" style={{ height: `${h}%`, minHeight: 2 }} />;
+                  })}
+                </div>
+              ) : (
+                <p className="mt-1 text-[18px] font-bold text-gray-800 dark:text-gray-100">{w.value || "—"}</p>
+              )}
+            </div>
           ))}
         </div>
-        {widget.labels && (
-          <div className="mt-1 flex justify-between text-[9px] text-gray-400">
-            {widget.labels.map((l, i) => <span key={i}>{l}</span>)}
-          </div>
+        {widgets.length === 0 && (
+          <div className="flex h-full items-center justify-center text-[12px] text-gray-400">Loading metrics...</div>
         )}
       </div>
-    );
-  }
-
-  return (
-    <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
-      <div className="text-[11px] text-gray-500">{widget.title}</div>
-      <div className="mt-1 text-[14px] text-gray-700 dark:text-gray-300">{widget.value ?? "—"}</div>
     </div>
   );
 }

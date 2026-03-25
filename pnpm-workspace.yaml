@@ -1,0 +1,10 @@
+packages:
+  - "packages/acp-js"
+  - "packages/acp-spec"
+  - "packages/brain-runtime"
+  - "packages/cli"
+  - "packages/computer-use"
+  - "packages/connectors"
+  - "packages/sdk-js"
+  - "packages/teamchat"
+  - "packages/theatre-react"

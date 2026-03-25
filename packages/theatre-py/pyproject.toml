@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maia-theatre"
+version = "0.1.0"
+description = "Live agent visualization — serve the Theatre UI from Python with one line of code"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = ["maia-acp>=0.1.0"]
+keywords = ["ai", "agent", "visualization", "theatre", "observability", "maia"]
+authors = [{name = "Maia AI"}]
+
+[project.urls]
+Homepage = "https://github.com/maia-sdk/maia"
+Repository = "https://github.com/maia-sdk/maia"
+
+[tool.setuptools.package-data]
+maia_theatre = ["static/**"]

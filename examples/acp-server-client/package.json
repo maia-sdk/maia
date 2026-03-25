@@ -1,0 +1,12 @@
+{
+  "name": "acp-server-client",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "server": "tsx server.ts",
+    "client": "tsx client.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0"
+  }
+}

@@ -1,0 +1,120 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-npm:
+    name: Publish JS packages to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Install & build
+        run: |
+          npm install
+          npm run build
+
+      - name: Publish @maia/acp
+        working-directory: packages/acp-js
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @maia/theatre
+        working-directory: packages/theatre-react
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @maia/teamchat
+        working-directory: packages/teamchat
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @maia/brain
+        working-directory: packages/brain-runtime
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @maia/computer-use
+        working-directory: packages/computer-use
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @maia/connectors
+        working-directory: packages/connectors
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @maia/cli
+        working-directory: packages/cli
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @maia/sdk
+        working-directory: packages/sdk-js
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-pypi:
+    name: Publish Python packages to PyPI
+    runs-on: ubuntu-latest
+    environment: Pypi
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build & publish maia-acp
+        run: |
+          python -m build packages/acp-py --outdir dist/
+          twine upload dist/maia_acp-*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_APIS }}
+
+      - name: Build & publish maia-adapters
+        run: |
+          python -m build packages/connector-adapters --outdir dist/
+          twine upload dist/maia_adapters-*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_APIS }}
+
+      - name: Build & publish maia-sdk
+        run: |
+          python -m build packages/sdk-py --outdir dist/
+          twine upload dist/maia_sdk-*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_APIS }}
+
+      - name: Build & publish maia-cli
+        run: |
+          python -m build packages/cli-py --outdir dist/
+          twine upload dist/maia_cli-*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_APIS }}

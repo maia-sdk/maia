@@ -5,6 +5,7 @@
  */
 
 import type { ConnectorDefinition, AuthKind } from "./types";
+import { IMPLEMENTATIONS } from "./implementations";
 
 interface CatalogEntry {
   name: string;
@@ -105,17 +106,20 @@ const CATALOG: Record<string, CatalogEntry> = {
   webflow: { name: "Webflow", description: "Manage CMS collections and sites", authKind: "token", category: "website", iconEmoji: "\u{1F310}", requiredCredentials: ["access_token"], tools: [{ id: "list_sites", name: "List Sites", description: "List Webflow sites" }, { id: "list_items", name: "List Items", description: "List CMS items" }] },
 };
 
-/** Get all connector definitions. */
+/** Get all connector definitions with real execute functions. */
 export function getAllConnectors(): ConnectorDefinition[] {
-  return Object.entries(CATALOG).map(([id, entry]) => ({
-    id,
-    ...entry,
-    tools: entry.tools.map((t) => ({
-      ...t,
-      inputSchema: {},
-      execute: async () => ({ success: false, error: "Not implemented", summary: "Stub" }),
-    })),
-  }));
+  return Object.entries(CATALOG).map(([id, entry]) => {
+    const impls = IMPLEMENTATIONS[id] || {};
+    return {
+      id,
+      ...entry,
+      tools: entry.tools.map((t) => ({
+        ...t,
+        inputSchema: {},
+        execute: impls[t.id] || (async () => ({ success: false, error: "Not implemented", summary: `${id}.${t.id} not yet wired` })),
+      })),
+    };
+  });
 }
 
 /** Get a connector definition by ID. */

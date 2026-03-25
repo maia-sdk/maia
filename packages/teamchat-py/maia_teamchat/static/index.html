@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maia TeamChat</title>
+<style>
+  :root{--bg:#08080d;--s1:#0f0f18;--bd:#252540;--t1:#e8e8f0;--t2:#8585a0;--t3:#55556a;--ac:#7c3aed;--ac2:#a78bfa;--g:#22c55e;--b:#3b82f6;--am:#f59e0b;--r:#ef4444}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t1);height:100vh;display:flex;flex-direction:column}
+  .top{height:44px;background:var(--s1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 16px;gap:10px}
+  .logo{font-size:15px;font-weight:700}.logo span{color:var(--ac2)}
+  .live{width:7px;height:7px;border-radius:50%;background:var(--g);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .stats{margin-left:auto;font-size:11px;color:var(--t2)}
+  .chat{flex:1;overflow-y:auto;padding:16px;max-width:720px;margin:0 auto;width:100%}
+  .msg{display:flex;gap:10px;padding:10px 0}
+  .msg-av{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .msg-name{font-size:12px;font-weight:600}
+  .msg-int{font-size:8px;padding:1px 6px;border-radius:6px;margin-left:6px;font-weight:500}
+  .msg-int.propose,.msg-int.inform{background:rgba(59,130,246,.15);color:var(--b)}
+  .msg-int.challenge{background:rgba(239,68,68,.15);color:var(--r)}
+  .msg-int.agree{background:rgba(34,197,94,.15);color:var(--g)}
+  .msg-int.delegate{background:rgba(245,158,11,.15);color:var(--am)}
+  .msg-int.summarize{background:rgba(124,58,237,.15);color:var(--ac2)}
+  .msg-time{font-size:9px;color:var(--t3);margin-left:auto}
+  .msg-think{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12);border-radius:6px;padding:5px 8px;font-size:10px;font-style:italic;color:var(--am);margin:4px 0;line-height:1.4}
+  .msg-text{font-size:13px;color:var(--t2);margin-top:3px;line-height:1.6}
+  .msg-text strong{color:var(--t1)}
+  .ho{padding:8px 14px;margin:6px 0;background:rgba(245,158,11,.06);border:1px dashed rgba(245,158,11,.25);border-radius:8px;font-size:11px;color:var(--am);display:flex;align-items:center;gap:6px}
+  .rv{padding:10px 14px;margin:6px 0;border-radius:8px;font-size:12px}
+  .rv.approve{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2)}
+  .rv.revise{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2)}
+  .rv .verdict{font-weight:700;text-transform:uppercase;font-size:11px}
+  .rv.approve .verdict{color:var(--g)}.rv.revise .verdict{color:var(--am)}
+  .rv .score{font-size:22px;font-weight:700;margin-top:2px}
+  .rv .fb{color:var(--t2);margin-top:4px;line-height:1.4}
+  .rv .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  .rv .tag{font-size:9px;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:8px;color:var(--t2)}
+  ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">maia<span>.teamchat</span></div>
+  <div class="live"></div>
+  <div class="stats"><span id="count">0</span> messages</div>
+</div>
+<div class="chat" id="chat"></div>
+
+<script>
+const A={};let cnt=0;
+const colors={orchestrator:'#8B5CF6',researcher:'#3B82F6',analyst:'#10B981',writer:'#F59E0B',designer:'#EC4899',devops:'#6366F1'};
+
+function handle(e){
+  const p=e.payload||{};
+  if(e.event_type==='capabilities'){A[e.agent_id]={name:p.name||'Agent',emoji:p.personality?.avatar_emoji||'\uD83E\uDD16',color:colors[p.role]||'#666'};}
+  if(e.event_type==='message'){cnt++;document.getElementById('count').textContent=cnt;addMsg(e);}
+  if(e.event_type==='handoff')addHo(e);
+  if(e.event_type==='review')addRv(e);
+}
+
+function addMsg(e){
+  const a=A[e.agent_id]||{emoji:'\uD83E\uDD16',color:'#666',name:'Agent'};
+  const p=e.payload||{};
+  const el=document.createElement('div');el.className='msg';
+  const time=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  el.innerHTML=\`
+    <div class="msg-av" style="background:\${a.color}20">\${a.emoji}</div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center">
+        <span class="msg-name" style="color:\${a.color}">\${a.name}</span>
+        <span class="msg-int \${p.intent||''}">\${p.intent||''}</span>
+        <span class="msg-time">\${time}</span>
+      </div>
+      \${p.thinking?\`<div class="msg-think">\uD83D\uDCA1 \${p.thinking}</div>\`:''}
+      <div class="msg-text">\${(p.content||'').replace(/\\*\\*(.+?)\\*\\*/g,'<strong>$1</strong>').replace(/\\n/g,'<br>')}</div>
+    </div>\`;
+  document.getElementById('chat').appendChild(el);
+  document.getElementById('chat').scrollTop=1e6;
+}
+
+function addHo(e){
+  const p=e.payload||{};
+  const f=A[p.from]||{name:'?',emoji:'→'},t=A[p.to]||{name:'?',emoji:'→'};
+  const el=document.createElement('div');el.className='ho';
+  el.innerHTML=\`\${f.emoji} <b>\${f.name}</b> → \${t.emoji} <b>\${t.name}</b> — \${p.task?.description||''}\`;
+  document.getElementById('chat').appendChild(el);
+}
+
+function addRv(e){
+  const p=e.payload||{};
+  const ok=p.verdict==='approve';
+  const el=document.createElement('div');el.className='rv '+(ok?'approve':'revise');
+  el.innerHTML=\`<div class="verdict">\${ok?'✅':'⚠️'} \${p.verdict||''}</div><div class="score">\${(((p.score||0)*100)|0)}%</div><div class="fb">\${p.feedback||''}</div><div class="tags">\${(p.strengths||[]).map(s=>'<span class="tag">'+s+'</span>').join('')}</div>\`;
+  document.getElementById('chat').appendChild(el);
+}
+
+const es=new EventSource('/acp/events');
+es.onmessage=function(e){
+  if(e.data==='[DONE]'){es.close();return;}
+  try{handle(JSON.parse(e.data));}catch{}
+};
+</script>
+</body>
+</html>

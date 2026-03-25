@@ -1,17 +1,23 @@
 // ─── @maia/sdk/theatre ──────────────────────────────────────────────────────
 //
-// Live agent visualization. Import from '@maia/sdk/theatre' for React components.
+// Live agent visualization + conversation UI.
+// Import from '@maia/sdk/theatre' for React components.
 //
 // Usage:
-//   import { Theatre, useACPStream, useReplay } from '@maia/sdk/theatre';
+//   import { Theatre, TeamChat, useACPStream } from '@maia/sdk/theatre';
 //
 //   <Theatre streamUrl="/acp/events" />
+//   <TeamChat streamUrl="/acp/events" />
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Main component
+// Main components
 export { Theatre } from "@maia/theatre";
 export type { TheatreProps } from "@maia/theatre";
+
+// TeamChat — re-exported so `@maia/sdk/theatre` is a single import for all UI
+export { TeamChat } from "@maia/teamchat";
+export type { TeamChatProps } from "@maia/teamchat";
 
 // Sub-components
 export { TeamThread } from "@maia/theatre";

@@ -201,7 +201,7 @@ def cmd_info(args: argparse.Namespace) -> None:
     print()
     print(f"  {bold('Links')}")
     print(f"    Docs:   https://docs.maia.ai")
-    print(f"    GitHub: https://github.com/maia-ai/maia-sdk")
+    print(f"    GitHub: https://github.com/maia-sdk/maia")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

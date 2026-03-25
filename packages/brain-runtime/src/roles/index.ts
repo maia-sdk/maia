@@ -110,8 +110,7 @@ export function inferRole(description: string): string {
 export function formatRoleCatalogForPrompt(): string {
   return getAllRoles()
     .map((r) => `- ${r.role.id}: ${r.role.name} — ${r.role.description}`)
-    .join("
-");
+    .join("\n");
 }
 
 /** Build a personality instruction for an agent's system prompt. */
@@ -119,19 +118,12 @@ export function personalityPrompt(roleId: string): string {
   const r = ROLE_CATALOG[roleId];
   if (!r) return "";
   const p = r.personality;
-  return (
-    "
-
-Your communication style:
-"
-    + `- Keep messages under ${p.maxWords} words. Shorter is better.
-`
-    + `- Be ${p.directness > 0.7 ? "direct and blunt" : "measured and diplomatic"}.
-`
-    + `- When you disagree: ${p.disagreementStyle}
-`
-    + `- When you agree: ${p.agreementStyle}
-`
-    + `- For quick exchanges, respond with just: "${p.quickResponse}"`
-  );
+  return [
+    "\nYour communication style:",
+    `- Keep messages under ${p.maxWords} words. Shorter is better.`,
+    `- Be ${p.directness > 0.7 ? "direct and blunt" : "measured and diplomatic"}.`,
+    `- When you disagree: ${p.disagreementStyle}`,
+    `- When you agree: ${p.agreementStyle}`,
+    `- For quick exchanges, respond with just: "${p.quickResponse}"`,
+  ].join("\n");
 }

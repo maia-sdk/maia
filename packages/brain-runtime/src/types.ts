@@ -22,16 +22,33 @@ export interface AgentDefinition {
 
 // ── Configuration ────────────────────────────────────────────────────────────
 
+export interface ResearchConfig {
+  /** Pages to visit per search. 0 = Brain decides based on task complexity. */
+  depth?: number;
+  /** Number of search results to fetch. 0 = Brain decides. */
+  searchCount?: number;
+  /** Domains to prioritize (e.g., ["wikipedia.org", "arxiv.org"]). Empty = Brain decides. */
+  preferSources?: string[];
+  /** Domains to exclude (e.g., ["reddit.com", "twitter.com"]). Empty = Brain decides. */
+  blockSources?: string[];
+  /** Search API key (e.g., Brave). If not set, uses built-in. */
+  searchApiKey?: string;
+  /** Search provider. Default: "brave". */
+  searchProvider?: "brave" | "google" | "bing";
+}
+
 export interface BrainOptions {
-  /** Agents available to the Brain. */
+  /** Agents available to the Brain. Pass [] to auto-assemble from built-in roles. */
   agents: AgentDefinition[];
   /** LLM configuration. */
   llm: LLMConfig;
-  /** Maximum review rounds per step (default: 3). */
+  /** Research behavior — controls how agents search and browse the web. */
+  research?: ResearchConfig;
+  /** Maximum review rounds per step. No limit by default. */
   maxReviewRounds?: number;
-  /** Maximum conversation turns per step (default: 8). */
+  /** Maximum conversation turns per step. No limit by default. */
   maxConversationTurns?: number;
-  /** Maximum total steps (default: 20). */
+  /** Maximum total steps. No limit by default. */
   maxSteps?: number;
   /** Budget limit in USD (default: no limit). */
   budgetUsd?: number;
@@ -40,13 +57,13 @@ export interface BrainOptions {
 }
 
 export interface LLMConfig {
-  /** API key for the LLM provider. */
-  apiKey: string;
-  /** Base URL (default: https://api.openai.com/v1). */
+  /** API key. Reads from .env or OPENAI_API_KEY/ANTHROPIC_API_KEY if not set. Use "env:VAR_NAME" to read a specific env var. */
+  apiKey?: string;
+  /** Base URL. Required for non-OpenAI providers. */
   baseUrl?: string;
-  /** Model name (default: gpt-4o). */
-  model?: string;
-  /** Temperature (default: 0.3). */
+  /** Model name. Required — no default. e.g. "gpt-4o-mini", "claude-sonnet-4-20250514" */
+  model: string;
+  /** Temperature. Optional — uses provider default if not set. */
   temperature?: number;
   /** Max tokens per call. */
   maxTokens?: number;

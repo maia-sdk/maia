@@ -23,22 +23,24 @@ classifiers = [
 ]
 dependencies = [
     "maia-acp>=0.1.0",
+    "maia-brain>=0.1.0",
+    "maia-connectors>=0.1.0",
 ]
 
 [project.optional-dependencies]
-langchain = ["langchain-core>=0.2.0"]
-crewai = ["crewai>=0.50.0"]
-autogen = ["autogen-agentchat>=0.4.0"]
+computer-use = ["maia-computer-use>=0.1.0"]
+langchain = ["maia-adapters[langchain]>=0.1.0"]
+crewai = ["maia-adapters[crewai]>=0.1.0"]
+autogen = ["maia-adapters[autogen]>=0.1.0"]
 all = [
-    "langchain-core>=0.2.0",
-    "crewai>=0.50.0",
-    "autogen-agentchat>=0.4.0",
+    "maia-computer-use>=0.1.0",
+    "maia-adapters[all]>=0.1.0",
 ]
 
 [project.urls]
-Homepage = "https://maia.ai"
-Documentation = "https://docs.maia.ai"
-Repository = "https://github.com/maia-ai/maia-sdk"
+Homepage = "https://github.com/maia-sdk/maia"
+Documentation = "https://github.com/maia-sdk/maia"
+Repository = "https://github.com/maia-sdk/maia"
 
 [tool.hatch.build.targets.wheel]
 packages = ["maia_sdk"]

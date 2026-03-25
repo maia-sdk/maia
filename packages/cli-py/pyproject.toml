@@ -28,7 +28,7 @@ maia = "maia_cli.main:cli"
 
 [project.urls]
 Homepage = "https://maia.ai"
-Repository = "https://github.com/maia-ai/maia-sdk"
+Repository = "https://github.com/maia-sdk/maia"
 
 [tool.hatch.build.targets.wheel]
 packages = ["maia_cli"]

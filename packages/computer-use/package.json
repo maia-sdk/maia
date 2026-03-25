@@ -5,10 +5,15 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch"
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run"
   },
   "dependencies": {
     "@maia/acp": "workspace:*"
@@ -17,14 +22,29 @@
     "playwright": ">=1.40.0"
   },
   "peerDependenciesMeta": {
-    "playwright": { "optional": true }
+    "playwright": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "playwright": "^1.44.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.9"
   },
-  "keywords": ["ai", "agent", "browser", "automation", "computer-use", "playwright", "maia"],
+  "keywords": [
+    "ai",
+    "agent",
+    "browser",
+    "automation",
+    "computer-use",
+    "playwright",
+    "maia"
+  ],
   "author": "Maia AI",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maia-sdk/maia"
+  }
 }

@@ -119,3 +119,6 @@ export type { EvalDataset, EvalExample, EvalResult, EvalSummary, Scorer, ScorerR
 // Telemetry
 export { createTelemetry } from "./telemetry";
 export type { Telemetry, TelemetryConfig, LLMSpan, TelemetrySummary } from "./telemetry";
+
+// Environment — auto-loads .env, resolves API keys
+export { loadEnv, resolveApiKey } from "./env";

@@ -1,9 +1,15 @@
 /**
  * Full test suite for Maia TypeScript SDK.
- * Run with: npx tsx test_sdk.ts
+ *
+ * Consumer-style imports: these reference package names, not source paths,
+ * so the test validates the same import surface that end-users see.
+ *
+ * Run with:  npm run build && npx tsx test_sdk.ts
+ *   (build first so workspace resolution + dist artifacts exist)
+ * Or with source paths via tsconfig paths if using --no-build dev mode.
  */
 
-// Direct imports from source (no build needed)
+// Consumer-style imports via workspace package names
 import {
   ACPClient,
   message,
@@ -15,7 +21,7 @@ import {
   envelope,
   parseSSELine,
   streamToACPEvents,
-} from "./packages/acp-js/src/index";
+} from "@maia/acp";
 
 import type {
   ACPEvent,
@@ -31,7 +37,7 @@ import type {
   ArtifactKind,
   AgentMood,
   CostInfo,
-} from "./packages/acp-js/src/index";
+} from "@maia/acp";
 
 let passed = 0;
 let failed = 0;

@@ -29,7 +29,7 @@ crewai = ["crewai>=0.50.0"]
 autogen = ["autogen-agentchat>=0.4.0"]
 
 [project.urls]
-Homepage = "https://github.com/maia-ai/maia-sdk"
+Homepage = "https://github.com/maia-sdk/maia"
 Documentation = "https://docs.maia.ai/acp"
 
 [tool.hatch.build.targets.wheel]
