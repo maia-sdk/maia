@@ -125,6 +125,31 @@ export { DocsScene } from "./desktop-scenes/DocsScene";
 export { SheetsScene } from "./desktop-scenes/SheetsScene";
 export { BrowserScene } from "./desktop-scenes/BrowserScene";
 export { ApiScene } from "./desktop-scenes/ApiScene";
+export {
+  asHttpUrl,
+  compactValue,
+  parseBrowserFindState,
+  parseDocumentHighlights,
+  parseHighlightRegions,
+  parseLiveCopiedWords,
+  parsePdfPlaybackState,
+  parseScrollPercent,
+  parseSemanticFindResults,
+  parseSheetState,
+  parseZoomHistory,
+} from "./desktop-scenes/helpers";
+export {
+  buildRoadmapSteps,
+  buildTargetRegion,
+  looksLikePdfUrl,
+  parseOpenedPages,
+  parsePercent,
+  shouldRenderTeamChatScene,
+} from "./desktop-scenes/sceneRuntime";
+export { useSceneAnimations } from "./desktop-scenes/useSceneAnimations";
+export { sanitizeComputerUseText } from "./desktop-scenes/text";
+export { TeamChatSkin } from "./desktop-scenes/team-chat/TeamChatSkin";
+export type { TeamChatMessage } from "./desktop-scenes/team-chat/TeamChatSkin";
 export { DocumentFallbackScene, DocumentPdfScene } from "./desktop-scenes/DocumentScenes";
 export { SnapshotScene } from "./desktop-scenes/SnapshotScene";
 export { DefaultScene, SystemScene } from "./desktop-scenes/SystemFallbackScenes";
@@ -140,5 +165,7 @@ export type {
   DocumentHighlight,
   HighlightColor as DesktopHighlightColor,
   HighlightRegion as DesktopHighlightRegion,
+  PdfPlaybackState,
+  SceneAnimationState,
   ZoomHistoryEntry as DesktopZoomHistoryEntry,
 } from "./desktop-scenes/types";
