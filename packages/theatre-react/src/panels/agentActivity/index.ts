@@ -7,6 +7,8 @@ export {
   resolveEmailSubject,
   resolveSheetBodyHint,
 } from "./contentDerivation";
+export { derivePlannedRoadmap } from "./roadmapDerivation";
+export type { RoadmapStep } from "./roadmapDerivation";
 export type { ActivityEventLike, PreviewTab } from "./types";
 export { EMAIL_SCENE_EVENT_TYPES, readEventIndex } from "./deriveHelpers";
 export { desktopStatusForEventType } from "./labels";

@@ -135,6 +135,7 @@ export {
   resolveEmailRecipient,
   resolveEmailSubject,
   resolveSheetBodyHint,
+  derivePlannedRoadmap,
   roleColorFromKey,
   roleKeyFromEvent,
   roleLabelFromKey,
@@ -148,6 +149,7 @@ export {
 export type {
   ActivityEventLike,
   PreviewTab as ActivityPreviewTab,
+  RoadmapStep as ActivityRoadmapStep,
   SurfaceCommit,
 } from "./panels/agentActivity";
 
