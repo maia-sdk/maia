@@ -14,6 +14,8 @@ import { TeamThread } from "./TeamThread";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { CostBar } from "./CostBar";
 import { ReplayControls } from "./ReplayControls";
+import { resolveTheatreTheme } from "../theme";
+import type { TheatreThemeOverride } from "../theme";
 
 export interface TheatreProps {
   /** SSE endpoint URL for live mode. */
@@ -34,6 +36,8 @@ export interface TheatreProps {
   onEvent?: (event: ACPEvent) => void;
   /** Height of the Theatre (default "100%"). */
   height?: string;
+  /** Override Maia default theme tokens. */
+  theme?: TheatreThemeOverride;
 }
 
 type Tab = "chat" | "activity";
@@ -48,8 +52,10 @@ export function Theatre({
   className = "",
   onEvent,
   height = "100%",
+  theme,
 }: TheatreProps) {
   const [tab, setTab] = useState<Tab>(defaultTab);
+  const resolvedTheme = resolveTheatreTheme(theme);
   const isReplayMode = !!recordedEvents && !streamUrl;
 
   // Live mode
@@ -67,54 +73,59 @@ export function Theatre({
 
   // Pick the right event source
   const events = isReplayMode ? replay.visibleEvents : stream.events;
-  const messages = events.filter((e) => e.event_type === "message");
+  const communicationEvents = events.filter(
+    (event) =>
+      event.event_type === "message" ||
+      event.event_type === "handoff" ||
+      event.event_type === "review",
+  );
   const connected = isReplayMode ? true : stream.connected;
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950 ${className}`}
+      className={`${resolvedTheme.theatre.shell} ${className}`}
       style={{ height }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2 dark:border-gray-800">
+      <div className={resolvedTheme.theatre.header}>
         <div className="flex items-center gap-3">
-          <h3 className="text-[13px] font-semibold text-gray-800 dark:text-gray-200">
+          <h3 className={resolvedTheme.theatre.title}>
             Theatre
           </h3>
           <span
-            className={`h-2 w-2 rounded-full ${connected ? "bg-green-400" : "bg-gray-300"}`}
+            className={`h-2 w-2 rounded-full ${connected ? resolvedTheme.theatre.statusConnected : resolvedTheme.theatre.statusDisconnected}`}
             title={connected ? "Connected" : "Disconnected"}
           />
           {!isReplayMode && stream.runId && (
-            <span className="text-[11px] text-gray-400">
+            <span className={resolvedTheme.theatre.statusMeta}>
               Run: {stream.runId.slice(0, 8)}
             </span>
           )}
         </div>
 
         {/* Tabs */}
-        <div className="flex rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800">
+        <div className={resolvedTheme.theatre.tabsWrap}>
           <button
             onClick={() => setTab("chat")}
-            className={`rounded-md px-3 py-1 text-[12px] font-medium transition-colors ${
+            className={`${resolvedTheme.theatre.tabBase} ${
               tab === "chat"
-                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100"
-                : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                ? resolvedTheme.theatre.tabActive
+                : resolvedTheme.theatre.tabInactive
             }`}
           >
             Team Chat
-            {messages.length > 0 && (
-              <span className="ml-1 text-[10px] text-gray-400">
-                ({messages.length})
+            {communicationEvents.length > 0 && (
+              <span className={resolvedTheme.theatre.statusMeta}>
+                ({communicationEvents.length})
               </span>
             )}
           </button>
           <button
             onClick={() => setTab("activity")}
-            className={`rounded-md px-3 py-1 text-[12px] font-medium transition-colors ${
+            className={`${resolvedTheme.theatre.tabBase} ${
               tab === "activity"
-                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100"
-                : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                ? resolvedTheme.theatre.tabActive
+                : resolvedTheme.theatre.tabInactive
             }`}
           >
             Activity
@@ -123,17 +134,18 @@ export function Theatre({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className={resolvedTheme.theatre.content}>
         {tab === "chat" ? (
           <TeamThread
-            messages={messages}
+            messages={communicationEvents}
             agents={stream.agents}
             showThinking={showThinking}
             compact={compact}
+            theme={resolvedTheme}
             className="h-full"
           />
         ) : (
-          <ActivityTimeline events={events} className="h-full" />
+          <ActivityTimeline events={events} theme={resolvedTheme} className="h-full" />
         )}
       </div>
 

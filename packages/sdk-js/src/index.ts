@@ -25,6 +25,9 @@ export type {
   ReviewVerdict,
   ArtifactKind,
   EventType,
+  DeliveryStatus,
+  AgentAvailability,
+  TaskLifecycleStatus,
   ACPEvent,
   ACPMessage,
   ACPHandoff,
@@ -42,8 +45,23 @@ export type {
   BrowserActivity,
   ProgressInfo,
   CostInfo,
+  AgentPresence,
+  DeliveryReceipt,
+  ACPTransport,
+  ACPRegistryLike,
   AgentPersonality,
   AgentSkill,
+  ExecutionStage,
+  ExecutionStatus,
+  ExecutionSurface,
+  ExecutionSceneFamily,
+  ExecutionMetadata,
+  ExecutionBrowserState,
+  ExecutionEmailState,
+  ExecutionDocumentState,
+  ExecutionExtension,
+  ACPExecutionActivity,
+  ACPExecutionEvent,
 } from "@maia/acp";
 
 // Client
@@ -58,7 +76,56 @@ export {
   artifact,
   activity,
   capabilities,
+  executionActivity,
+  executionEnvelope,
 } from "@maia/acp";
 
 // Stream utilities
 export { parseSSELine, streamToACPEvents, connectToSSE } from "@maia/acp";
+
+// Brain-native collaboration helpers
+export {
+  suggestConversationMove,
+  draftConversationMessage,
+  summarizeConversationThread,
+} from "@maia/brain";
+export type {
+  LLMConfig,
+  CollaborationParticipant,
+  CollaborationContext,
+  ConversationMove,
+  MessageDraft,
+  ThreadDigest,
+} from "@maia/brain";
+
+// Theatre theming
+export { maiaTheme, resolveTheatreTheme } from "@maia/theatre";
+export type { TheatreTheme, TheatreThemeOverride } from "@maia/theatre";
+// Maia computer-use runtime client
+export {
+  cancelComputerUseSession,
+  createComputerUseClient,
+  defaultComputerUseClient,
+  getComputerUseActiveModel,
+  getComputerUsePolicy,
+  getComputerUseSession,
+  getComputerUseSLOSummary,
+  listComputerUseSessions,
+  navigateComputerUseSession,
+  startComputerUseSession,
+  streamComputerUseSession,
+} from "@maia/computer-use";
+export type {
+  ComputerUseActiveModelResponse,
+  ComputerUseClient,
+  ComputerUseClientConfig,
+  ComputerUsePolicyResponse,
+  ComputerUseSessionListRecord,
+  ComputerUseSessionRecord,
+  ComputerUseSLOSummaryResponse,
+  ComputerUseStreamEvent,
+  NavigateComputerUseSessionResponse,
+  StartComputerUseSessionInput,
+  StartComputerUseSessionResponse,
+  StreamComputerUseSessionOptions,
+} from "@maia/computer-use";

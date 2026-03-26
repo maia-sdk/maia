@@ -44,6 +44,20 @@ export type { RevisionResult } from "./reviser";
 export { detectDialogueNeeds, proposeSeedDialogue, evaluateFollowUp } from "./dialogue";
 export type { DialogueNeed, DialogueSeed, DialogueFollowUp } from "./dialogue";
 
+// Collaboration
+export {
+  suggestConversationMove,
+  draftConversationMessage,
+  summarizeConversationThread,
+} from "./collaboration";
+export type {
+  CollaborationParticipant,
+  CollaborationContext,
+  ConversationMove,
+  MessageDraft,
+  ThreadDigest,
+} from "./collaboration";
+
 // Roles (27 roles, each in its own file under ./roles/)
 export {
   ROLE_CATALOG, getRole, getAllRoles, inferRole,

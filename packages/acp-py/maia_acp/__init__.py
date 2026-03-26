@@ -28,6 +28,7 @@ from maia_acp.types import (
     BrowserActivity,
     ProgressInfo,
     CostInfo,
+    AgentPresence,
 )
 from maia_acp.builders import (
     envelope,
@@ -39,6 +40,7 @@ from maia_acp.builders import (
     capabilities,
 )
 from maia_acp.client import ACPClient
+from maia_acp.registry import ACPAgentRegistry
 from maia_acp.stream import parse_sse_line, stream_events, connect_sse
 
 __version__ = "0.1.0"
@@ -59,6 +61,7 @@ __all__ = [
     "BrowserActivity",
     "ProgressInfo",
     "CostInfo",
+    "AgentPresence",
     # Builders
     "envelope",
     "message",
@@ -69,6 +72,7 @@ __all__ = [
     "capabilities",
     # Client
     "ACPClient",
+    "ACPAgentRegistry",
     # Stream
     "parse_sse_line",
     "stream_events",

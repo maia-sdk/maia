@@ -1,15 +1,17 @@
 /**
  * ActivityTimeline — vertical timeline of all agent activities.
  * Shows tool calls, browser actions, searches, file reads, etc.
- * Complements the TeamThread (chat) with a structured work log.
  */
 import React from "react";
-import type { ACPEvent, ACPActivity } from "@maia/acp";
-import { AgentAvatar } from "./AgentAvatar";
+import type { ACPActivity, ACPEvent } from "@maia/acp";
+
+import { resolveTheatreTheme } from "../theme";
+import type { TheatreTheme, TheatreThemeOverride } from "../theme";
 
 export interface ActivityTimelineProps {
   events: ACPEvent[];
   className?: string;
+  theme?: TheatreThemeOverride;
 }
 
 const ACTIVITY_ICONS: Record<string, string> = {
@@ -43,51 +45,42 @@ const ACTIVITY_COLORS: Record<string, string> = {
 
 function formatTime(ts: string): string {
   try {
-    return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return new Date(ts).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   } catch {
     return "";
   }
 }
 
-function ActivityItem({ event }: { event: ACPEvent }) {
-  const act = event.payload as unknown as ACPActivity;
+function ActivityItem({ event, theme }: { event: ACPEvent; theme: TheatreTheme }) {
+  const act = event.payload as ACPActivity;
   const icon = ACTIVITY_ICONS[act.activity] ?? "\u{2022}";
   const color = ACTIVITY_COLORS[act.activity] ?? "border-gray-300 bg-gray-50";
   const agentName = (act.agent_id ?? event.agent_id).replace("agent://", "");
 
   return (
-    <div className="flex gap-3 py-1.5">
-      {/* Timeline line + dot */}
+    <div className={theme.activity.item}>
       <div className="flex flex-col items-center">
         <div className={`flex h-6 w-6 items-center justify-center rounded-full border text-[12px] ${color}`}>
           {icon}
         </div>
-        <div className="w-px flex-1 bg-gray-200 dark:bg-gray-700" />
+        <div className="w-px flex-1 bg-[#e4e7ec]" />
       </div>
 
-      {/* Content */}
       <div className="min-w-0 flex-1 pb-2">
         <div className="flex items-center gap-2">
-          <span className="text-[12px] font-medium text-gray-700 dark:text-gray-300">
-            {agentName}
-          </span>
-          <span className="text-[11px] text-gray-400">
-            {act.activity.replace("_", " ")}
-          </span>
-          <span className="text-[10px] text-gray-300">
-            {formatTime(event.timestamp)}
-          </span>
+          <span className={theme.activity.actor}>{agentName}</span>
+          <span className={theme.activity.action}>{act.activity.replace("_", " ")}</span>
+          <span className={theme.activity.time}>{formatTime(event.timestamp)}</span>
         </div>
 
-        {act.detail && (
-          <p className="mt-0.5 text-[12px] text-gray-500 dark:text-gray-400">
-            {act.detail}
-          </p>
-        )}
+        {act.detail && <p className={theme.activity.detail}>{act.detail}</p>}
 
-        {/* Tool call details */}
         {act.tool && (
-          <div className="mt-1 rounded bg-gray-100 px-2 py-1 text-[11px] font-mono text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+          <div className={theme.activity.toolChip}>
             {act.tool.tool_name ?? act.tool.tool_id}
             {act.tool.status && (
               <span className={`ml-2 ${act.tool.status === "failed" ? "text-red-500" : "text-green-500"}`}>
@@ -97,29 +90,26 @@ function ActivityItem({ event }: { event: ACPEvent }) {
           </div>
         )}
 
-        {/* Browser details */}
         {act.browser && (
-          <div className="mt-1 flex items-center gap-1.5 rounded bg-cyan-50 px-2 py-1 text-[11px] dark:bg-cyan-900/20">
+          <div className={theme.activity.browserChip}>
             <span>{act.browser.action ?? "navigate"}</span>
-            <span className="truncate text-cyan-600 dark:text-cyan-400">
-              {act.browser.url}
-            </span>
+            <span className="truncate">{act.browser.url}</span>
           </div>
         )}
 
-        {/* Progress bar */}
         {act.progress && act.progress.total > 0 && (
-          <div className="mt-1 h-1.5 w-32 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+          <div className="mt-1 h-1.5 w-32 overflow-hidden rounded-full bg-[#eaecf0]">
             <div
-              className="h-full rounded-full bg-blue-500 transition-all"
-              style={{ width: `${act.progress.percentage ?? (act.progress.current / act.progress.total) * 100}%` }}
+              className="h-full rounded-full bg-[#175cd3] transition-all"
+              style={{
+                width: `${act.progress.percentage ?? (act.progress.current / act.progress.total) * 100}%`,
+              }}
             />
           </div>
         )}
 
-        {/* Cost */}
         {act.cost && act.cost.cost_usd > 0 && (
-          <span className="mt-0.5 inline-block text-[10px] text-gray-400">
+          <span className={theme.activity.cost}>
             ${act.cost.cost_usd.toFixed(4)} ({act.cost.tokens_used} tokens)
           </span>
         )}
@@ -128,18 +118,17 @@ function ActivityItem({ event }: { event: ACPEvent }) {
   );
 }
 
-export function ActivityTimeline({ events, className = "" }: ActivityTimelineProps) {
-  const activityEvents = events.filter((e) => e.event_type === "event");
+export function ActivityTimeline({ events, className = "", theme }: ActivityTimelineProps) {
+  const resolvedTheme = resolveTheatreTheme(theme);
+  const activityEvents = events.filter((event) => event.event_type === "event");
 
   return (
-    <div className={`overflow-y-auto px-4 py-2 ${className}`}>
+    <div className={`${resolvedTheme.activity.root} ${className}`}>
       {activityEvents.length === 0 && (
-        <div className="py-8 text-center text-[13px] text-gray-400">
-          No activity yet
-        </div>
+        <div className={resolvedTheme.activity.emptyState}>No activity yet</div>
       )}
-      {activityEvents.map((event, i) => (
-        <ActivityItem key={`${event.timestamp}_${i}`} event={event} />
+      {activityEvents.map((event, index) => (
+        <ActivityItem key={`${event.timestamp}_${index}`} event={event} theme={resolvedTheme} />
       ))}
     </div>
   );

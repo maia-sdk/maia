@@ -1,59 +1,132 @@
-/**
- * Types for @maia/computer-use.
- */
+export type RequestLike = typeof fetch;
+export type EventSourceLike = typeof EventSource;
 
-export interface ComputerUseOptions {
-  /** Run browser in headless mode (default: true). */
-  headless?: boolean;
-  /** Browser type: chromium, firefox, webkit (default: chromium). */
-  browser?: "chromium" | "firefox" | "webkit";
-  /** Viewport width (default: 1280). */
-  width?: number;
-  /** Viewport height (default: 720). */
-  height?: number;
-  /** Agent ID for ACP events (default: agent://browser). */
-  agentId?: string;
-  /** Run ID for ACP events. */
+export interface ComputerUseClientConfig {
+  apiBase?: string;
+  userId?: string | null;
+  headers?: HeadersInit;
+  fetch?: RequestLike;
+  eventSource?: EventSourceLike;
+}
+
+export interface StartComputerUseSessionInput {
+  url: string;
+  requestId?: string;
+}
+
+export interface StartComputerUseSessionResponse {
+  session_id: string;
+  url: string;
+}
+
+export interface ComputerUseSessionRecord {
+  session_id: string;
+  url: string;
+  viewport?: Record<string, unknown>;
+}
+
+export interface ComputerUseSessionListRecord {
+  session_id: string;
+  user_id: string;
+  start_url: string;
+  status: "active" | "closed" | "stale";
+  live: boolean;
+  date_created: string;
+  date_closed: string | null;
+}
+
+export interface NavigateComputerUseSessionResponse {
+  session_id: string;
+  url: string;
+  title: string;
+}
+
+export interface ComputerUseActiveModelResponse {
+  model: string;
+  source: string;
+}
+
+export interface ComputerUsePolicyResponse {
+  mode: string;
+  max_task_chars: number;
+  blocked_terms_count: number;
+  blocked_terms_preview: string[];
+}
+
+export interface ComputerUseSLOSummaryResponse {
+  window_seconds: number;
+  run_count: number;
+  success_rate: number;
+  error_rate: number;
+  p50_latency_ms: number;
+  p95_latency_ms: number;
+  p99_latency_ms: number;
+  avg_latency_ms: number;
+  avg_event_count: number;
+  avg_action_count: number;
+  status_counts: Record<string, number>;
+}
+
+export type ComputerUseStreamEvent =
+  | {
+      event_type: "started";
+      iteration?: number;
+      detail?: string;
+      url?: string;
+    }
+  | {
+      event_type: "screenshot";
+      iteration?: number;
+      url?: string;
+      screenshot_b64?: string;
+    }
+  | {
+      event_type: "text";
+      iteration?: number;
+      text?: string;
+    }
+  | {
+      event_type: "action";
+      iteration?: number;
+      action?: string;
+      input?: Record<string, unknown>;
+      tool_id?: string;
+    }
+  | {
+      event_type: "done" | "max_iterations";
+      iteration?: number;
+      url?: string;
+    }
+  | {
+      event_type: "error";
+      iteration?: number;
+      detail?: string;
+    };
+
+export interface StreamComputerUseSessionOptions {
+  task: string;
+  model?: string;
+  maxIterations?: number;
   runId?: string;
-  /** Screenshot quality 0-100 (default: 60). */
-  screenshotQuality?: number;
-  /** Auto-screenshot after each action (default: true). */
-  autoScreenshot?: boolean;
-  /** Max page load timeout in ms (default: 30000). */
-  timeout?: number;
+  onEvent?: (event: ComputerUseStreamEvent) => void;
+  onDone?: () => void;
+  onError?: (error: Error) => void;
 }
 
-export type BrowserAction =
-  | { type: "navigate"; url: string }
-  | { type: "click"; selector: string }
-  | { type: "type"; selector: string; text: string }
-  | { type: "scroll"; direction: "up" | "down"; amount?: number }
-  | { type: "extract"; selector?: string }
-  | { type: "screenshot" }
-  | { type: "wait"; ms: number }
-  | { type: "back" }
-  | { type: "forward" };
-
-export interface ScreenshotResult {
-  /** Base64-encoded PNG image. */
-  data: string;
-  /** Width in pixels. */
-  width: number;
-  /** Height in pixels. */
-  height: number;
-  /** Current page URL. */
-  url: string;
-  /** Page title. */
-  title: string;
-}
-
-export interface ExtractResult {
-  /** Extracted text content. */
-  text: string;
-  /** Page URL. */
-  url: string;
-  /** Page title. */
-  title: string;
-  /** Number of links found. */
-  linkCount: number;
+export interface ComputerUseClient {
+  startSession: (body: StartComputerUseSessionInput) => Promise<StartComputerUseSessionResponse>;
+  getSession: (sessionId: string) => Promise<ComputerUseSessionRecord>;
+  listSessions: () => Promise<ComputerUseSessionListRecord[]>;
+  navigateSession: (
+    sessionId: string,
+    url: string,
+  ) => Promise<NavigateComputerUseSessionResponse>;
+  cancelSession: (sessionId: string) => Promise<void>;
+  getActiveModel: () => Promise<ComputerUseActiveModelResponse>;
+  getPolicy: () => Promise<ComputerUsePolicyResponse>;
+  getSLOSummary: (windowSeconds?: number) => Promise<ComputerUseSLOSummaryResponse>;
+  streamSession: (
+    sessionId: string,
+    options: StreamComputerUseSessionOptions,
+  ) => () => void;
 }

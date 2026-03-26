@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import threading
 from collections import defaultdict
-from typing import Any, Callable
+from typing import Any, Callable, Protocol
 
 from maia_acp.builders import envelope
+from maia_acp.registry import ACPAgentRegistry
 from maia_acp.stream import connect_sse
 from maia_acp.types import (
     ACPActivity,
@@ -17,11 +17,43 @@ from maia_acp.types import (
     ACPHandoff,
     ACPMessage,
     ACPReview,
+    AgentPresence,
 )
 
 logger = logging.getLogger(__name__)
 
 EventCallback = Callable[[ACPEvent], None]
+
+
+class ACPTransport(Protocol):
+    def deliver(
+        self,
+        event: ACPEvent,
+        *,
+        recipient: str | None = None,
+        timeout_ms: int | None = None,
+    ) -> dict[str, Any]:
+        ...
+
+
+def _presence_from_activity(activity: ACPActivity) -> AgentPresence:
+    kind = str(activity.activity or "").strip().lower()
+    detail = str(activity.detail or "").strip() or None
+    if kind in {"idle", "waiting"}:
+        return AgentPresence(
+            availability="available",
+            current_focus=detail,
+        )
+    if kind == "error":
+        return AgentPresence(
+            availability="busy",
+            current_focus=detail,
+        )
+    return AgentPresence(
+        availability="focused" if kind == "reviewing" else "busy",
+        current_focus=detail,
+        active_task_count=1,
+    )
 
 
 class ACPClient:
@@ -43,10 +75,14 @@ class ACPClient:
         *,
         name: str | None = None,
         role: str | None = None,
+        transport: ACPTransport | None = None,
+        registry: ACPAgentRegistry | None = None,
     ) -> None:
         self.agent_id = agent_id
         self.name = name or agent_id.replace("agent://", "")
         self.role = role or "agent"
+        self.transport = transport
+        self.registry = registry or ACPAgentRegistry()
         self._run_id = ""
         self._listeners: dict[str, list[EventCallback]] = defaultdict(list)
         self._buffer: list[ACPEvent] = []
@@ -120,6 +156,11 @@ class ACPClient:
     def _handle_event(self, event: ACPEvent) -> None:
         self._buffer.append(event)
         self._run_id = event.run_id
+        if event.event_type == "capabilities":
+            self.registry.upsert_capabilities(event.as_capabilities())
+        elif event.event_type == "event":
+            activity = event.as_activity()
+            self.registry.update_presence(activity.agent_id, _presence_from_activity(activity))
 
         # Fire specific listeners
         for cb in self._listeners.get(event.event_type, []):
@@ -150,7 +191,92 @@ class ACPClient:
         return envelope(self.agent_id, self._run_id, "event", payload)
 
     def emit_capabilities(self, payload: dict[str, Any]) -> ACPEvent:
+        self.registry.upsert_capabilities(ACPCapabilities.model_validate(payload))
         return envelope(self.agent_id, self._run_id, "capabilities", payload)
+
+    def _deliver(
+        self,
+        event: ACPEvent,
+        *,
+        recipient: str | None = None,
+        timeout_ms: int | None = None,
+    ) -> dict[str, Any]:
+        if self.transport is None:
+            return {"status": "queued", "recipient": recipient}
+        try:
+            return self.transport.deliver(
+                event,
+                recipient=recipient,
+                timeout_ms=timeout_ms,
+            )
+        except Exception as exc:
+            return {
+                "status": "failed",
+                "recipient": recipient,
+                "error": str(exc),
+            }
+
+    def send_message(
+        self,
+        payload: dict[str, Any],
+        *,
+        timeout_ms: int | None = None,
+    ) -> ACPEvent:
+        msg = ACPMessage.model_validate(payload)
+        resolved = self.registry.resolve_recipient(
+            to=msg.to,
+            intent=msg.intent,
+            exclude_agent_id=self.agent_id,
+        )
+        recipient = resolved.agent_id if resolved else msg.to
+        msg.context = {
+            **(msg.context or {}),
+            "delivery_status": "queued",
+        }
+        msg.to = recipient
+        event = self.emit_message(msg.model_dump(by_alias=True))
+        receipt = self._deliver(event, recipient=recipient, timeout_ms=timeout_ms)
+        msg.context["delivery_status"] = receipt.get("status", "queued")
+        return event.model_copy(update={"payload": msg.model_dump(by_alias=True)})
+
+    def send_handoff(
+        self,
+        payload: dict[str, Any],
+        *,
+        timeout_ms: int | None = None,
+    ) -> ACPEvent:
+        handoff_payload = ACPHandoff.model_validate(payload)
+        resolved = self.registry.resolve_recipient(
+            to=handoff_payload.to,
+            intent="handoff",
+            exclude_agent_id=self.agent_id,
+        )
+        recipient = resolved.agent_id if resolved else handoff_payload.to
+        handoff_payload.to = recipient
+        if not handoff_payload.status:
+            handoff_payload.status = "proposed"
+        event = self.emit_handoff(handoff_payload.model_dump(by_alias=True))
+        receipt = self._deliver(event, recipient=recipient, timeout_ms=timeout_ms)
+        if receipt.get("status") == "failed":
+            handoff_payload.status = "rejected"
+            handoff_payload.declined_reason = receipt.get("error")
+        return event.model_copy(update={"payload": handoff_payload.model_dump(by_alias=True)})
+
+    def send_review(
+        self,
+        payload: dict[str, Any],
+        *,
+        recipient: str | None = None,
+        timeout_ms: int | None = None,
+    ) -> ACPEvent:
+        review_payload = ACPReview.model_validate(payload)
+        event = self.emit_review(review_payload.model_dump(by_alias=True))
+        self._deliver(
+            event,
+            recipient=recipient or review_payload.author,
+            timeout_ms=timeout_ms,
+        )
+        return event
 
     # ── Buffer / Query ────────────────────────────────────────────────────
 
@@ -178,3 +304,9 @@ class ACPClient:
 
     def clear_buffer(self) -> None:
         self._buffer.clear()
+
+    def list_agents(self) -> list[ACPCapabilities]:
+        return self.registry.list_agents()
+
+    def list_available_agents(self, intent: str | None = None) -> list[ACPCapabilities]:
+        return self.registry.list_available_agents(intent)  # type: ignore[arg-type]

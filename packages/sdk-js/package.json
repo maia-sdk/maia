@@ -1,25 +1,24 @@
 {
   "name": "@maia/sdk",
   "version": "0.1.0",
-  "description": "Maia SDK — the collaboration and observability layer for AI agents. One install, everything you need.",
+  "description": "Maia SDK - the collaboration and observability layer for AI agents. One install, everything you need.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./theatre": {
+      "types": "./dist/theatre.d.ts",
       "import": "./dist/theatre.mjs",
-      "require": "./dist/theatre.js",
-      "types": "./dist/theatre.d.ts"
+      "require": "./dist/theatre.js"
     },
     "./styles.css": "./dist/styles.css"
   },
   "files": ["dist", "src"],
-  "sideEffects": false,
   "scripts": {
     "build": "tsup src/index.ts src/theatre.ts --format cjs,esm --dts --external react",
     "dev": "tsup src/index.ts src/theatre.ts --format cjs,esm --dts --watch --external react",
@@ -28,7 +27,8 @@
   },
   "dependencies": {
     "@maia/acp": "workspace:*",
-    "@maia/teamchat": "workspace:*",
+    "@maia/brain": "workspace:*",
+    "@maia/computer-use": "workspace:*",
     "@maia/theatre": "workspace:*"
   },
   "peerDependencies": {

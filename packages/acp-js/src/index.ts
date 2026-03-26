@@ -17,6 +17,9 @@ export type {
   ReviewVerdict,
   ArtifactKind,
   EventType,
+  DeliveryStatus,
+  AgentAvailability,
+  TaskLifecycleStatus,
   ACPEvent,
   ACPMessage,
   ACPHandoff,
@@ -34,12 +37,30 @@ export type {
   BrowserActivity,
   ProgressInfo,
   CostInfo,
+  AgentPresence,
+  DeliveryReceipt,
+  ACPTransport,
+  ACPRegistryLike,
   AgentPersonality,
   AgentSkill,
 } from "./types";
+export type {
+  ExecutionStage,
+  ExecutionStatus,
+  ExecutionSurface,
+  ExecutionSceneFamily,
+  ExecutionMetadata,
+  ExecutionBrowserState,
+  ExecutionEmailState,
+  ExecutionDocumentState,
+  ExecutionExtension,
+  ACPExecutionActivity,
+  ACPExecutionEvent,
+} from "./execution-types";
 
 // Client
 export { ACPClient } from "./client";
+export { ACPAgentRegistry } from "./registry";
 
 // Builders
 export {
@@ -51,6 +72,7 @@ export {
   activity,
   capabilities,
 } from "./builders";
+export { executionActivity, executionEnvelope } from "./execution-builders";
 
 // Stream utilities
 export { parseSSELine, streamToACPEvents, connectToSSE } from "./stream";

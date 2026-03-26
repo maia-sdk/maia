@@ -1,20 +1,47 @@
 /**
- * @maia/computer-use — Browser automation that emits ACP events.
+ * @maia/computer-use
  *
- * Wraps Playwright to give AI agents browser control with full
- * Theatre observability (live screenshots, click highlights, URL tracking).
- *
- * Usage:
- *   import { ComputerUse } from '@maia/computer-use';
- *
- *   const browser = new ComputerUse({ headless: true });
- *   await browser.launch();
- *
- *   for await (const event of browser.navigate("https://example.com")) {
- *     // ACP events: browsing activity, screenshots, extracted text
- *   }
+ * Maia computer session client for browser-side SDK consumers.
+ * This package talks to the Maia computer-use runtime and streams
+ * live session events instead of embedding a local automation engine.
  */
 
-export { ComputerUse } from "./computer-use";
-export type { ComputerUseOptions, BrowserAction, ScreenshotResult } from "./types";
-export { takeScreenshot, extractPageText, clickElement } from "./actions";
+export {
+  cancelComputerUseSession,
+  createComputerUseClient,
+  defaultComputerUseClient,
+  getComputerUseActiveModel,
+  getComputerUsePolicy,
+  getComputerUseSession,
+  getComputerUseSLOSummary,
+  listComputerUseSessions,
+  navigateComputerUseSession,
+  startComputerUseSession,
+  streamComputerUseSession,
+} from "./client";
+export {
+  buildRequestUrl,
+  fetchApi,
+  inferApiBase,
+  inferUserId,
+  normalizeApiBase,
+  request,
+  sanitizeUserId,
+  withUserIdQuery,
+} from "./core";
+export type {
+  ComputerUseActiveModelResponse,
+  ComputerUseClient,
+  ComputerUseClientConfig,
+  ComputerUsePolicyResponse,
+  ComputerUseSessionListRecord,
+  ComputerUseSessionRecord,
+  ComputerUseSLOSummaryResponse,
+  ComputerUseStreamEvent,
+  EventSourceLike,
+  NavigateComputerUseSessionResponse,
+  RequestLike,
+  StartComputerUseSessionInput,
+  StartComputerUseSessionResponse,
+  StreamComputerUseSessionOptions,
+} from "./types";

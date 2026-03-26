@@ -90,6 +90,37 @@
       "default": 1,
       "description": "How many tasks the agent can handle simultaneously."
     },
+    "presence": {
+      "type": "object",
+      "properties": {
+        "availability": {
+          "type": "string",
+          "enum": ["available", "focused", "busy", "offline"]
+        },
+        "status_text": {
+          "type": "string",
+          "description": "Free-form status supplied by the host agent runtime."
+        },
+        "current_focus": {
+          "type": "string",
+          "description": "What the agent is currently focused on."
+        },
+        "current_task_id": {
+          "type": "string",
+          "description": "Task currently owned by the agent."
+        },
+        "active_task_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "last_seen_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": true,
+      "description": "Live availability and workload hints for routing and Theatre."
+    },
     "cost_per_invocation": {
       "type": "object",
       "properties": {

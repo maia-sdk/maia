@@ -20,6 +20,16 @@ AgentMood = Literal[
     "excited", "concerned", "focused",
 ]
 
+DeliveryStatus = Literal[
+    "draft", "queued", "sent", "delivered", "acknowledged", "failed",
+]
+
+AgentAvailability = Literal["available", "focused", "busy", "offline"]
+
+TaskLifecycleStatus = Literal[
+    "proposed", "accepted", "in_progress", "blocked", "completed", "rejected",
+]
+
 ActivityKind = Literal[
     "thinking", "searching", "reading", "writing",
     "browsing", "coding", "analyzing", "tool_calling",
@@ -47,6 +57,15 @@ class CostInfo(BaseModel):
     tokens_used: int = 0
     cost_usd: float = 0.0
     model: str | None = None
+
+
+class AgentPresence(BaseModel):
+    availability: AgentAvailability | None = None
+    status_text: str | None = None
+    current_focus: str | None = None
+    current_task_id: str | None = None
+    active_task_count: int | None = None
+    last_seen_at: str | None = None
 
 
 class ProgressInfo(BaseModel):
@@ -107,11 +126,16 @@ class ACPMessage(BaseModel):
 
 
 class HandoffTask(BaseModel):
+    task_id: str | None = None
+    thread_id: str | None = None
     description: str
     constraints: list[str] = Field(default_factory=list)
     definition_of_done: str | None = None
     deadline_seconds: int | None = None
     priority: Priority = "normal"
+    owner_agent_id: str | None = None
+    status: TaskLifecycleStatus | None = None
+    blockers: list[str] = Field(default_factory=list)
 
 
 class PriorStep(BaseModel):
@@ -124,6 +148,11 @@ class ACPHandoff(BaseModel):
     from_agent: str = Field(alias="from")
     to: str
     task: HandoffTask
+    handoff_id: str | None = None
+    status: TaskLifecycleStatus | None = None
+    requires_ack: bool | None = None
+    accepted_by: str | None = None
+    declined_reason: str | None = None
     context: dict[str, Any] = Field(default_factory=dict)
     artifacts: list[ACPArtifact] = Field(default_factory=list)
     prior_steps: list[PriorStep] = Field(default_factory=list)
@@ -179,6 +208,7 @@ class ACPCapabilities(BaseModel):
     connectors: list[str] = Field(default_factory=list)
     accepts_intents: list[MessageIntent] = Field(default_factory=list)
     max_concurrent_tasks: int = 1
+    presence: AgentPresence | None = None
     cost_per_invocation: CostInfo | None = None
 
 

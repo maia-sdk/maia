@@ -25,6 +25,28 @@ export type AgentMood =
   | "concerned"
   | "focused";
 
+export type DeliveryStatus =
+  | "draft"
+  | "queued"
+  | "sent"
+  | "delivered"
+  | "acknowledged"
+  | "failed";
+
+export type AgentAvailability =
+  | "available"
+  | "focused"
+  | "busy"
+  | "offline";
+
+export type TaskLifecycleStatus =
+  | "proposed"
+  | "accepted"
+  | "in_progress"
+  | "blocked"
+  | "completed"
+  | "rejected";
+
 // ── Activity ─────────────────────────────────────────────────────────────────
 
 export type ActivityType =
@@ -94,10 +116,20 @@ export interface ACPMessage {
 }
 
 export interface MessageContext {
+  message_id?: string;
   run_id?: string;
   step?: string;
   thread_id?: string;
   in_reply_to?: string;
+  task_id?: string;
+  task_title?: string;
+  handoff_id?: string;
+  review_id?: string;
+  channel?: "direct" | "thread" | "broadcast";
+  mentions?: string[];
+  requires_ack?: boolean;
+  delivery_status?: DeliveryStatus;
+  acked_by?: string[];
   [key: string]: unknown;
 }
 
@@ -105,17 +137,27 @@ export interface ACPHandoff {
   from: string;
   to: string;
   task: HandoffTask;
+  handoff_id?: string;
+  status?: TaskLifecycleStatus;
+  requires_ack?: boolean;
+  accepted_by?: string;
+  declined_reason?: string;
   context?: Record<string, unknown>;
   artifacts?: ACPArtifact[];
   prior_steps?: PriorStep[];
 }
 
 export interface HandoffTask {
+  task_id?: string;
+  thread_id?: string;
   description: string;
   constraints?: string[];
   definition_of_done?: string;
   deadline_seconds?: number;
   priority?: "low" | "normal" | "high" | "critical";
+  owner_agent_id?: string;
+  status?: TaskLifecycleStatus;
+  blockers?: string[];
 }
 
 export interface PriorStep {
@@ -196,6 +238,23 @@ export interface CostInfo {
   model?: string;
 }
 
+export interface AgentPresence {
+  availability?: AgentAvailability;
+  status_text?: string;
+  current_focus?: string;
+  current_task_id?: string;
+  active_task_count?: number;
+  last_seen_at?: string;
+}
+
+export interface DeliveryReceipt {
+  status: DeliveryStatus;
+  delivered_at?: string;
+  acknowledged_at?: string;
+  recipient?: string;
+  error?: string;
+}
+
 export interface ACPCapabilities {
   agent_id: string;
   name: string;
@@ -206,6 +265,7 @@ export interface ACPCapabilities {
   connectors?: string[];
   accepts_intents?: MessageIntent[];
   max_concurrent_tasks?: number;
+  presence?: AgentPresence;
   cost_per_invocation?: CostInfo;
 }
 
@@ -231,8 +291,30 @@ export interface ACPClientOptions {
   role?: string;
   personality?: AgentPersonality;
   streamUrl?: string;
+  transport?: ACPTransport;
+  registry?: ACPRegistryLike;
   onEvent?: (event: ACPEvent) => void;
   onError?: (error: Error) => void;
+}
+
+export interface ACPTransport {
+  deliver<T = unknown>(
+    event: ACPEvent<T>,
+    options?: { recipient?: string; timeoutMs?: number },
+  ): Promise<DeliveryReceipt> | DeliveryReceipt;
+}
+
+export interface ACPRegistryLike {
+  upsertCapabilities(capabilities: ACPCapabilities): void;
+  updatePresence(agentId: string, presence: AgentPresence): void;
+  getCapabilities(agentId: string): ACPCapabilities | undefined;
+  listAgents(): ACPCapabilities[];
+  listAvailableAgents(intent?: MessageIntent): ACPCapabilities[];
+  resolveRecipient(input: {
+    to?: string;
+    intent?: MessageIntent;
+    excludeAgentId?: string;
+  }): ACPCapabilities | undefined;
 }
 
 // ── Typed Event Map ──────────────────────────────────────────────────────────

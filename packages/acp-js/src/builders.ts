@@ -16,6 +16,8 @@ import type {
   AgentPersonality,
   AgentSkill,
   HandoffTask,
+  AgentPresence,
+  DeliveryStatus,
 } from "./types";
 
 let _sequence = 0;
@@ -62,8 +64,18 @@ export function message(opts: {
   content: string;
   thinking?: string;
   mood?: ACPMessage["mood"];
+  messageId?: string;
   threadId?: string;
   inReplyTo?: string;
+  taskId?: string;
+  taskTitle?: string;
+  handoffId?: string;
+  reviewId?: string;
+  channel?: "direct" | "thread" | "broadcast";
+  mentions?: string[];
+  requiresAck?: boolean;
+  deliveryStatus?: DeliveryStatus;
+  ackedBy?: string[];
   artifacts?: ACPArtifact[];
 }): ACPMessage {
   return {
@@ -75,8 +87,18 @@ export function message(opts: {
     mood: opts.mood,
     artifacts: opts.artifacts ?? [],
     context: {
+      message_id: opts.messageId ?? `msg_${uid()}`,
       thread_id: opts.threadId,
       in_reply_to: opts.inReplyTo,
+      task_id: opts.taskId,
+      task_title: opts.taskTitle,
+      handoff_id: opts.handoffId,
+      review_id: opts.reviewId,
+      channel: opts.channel ?? (opts.to === "agent://broadcast" ? "broadcast" : "direct"),
+      mentions: opts.mentions,
+      requires_ack: opts.requiresAck,
+      delivery_status: opts.deliveryStatus,
+      acked_by: opts.ackedBy,
     },
   };
 }
@@ -87,18 +109,28 @@ export function handoff(opts: {
   from: string;
   to: string;
   task: HandoffTask | string;
+  handoffId?: string;
+  status?: ACPHandoff["status"];
+  requiresAck?: boolean;
+  acceptedBy?: string;
+  declinedReason?: string;
   context?: Record<string, unknown>;
   artifacts?: ACPArtifact[];
 }): ACPHandoff {
   const task: HandoffTask =
     typeof opts.task === "string"
-      ? { description: opts.task, priority: "normal" }
+      ? { description: opts.task, priority: "normal", task_id: `task_${uid()}` }
       : opts.task;
 
   return {
     from: opts.from,
     to: opts.to,
     task,
+    handoff_id: opts.handoffId ?? `handoff_${uid()}`,
+    status: opts.status ?? task.status ?? "proposed",
+    requires_ack: opts.requiresAck,
+    accepted_by: opts.acceptedBy,
+    declined_reason: opts.declinedReason,
     context: opts.context ?? {},
     artifacts: opts.artifacts ?? [],
     prior_steps: [],
@@ -184,6 +216,9 @@ export function capabilities(opts: {
   personality?: AgentPersonality;
   skills: AgentSkill[];
   connectors?: string[];
+  acceptsIntents?: ACPCapabilities["accepts_intents"];
+  maxConcurrentTasks?: number;
+  presence?: AgentPresence;
 }): ACPCapabilities {
   return {
     agent_id: opts.agentId,
@@ -193,5 +228,8 @@ export function capabilities(opts: {
     personality: opts.personality,
     skills: opts.skills,
     connectors: opts.connectors ?? [],
+    accepts_intents: opts.acceptsIntents ?? [],
+    max_concurrent_tasks: opts.maxConcurrentTasks ?? 1,
+    presence: opts.presence,
   };
 }

@@ -1,46 +1,27 @@
 {
   "name": "@maia/computer-use",
   "version": "0.1.0",
-  "description": "Browser automation for AI agents — Playwright wrapper that emits ACP events",
+  "description": "Maia computer-use session client for browser-side SDK consumers",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist",
-    "src"
-  ],
-  "sideEffects": false,
-  "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@maia/acp": "workspace:*"
-  },
-  "peerDependencies": {
-    "playwright": ">=1.40.0"
-  },
-  "peerDependenciesMeta": {
-    "playwright": {
-      "optional": true
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     }
   },
-  "devDependencies": {
-    "playwright": "^1.44.0",
-    "tsup": "^8.0.0",
-    "typescript": "^5.4.0",
-    "vitest": "^2.1.9"
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch"
   },
-  "keywords": [
-    "ai",
-    "agent",
-    "browser",
-    "automation",
-    "computer-use",
-    "playwright",
-    "maia"
-  ],
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  },
+  "keywords": ["ai", "agent", "browser", "computer-use", "maia", "session", "streaming"],
   "author": "Maia AI",
   "license": "MIT",
   "repository": {

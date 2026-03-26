@@ -34,10 +34,32 @@
     "context": {
       "type": "object",
       "properties": {
+        "message_id": { "type": "string" },
         "run_id": { "type": "string" },
         "step": { "type": "string" },
         "thread_id": { "type": "string" },
-        "in_reply_to": { "type": "string" }
+        "in_reply_to": { "type": "string" },
+        "task_id": { "type": "string" },
+        "task_title": { "type": "string" },
+        "handoff_id": { "type": "string" },
+        "review_id": { "type": "string" },
+        "channel": {
+          "type": "string",
+          "enum": ["direct", "thread", "broadcast"]
+        },
+        "mentions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requires_ack": { "type": "boolean" },
+        "delivery_status": {
+          "type": "string",
+          "enum": ["draft", "queued", "sent", "delivered", "acknowledged", "failed"]
+        },
+        "acked_by": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       },
       "additionalProperties": true,
       "description": "Contextual metadata for threading and routing."

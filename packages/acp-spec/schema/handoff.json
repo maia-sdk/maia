@@ -20,6 +20,14 @@
       "type": "object",
       "required": ["description"],
       "properties": {
+        "task_id": {
+          "type": "string",
+          "description": "Stable task identifier shared across messages, reviews, and execution events."
+        },
+        "thread_id": {
+          "type": "string",
+          "description": "Conversation thread associated with this handoff."
+        },
         "description": {
           "type": "string",
           "description": "What the receiving agent should do."
@@ -42,9 +50,42 @@
           "type": "string",
           "enum": ["low", "normal", "high", "critical"],
           "default": "normal"
+        },
+        "owner_agent_id": {
+          "type": "string",
+          "description": "Agent currently expected to own the task."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["proposed", "accepted", "in_progress", "blocked", "completed", "rejected"]
+        },
+        "blockers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Current blockers preventing completion."
         }
       },
       "additionalProperties": true
+    },
+    "handoff_id": {
+      "type": "string",
+      "description": "Stable handoff identifier."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "accepted", "in_progress", "blocked", "completed", "rejected"]
+    },
+    "requires_ack": {
+      "type": "boolean",
+      "description": "Whether the receiving agent is expected to acknowledge the handoff."
+    },
+    "accepted_by": {
+      "type": "string",
+      "description": "Agent that accepted the handoff."
+    },
+    "declined_reason": {
+      "type": "string",
+      "description": "Reason the handoff was rejected or declined."
     },
     "context": {
       "type": "object",

@@ -8,7 +8,15 @@
  *   });
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ACPEvent, ACPMessage, ACPCapabilities, CostInfo } from "@maia/acp";
+import type {
+  ACPActivity,
+  ACPCapabilities,
+  ACPEvent,
+  ACPHandoff,
+  ACPMessage,
+  ACPReview,
+  CostInfo,
+} from "@maia/acp";
 import { parseSSELine } from "@maia/acp";
 
 export interface UseACPStreamOptions {
@@ -47,6 +55,33 @@ export interface ACPStreamState {
   clear: () => void;
 }
 
+function derivePresenceFromActivity(activity: ACPActivity): ACPCapabilities["presence"] {
+  const kind = String(activity.activity || "").trim().toLowerCase();
+  const detail = String(activity.detail || "").trim() || undefined;
+  if (kind === "idle" || kind === "waiting") {
+    return {
+      availability: "available",
+      current_focus: detail,
+      last_seen_at: new Date().toISOString(),
+    };
+  }
+  if (kind === "error") {
+    return {
+      availability: "busy",
+      status_text: detail ?? "Attention needed",
+      current_focus: detail,
+      last_seen_at: new Date().toISOString(),
+    };
+  }
+  return {
+    availability: kind === "reviewing" ? "focused" : "busy",
+    status_text: detail,
+    current_focus: detail,
+    active_task_count: 1,
+    last_seen_at: new Date().toISOString(),
+  };
+}
+
 export function useACPStream(options: UseACPStreamOptions): ACPStreamState {
   const { url, maxBuffer = 5000, autoConnect = true, onEvent, onError } = options;
   const [events, setEvents] = useState<ACPEvent[]>([]);
@@ -56,6 +91,24 @@ export function useACPStream(options: UseACPStreamOptions): ACPStreamState {
   const costRef = useRef({ tokens: 0, usd: 0 });
   const sourceRef = useRef<EventSource | null>(null);
 
+  const mergeAgent = useCallback((agentId: string, patch: Partial<ACPCapabilities>) => {
+    const previous = agentsRef.current.get(agentId);
+    agentsRef.current.set(agentId, {
+      agent_id: agentId,
+      name: previous?.name ?? agentId.replace("agent://", ""),
+      skills: previous?.skills ?? [],
+      connectors: previous?.connectors ?? [],
+      accepts_intents: previous?.accepts_intents ?? [],
+      max_concurrent_tasks: previous?.max_concurrent_tasks ?? 1,
+      ...previous,
+      ...patch,
+      presence: {
+        ...(previous?.presence ?? {}),
+        ...(patch.presence ?? {}),
+      },
+    });
+  }, []);
+
   const handleEvent = useCallback(
     (event: ACPEvent) => {
       // Track run ID
@@ -64,16 +117,86 @@ export function useACPStream(options: UseACPStreamOptions): ACPStreamState {
       // Track agent capabilities
       if (event.event_type === "capabilities" && event.payload) {
         const caps = event.payload as unknown as ACPCapabilities;
-        agentsRef.current.set(caps.agent_id, caps);
+        mergeAgent(caps.agent_id, caps);
+      }
+
+      if (event.event_type === "message" && event.payload) {
+        const msg = event.payload as unknown as ACPMessage;
+        if (msg.from) {
+          mergeAgent(msg.from, {
+            presence: {
+              availability: "busy",
+              status_text: msg.intent,
+              current_focus: msg.context?.task_title ?? msg.context?.task_id,
+              current_task_id: msg.context?.task_id,
+              last_seen_at: event.timestamp,
+            },
+          });
+        }
+        if (msg.to && msg.to !== "agent://broadcast") {
+          mergeAgent(msg.to, {
+            presence: {
+              last_seen_at: event.timestamp,
+            },
+          });
+        }
+      }
+
+      if (event.event_type === "handoff" && event.payload) {
+        const handoff = event.payload as unknown as ACPHandoff;
+        mergeAgent(handoff.from, {
+          presence: {
+            availability: "focused",
+            status_text: "handoff",
+            current_focus: handoff.task.description,
+            current_task_id: handoff.task.task_id,
+            last_seen_at: event.timestamp,
+          },
+        });
+        mergeAgent(handoff.to, {
+          presence: {
+            availability: "busy",
+            status_text: handoff.status ?? handoff.task.status,
+            current_focus: handoff.task.description,
+            current_task_id: handoff.task.task_id,
+            active_task_count: 1,
+            last_seen_at: event.timestamp,
+          },
+        });
+      }
+
+      if (event.event_type === "review" && event.payload) {
+        const review = event.payload as unknown as ACPReview;
+        mergeAgent(review.reviewer, {
+          presence: {
+            availability: "focused",
+            status_text: review.verdict,
+            current_focus: review.artifact_id,
+            last_seen_at: event.timestamp,
+          },
+        });
+        mergeAgent(review.author, {
+          presence: {
+            availability: review.verdict === "approve" ? "available" : "busy",
+            status_text: review.verdict,
+            current_focus: review.artifact_id,
+            last_seen_at: event.timestamp,
+          },
+        });
       }
 
       // Track cost
       if (event.event_type === "event" && event.payload) {
-        const act = event.payload as Record<string, unknown>;
+        const act = event.payload as ACPActivity;
         const cost = act.cost as CostInfo | undefined;
         if (cost) {
           costRef.current.tokens += cost.tokens_used ?? 0;
           costRef.current.usd += cost.cost_usd ?? 0;
+        }
+        if (act.agent_id) {
+          mergeAgent(act.agent_id, {
+            presence: derivePresenceFromActivity(act),
+          });
         }
       }
 
@@ -85,7 +208,7 @@ export function useACPStream(options: UseACPStreamOptions): ACPStreamState {
 
       onEvent?.(event);
     },
-    [maxBuffer, onEvent],
+    [maxBuffer, mergeAgent, onEvent],
   );
 
   const connectFn = useCallback(() => {
