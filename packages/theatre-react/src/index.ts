@@ -110,6 +110,40 @@ export { deriveTheatreStage, desiredPreviewTabForStage } from "./panels/deriveTh
 export type { TheatreStage } from "./panels/deriveTheatreStage";
 export { compactNarrative, buildSceneNarrative } from "./panels/sceneNarrative";
 export { resolveStagedTheatreEnabled } from "./panels/theatreFeatureFlags";
+export {
+  EMAIL_SCENE_EVENT_TYPES,
+  agentColorFromEvent,
+  agentEventTypeFromEvent,
+  agentLabelFromEvent,
+  cursorFromEvent,
+  cursorLabelFromSemantics,
+  deriveSurfaceCommit,
+  desktopStatusForEventType,
+  eventMetadataString,
+  eventTab,
+  findRecentMetadataString,
+  interactionActionFromEvent,
+  interactionActionPhaseFromEvent,
+  interactionActionStatusFromEvent,
+  isApiRuntimeEvent,
+  readEventIndex,
+  readNumberField,
+  readStringField,
+  roleColorFromKey,
+  roleKeyFromEvent,
+  roleLabelFromKey,
+  roleNarrativeFromSemantics,
+  sampleFilmstripEvents,
+  sceneSurfaceFromEvent,
+  surfaceLabelForSceneKey,
+  tabForEventType,
+  tabForSceneSurface,
+} from "./panels/agentActivity";
+export type {
+  ActivityEventLike,
+  PreviewTab as ActivityPreviewTab,
+  SurfaceCommit,
+} from "./panels/agentActivity";
 
 // Maia default theme
 export { maiaTheme, resolveTheatreTheme } from "./theme";

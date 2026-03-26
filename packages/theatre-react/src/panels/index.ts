@@ -31,3 +31,6 @@ export { compactNarrative } from "./sceneNarrative";
 
 // ── Feature flags ────────────────────────────────────────────────────────
 export { resolveStagedTheatreEnabled } from "./theatreFeatureFlags";
+
+// Agent activity derivation helpers
+export * from "./agentActivity";
