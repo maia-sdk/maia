@@ -27,7 +27,16 @@ export type { RoadmapStep } from "./roadmapDerivation";
 export type { ActivityEventLike, PreviewTab } from "./types";
 export { EMAIL_SCENE_EVENT_TYPES, readEventIndex } from "./deriveHelpers";
 export { desktopStatusForEventType } from "./labels";
-export { readBooleanField, readNumberField, readStringField } from "./valueReaders";
+export {
+  readBooleanField,
+  readNumberField,
+  readObjectListField,
+  readStringField,
+  readStringListField,
+} from "./valueReaders";
+export { mergeLiveSceneData, resolveEventSourceUrl, URL_PATTERN } from "./liveSceneData";
+export { appendZoomHistory, collectReferenceTokens } from "./zoomHistory";
+export type { ZoomHistoryEntry } from "./zoomHistory";
 export {
   agentColorFromEvent,
   agentEventTypeFromEvent,

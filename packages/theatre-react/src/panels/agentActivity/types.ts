@@ -2,6 +2,7 @@ export type PreviewTab = "browser" | "document" | "email" | "system";
 
 export type ActivityEventLike = {
   event_id: string;
+  event_index?: number;
   run_id: string;
   event_family?: string;
   seq?: number;

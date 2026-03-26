@@ -132,8 +132,12 @@ export {
   isInteractionSuggestionEvent,
   readBooleanField,
   readEventIndex,
+  readObjectListField,
   readNumberField,
   readStringField,
+  readStringListField,
+  mergeLiveSceneData,
+  resolveEventSourceUrl,
   resolveBrowserUrl,
   resolveDocBodyHint,
   resolveEmailBodyHint,
@@ -151,6 +155,7 @@ export {
   surfaceLabelForSceneKey,
   tabForEventType,
   tabForSceneSurface,
+  URL_PATTERN,
 } from "./panels/agentActivity";
 export type {
   ActivityEventLike,
@@ -164,6 +169,7 @@ export type {
   InteractionSuggestionRejectReason as AgentActivityInteractionSuggestionRejectReason,
   MergedInteractionSource as AgentActivityMergedInteractionSource,
   MergedInteractionState as AgentActivityMergedInteractionState,
+  ZoomHistoryEntry as AgentActivityZoomHistoryEntry,
 } from "./panels/agentActivity";
 
 // Maia default theme
