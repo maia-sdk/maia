@@ -76,6 +76,28 @@ maia stream http://localhost:8765/acp/events
 | `maia-sdk` | `pip install maia-sdk` |
 | `maia-cli` | `pip install maia-cli` |
 
+Python `maia-sdk` now exports:
+- `ACPClient`
+- `Theatre`
+- `TeamChat`
+
+## JS vs Python Parity
+
+The SDKs share the same ACP foundation, but they are not identical surfaces.
+
+| Capability | JavaScript SDK | Python SDK |
+|---------|---------|---------|
+| ACP protocol, builders, stream parsing | Yes | Yes |
+| Theatre | Yes, React components and desktop composition | Yes, HTTP server export via `Theatre` |
+| TeamChat | Yes, React components and conversation modeling | Yes, HTTP server export via `TeamChat` |
+| Brain orchestration | Yes | Yes |
+| Maia computer runtime client | Yes | Not yet parity |
+| Theme and component composition | Yes | No |
+
+Best current rule:
+- use JS when you need embeddable UI and deep frontend composition
+- use Python when you need ACP emission, orchestration, and simple Theatre/TeamChat serving
+
 ## Brain — How It Works
 
 ```
