@@ -4,11 +4,32 @@ One import, everything you need.
 
 Quick start:
 
-    from maia_sdk import ACPClient, Theatre, TeamChat, create_computer_use_client, message
+    from maia_sdk import Brain, ACPClient, Theatre, TeamChat, create_computer_use_client, message
 """
 
 __version__ = "0.1.0"
 
+from maia_brain import (
+    AgentDefinition,
+    AgentRole,
+    Brain,
+    BrainConfig,
+    BrainResult,
+    BrainStep,
+    LLMConfig,
+    LLMResult,
+    MemoryEntry,
+    MemoryStore,
+    ResearchConfig,
+    SearchResult,
+    brave_search,
+    call_llm,
+    call_llm_json,
+    filter_results,
+    get_all_roles,
+    get_role,
+    infer_role,
+)
 from maia_acp import (
     ACPEvent,
     ACPMessage,
@@ -61,10 +82,37 @@ from maia_computer_use import (
     start_computer_use_session,
     stream_computer_use_session,
 )
+from maia_connectors import (
+    BaseConnector,
+    ConnectorDefinition,
+    ConnectorTool,
+    get_all_connectors,
+    get_connector,
+    get_connector_ids,
+)
 from maia_teamchat import TeamChat
 from maia_theatre import Theatre
 
 __all__ = [
+    "Brain",
+    "BrainConfig",
+    "BrainResult",
+    "BrainStep",
+    "LLMConfig",
+    "LLMResult",
+    "ResearchConfig",
+    "AgentDefinition",
+    "AgentRole",
+    "MemoryStore",
+    "MemoryEntry",
+    "SearchResult",
+    "get_role",
+    "get_all_roles",
+    "infer_role",
+    "call_llm",
+    "call_llm_json",
+    "brave_search",
+    "filter_results",
     "ACPEvent",
     "ACPMessage",
     "ACPHandoff",
@@ -91,6 +139,12 @@ __all__ = [
     "parse_sse_line",
     "stream_events",
     "connect_sse",
+    "BaseConnector",
+    "ConnectorDefinition",
+    "ConnectorTool",
+    "get_connector",
+    "get_all_connectors",
+    "get_connector_ids",
     "ComputerUseClient",
     "ComputerUseClientConfig",
     "ComputerUseActiveModelResponse",

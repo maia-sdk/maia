@@ -20,7 +20,7 @@ pip install maia-sdk[all]
 Default imports now include:
 
 ```python
-from maia_sdk import Theatre, TeamChat, create_computer_use_client
+from maia_sdk import Brain, Theatre, TeamChat, create_computer_use_client, get_connector
 ```
 
 ## Quick Start
@@ -36,6 +36,18 @@ msg = message(
     to="agent://analyst",
     intent="challenge",
     content="The 34% growth figure needs verification.",
+)
+```
+
+### Brain
+
+```python
+from maia_sdk import Brain, BrainConfig, LLMConfig
+
+brain = Brain(
+    BrainConfig(
+        llm=LLMConfig(api_key="sk-...", model="gpt-4o-mini"),
+    )
 )
 ```
 
@@ -63,6 +75,14 @@ from maia_sdk import create_computer_use_client
 client = create_computer_use_client()
 session = client.start_session({"url": "https://example.com"})
 print(session.session_id)
+```
+
+### Connectors
+
+```python
+from maia_sdk import get_connector
+
+gmail = get_connector("gmail")
 ```
 
 ## JS vs Python capability parity
