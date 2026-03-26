@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "maia-sdk"
 version = "0.1.0"
-description = "Maia SDK — the collaboration and observability layer for AI agents. One install, everything you need."
+description = "Maia SDK - the collaboration and observability layer for AI agents. One install, everything you need."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
@@ -25,6 +25,7 @@ dependencies = [
     "maia-acp>=0.1.0",
     "maia-brain>=0.1.0",
     "maia-connectors>=0.1.0",
+    "maia-teamchat>=0.1.0",
 ]
 
 [project.optional-dependencies]
