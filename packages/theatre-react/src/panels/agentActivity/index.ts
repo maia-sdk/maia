@@ -1,4 +1,12 @@
 export { eventMetadataString, findRecentMetadataString, sampleFilmstripEvents, tabForEventType } from "./activityMeta";
+export {
+  resolveBrowserUrl,
+  resolveDocBodyHint,
+  resolveEmailBodyHint,
+  resolveEmailRecipient,
+  resolveEmailSubject,
+  resolveSheetBodyHint,
+} from "./contentDerivation";
 export type { ActivityEventLike, PreviewTab } from "./types";
 export { EMAIL_SCENE_EVENT_TYPES, readEventIndex } from "./deriveHelpers";
 export { desktopStatusForEventType } from "./labels";
