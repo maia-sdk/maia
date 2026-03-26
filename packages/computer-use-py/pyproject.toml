@@ -5,17 +5,17 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "maia-computer-use"
 version = "0.1.0"
-description = "Browser automation for AI agents — Playwright wrapper with ACP event emission"
+description = "Maia computer runtime client for Python"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
-dependencies = ["maia-acp>=0.1.0"]
-keywords = ["ai", "agent", "browser", "automation", "playwright", "computer-use", "maia"]
+dependencies = ["httpx>=0.25.0"]
+keywords = ["ai", "agent", "browser", "computer-use", "runtime", "maia"]
 authors = [{name = "Maia AI"}]
 
 [project.urls]
 Homepage = "https://github.com/maia-sdk/maia"
 Repository = "https://github.com/maia-sdk/maia"
 
-[project.optional-dependencies]
-playwright = ["playwright>=1.40.0"]
+[tool.setuptools]
+packages = ["maia_computer_use"]

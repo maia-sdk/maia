@@ -4,19 +4,7 @@ One import, everything you need.
 
 Quick start:
 
-    from maia_sdk import ACPClient, Theatre, TeamChat, message, handoff, review
-
-    client = ACPClient(agent_id="agent://researcher")
-    msg = message(
-        from_agent="agent://researcher",
-        to="agent://analyst",
-        intent="challenge",
-        content="Can you verify the revenue figures?",
-    )
-
-Framework adapters:
-
-    from maia_sdk.adapters import langchain, crewai, autogen
+    from maia_sdk import ACPClient, Theatre, TeamChat, create_computer_use_client, message
 """
 
 __version__ = "0.1.0"
@@ -49,6 +37,30 @@ from maia_acp import (
     stream_events,
     connect_sse,
 )
+from maia_computer_use import (
+    ComputerUseClient,
+    ComputerUseClientConfig,
+    ComputerUseActiveModelResponse,
+    ComputerUsePolicyResponse,
+    ComputerUseSessionListRecord,
+    ComputerUseSessionRecord,
+    ComputerUseSLOSummaryResponse,
+    ComputerUseStreamEvent,
+    NavigateComputerUseSessionResponse,
+    StartComputerUseSessionInput,
+    StartComputerUseSessionResponse,
+    StreamComputerUseSessionOptions,
+    cancel_computer_use_session,
+    create_computer_use_client,
+    get_computer_use_active_model,
+    get_computer_use_policy,
+    get_computer_use_session,
+    get_computer_use_slo_summary,
+    list_computer_use_sessions,
+    navigate_computer_use_session,
+    start_computer_use_session,
+    stream_computer_use_session,
+)
 from maia_teamchat import TeamChat
 from maia_theatre import Theatre
 
@@ -79,6 +91,28 @@ __all__ = [
     "parse_sse_line",
     "stream_events",
     "connect_sse",
+    "ComputerUseClient",
+    "ComputerUseClientConfig",
+    "ComputerUseActiveModelResponse",
+    "ComputerUsePolicyResponse",
+    "ComputerUseSessionListRecord",
+    "ComputerUseSessionRecord",
+    "ComputerUseSLOSummaryResponse",
+    "ComputerUseStreamEvent",
+    "NavigateComputerUseSessionResponse",
+    "StartComputerUseSessionInput",
+    "StartComputerUseSessionResponse",
+    "StreamComputerUseSessionOptions",
+    "cancel_computer_use_session",
+    "create_computer_use_client",
+    "get_computer_use_active_model",
+    "get_computer_use_policy",
+    "get_computer_use_session",
+    "get_computer_use_slo_summary",
+    "list_computer_use_sessions",
+    "navigate_computer_use_session",
+    "start_computer_use_session",
+    "stream_computer_use_session",
     "TeamChat",
     "Theatre",
 ]

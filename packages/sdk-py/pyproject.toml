@@ -24,18 +24,17 @@ classifiers = [
 dependencies = [
     "maia-acp>=0.1.0",
     "maia-brain>=0.1.0",
+    "maia-computer-use>=0.1.0",
     "maia-connectors>=0.1.0",
     "maia-teamchat>=0.1.0",
     "maia-theatre>=0.1.0",
 ]
 
 [project.optional-dependencies]
-computer-use = ["maia-computer-use>=0.1.0"]
 langchain = ["maia-adapters[langchain]>=0.1.0"]
 crewai = ["maia-adapters[crewai]>=0.1.0"]
 autogen = ["maia-adapters[autogen]>=0.1.0"]
 all = [
-    "maia-computer-use>=0.1.0",
     "maia-adapters[all]>=0.1.0",
 ]
 

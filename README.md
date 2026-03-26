@@ -91,12 +91,12 @@ The SDKs share the same ACP foundation, but they are not identical surfaces.
 | Theatre | Yes, React components and desktop composition | Yes, HTTP server export via `Theatre` |
 | TeamChat | Yes, React components and conversation modeling | Yes, HTTP server export via `TeamChat` |
 | Brain orchestration | Yes | Yes |
-| Maia computer runtime client | Yes | Not yet parity |
+| Maia computer runtime client | Yes | Yes |
 | Theme and component composition | Yes | No |
 
 Best current rule:
 - use JS when you need embeddable UI and deep frontend composition
-- use Python when you need ACP emission, orchestration, and simple Theatre/TeamChat serving
+- use Python when you need ACP emission, orchestration, simple Theatre/TeamChat serving, and Maia runtime client access
 
 ## Brain — How It Works
 
@@ -392,3 +392,4 @@ Run `make help` for all targets.
 MIT licensed. Everything is free.
 
 For hosted infrastructure — managed LLMs, browser automation at scale, enterprise governance — see [maia.dev](https://maia.dev).
+
