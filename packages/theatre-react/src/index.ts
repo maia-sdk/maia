@@ -10,6 +10,10 @@ export { TeamThread } from "./components/TeamThread";
 export type { TeamThreadProps } from "./components/TeamThread";
 export { ActivityTimeline } from "./components/ActivityTimeline";
 export type { ActivityTimelineProps } from "./components/ActivityTimeline";
+export { AgentHandoffRelay } from "./components/AgentHandoffRelay";
+export type { AgentHandoffRelayProps } from "./components/AgentHandoffRelay";
+export { ApprovalGateCard } from "./components/ApprovalGateCard";
+export type { ApprovalGateCardProps } from "./components/ApprovalGateCard";
 export { AssemblyProgressPanel } from "./components/AssemblyProgressPanel";
 export type { AssemblyProgressEvent, AssemblyProgressPanelProps } from "./components/AssemblyProgressPanel";
 export { BrainReviewPanel } from "./components/BrainReviewPanel";
@@ -48,6 +52,8 @@ export { TheatreDesktop } from "./components/TheatreDesktop";
 export type { TheatreDesktopProps } from "./components/TheatreDesktop";
 export { TheatreDesktopViewer } from "./components/TheatreDesktopViewer";
 export type { TheatreDesktopViewerProps } from "./components/TheatreDesktopViewer";
+export { MaiaDesktop } from "./components/MaiaDesktop";
+export type { MaiaDesktopProps } from "./components/MaiaDesktop";
 
 // Hooks
 export { useACPStream } from "./hooks/useACPStream";

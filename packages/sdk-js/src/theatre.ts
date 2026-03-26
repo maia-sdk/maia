@@ -45,6 +45,10 @@ export { TheatreDesktop } from "@maia/theatre";
 export type { TheatreDesktopProps } from "@maia/theatre";
 export { TheatreDesktopViewer } from "@maia/theatre";
 export type { TheatreDesktopViewerProps } from "@maia/theatre";
+export { MaiaDesktop } from "@maia/theatre";
+export type { MaiaDesktopProps } from "@maia/theatre";
+export { ApprovalGateCard, AgentHandoffRelay } from "@maia/theatre";
+export type { ApprovalGateCardProps, AgentHandoffRelayProps } from "@maia/theatre";
 
 export {
   ApiScene,
