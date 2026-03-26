@@ -38,7 +38,8 @@ When `agents` is empty, the planner selects roles from the built-in catalog at p
 ## Watch Agents Work
 
 ```tsx
-import { Theatre, TeamChat } from '@maia/sdk/theatre';
+import { Theatre } from '@maia/sdk/theatre';
+import { TeamChat } from '@maia/sdk/teamchat';
 
 // Theatre: see the actual work (browser pages, documents, dashboards)
 <Theatre streamUrl="/acp/events" />
@@ -64,7 +65,7 @@ maia stream http://localhost:8765/acp/events
 | `@maia/acp` | Agent-to-agent protocol — types, client, SSE parser | `npm i @maia/acp` |
 | `@maia/theatre` | Live action visualization — 14 visual surfaces | `npm i @maia/theatre` |
 | `@maia/teamchat` | Agent conversation UI — chat bubbles, reviews | `npm i @maia/teamchat` |
-| `@maia/computer-use` | Browser automation with Playwright | `npm i @maia/computer-use` |
+| `@maia/computer-use` | Maia computer runtime client | `npm i @maia/computer-use` |
 | `@maia/connectors` | 40+ SaaS connectors (Gmail, Slack, Jira...) | `npm i @maia/connectors` |
 | `@maia/sdk` | Everything in one install | `npm i @maia/sdk` |
 

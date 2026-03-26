@@ -26,7 +26,17 @@ import {
   createComputerUseClient,
 } from "@maia/sdk";
 
-import {`r`n  Theatre,`r`n  MaiaDesktop,`r`n  TheatreDesktop,`r`n  TeamThread,`r`n  ActivityTimeline,`r`n  useACPStream,`r`n  useReplay,`r`n} from "@maia/sdk/theatre";`r`n`r`nimport { ConversationPanel } from "@maia/sdk/teamchat";
+import {
+  Theatre,
+  MaiaDesktop,
+  TheatreDesktop,
+  TeamThread,
+  ActivityTimeline,
+  useACPStream,
+  useReplay,
+} from "@maia/sdk/theatre";
+
+import { ConversationPanel, TeamChat } from "@maia/sdk/teamchat";
 ```
 
 ## Design Rule
@@ -70,6 +80,16 @@ import { Theatre } from "@maia/sdk/theatre";
 
 export function App() {
   return <Theatre streamUrl="/acp/events" budgetUsd={5} showThinking />;
+}
+```
+
+### Team chat
+
+```tsx
+import { ConversationPanel } from "@maia/sdk/teamchat";
+
+export function App({ rows }: { rows: unknown[] }) {
+  return <ConversationPanel rows={rows as never[]} loading={false} />;
 }
 ```
 
