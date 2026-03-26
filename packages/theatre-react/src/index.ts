@@ -122,10 +122,15 @@ export {
   eventMetadataString,
   eventTab,
   findRecentMetadataString,
+  extractSuggestionLayer,
+  derivePhaseTimeline,
+  phaseForEvent,
   interactionActionFromEvent,
   interactionActionPhaseFromEvent,
   interactionActionStatusFromEvent,
   isApiRuntimeEvent,
+  isInteractionSuggestionEvent,
+  readBooleanField,
   readEventIndex,
   readNumberField,
   readStringField,
@@ -136,6 +141,7 @@ export {
   resolveEmailSubject,
   resolveSheetBodyHint,
   derivePlannedRoadmap,
+  suggestionLookupKeyForEvent,
   roleColorFromKey,
   roleKeyFromEvent,
   roleLabelFromKey,
@@ -148,9 +154,16 @@ export {
 } from "./panels/agentActivity";
 export type {
   ActivityEventLike,
+  ActivityPhaseKey as AgentActivityPhaseKey,
+  ActivityPhaseRow as AgentActivityPhaseRow,
+  ActivityPhaseState as AgentActivityPhaseState,
   PreviewTab as ActivityPreviewTab,
   RoadmapStep as ActivityRoadmapStep,
   SurfaceCommit,
+  InteractionSuggestion as AgentActivityInteractionSuggestion,
+  InteractionSuggestionRejectReason as AgentActivityInteractionSuggestionRejectReason,
+  MergedInteractionSource as AgentActivityMergedInteractionSource,
+  MergedInteractionState as AgentActivityMergedInteractionState,
 } from "./panels/agentActivity";
 
 // Maia default theme
