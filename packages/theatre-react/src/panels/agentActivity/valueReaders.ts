@@ -11,4 +11,16 @@ function readNumberField(value: unknown): number | null {
   return null;
 }
 
-export { readNumberField, readStringField };
+function readBooleanField(value: unknown): boolean | null {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true" || normalized === "1" || normalized === "yes") return true;
+    if (normalized === "false" || normalized === "0" || normalized === "no") return false;
+  }
+  return null;
+}
+
+export { readBooleanField, readNumberField, readStringField };
