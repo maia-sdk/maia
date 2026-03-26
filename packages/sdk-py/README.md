@@ -25,6 +25,9 @@ from maia_sdk import Brain, Theatre, TeamChat, create_computer_use_client, get_c
 
 ## Quick Start
 
+Full end-to-end sample:
+- [`examples/python-live-workbench`](../../examples/python-live-workbench/)
+
 ### ACP
 
 ```python

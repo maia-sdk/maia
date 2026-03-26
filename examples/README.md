@@ -18,6 +18,7 @@ Runnable demos showing how to use the Maia SDK.
 | [**langchain-acp-demo**](langchain-acp-demo/) | Python | Wrap a LangChain agent with ACP event emission |
 | [**crewai-acp-demo**](crewai-acp-demo/) | Python | Wrap a CrewAI Crew with ACP observability |
 | [**autogen-acp-demo**](autogen-acp-demo/) | Python | Wrap an AutoGen group chat with ACP events |
+| [**python-live-workbench**](python-live-workbench/) | Python | End-to-end SDK sample: ACP + collaboration helpers + Theatre + TeamChat + computer runtime |
 
 ## React
 
