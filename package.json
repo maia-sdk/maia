@@ -9,6 +9,7 @@
     "packages/brain-runtime",
     "packages/cli",
     "packages/computer-use",
+    "packages/conversation-react",
     "packages/connectors",
     "packages/sdk-js",
     "packages/teamchat",

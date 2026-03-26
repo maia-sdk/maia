@@ -1,0 +1,50 @@
+{
+  "name": "@maia/conversation",
+  "version": "0.1.0",
+  "description": "Multi-agent conversation UI and conversation modeling for Maia",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --external react",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "dependencies": {
+    "@maia/acp": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "conversation",
+    "chat",
+    "handoff",
+    "review",
+    "multi-agent",
+    "maia"
+  ],
+  "author": "Maia AI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maia-sdk/maia"
+  }
+}

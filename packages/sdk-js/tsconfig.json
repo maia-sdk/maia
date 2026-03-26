@@ -15,6 +15,7 @@
       "@maia/acp": ["../acp-js/src/index.ts"],
       "@maia/brain": ["../brain-runtime/src/index.ts"],
       "@maia/computer-use": ["../computer-use/src/index.ts"],
+      "@maia/conversation": ["../conversation-react/src/index.ts"],
       "@maia/theatre": ["../theatre-react/src/index.ts"]
     }
   },
