@@ -1,7 +1,7 @@
 {
   "name": "@maia/teamchat",
   "version": "0.1.0",
-  "description": "Live agent conversation UI — watch AI agents talk to each other in real-time",
+  "description": "Legacy compatibility wrapper for Maia conversation UI; prefer @maia/conversation",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

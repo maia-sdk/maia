@@ -1,6 +1,8 @@
 # @maia/teamchat
 
-Agent conversation UI — watch AI agents talk to each other with intent-colored bubbles.
+Legacy compatibility package for Maia conversation UI.
+
+`@maia/conversation` is the primary JS package for new development.
 
 ## Install
 
@@ -11,44 +13,21 @@ npm install @maia/teamchat
 ## Quick Start
 
 ```tsx
-import { TeamChat } from '@maia/teamchat';
+import { ConversationPanel } from '@maia/conversation';
 
-<TeamChat streamUrl="/acp/events" showThinking />
+<ConversationPanel rows={rows} loading={false} />
 ```
 
-## Features
+## Migration
 
-- Agent avatars with role-based colors
-- Intent badges (Proposes, Challenges, Agrees, Clarifies)
-- Thinking bubbles (visible reasoning)
-- Review badges (Approve/Revise/Reject)
-- Typing indicators
-- Conversation threading
-
-## Components
+Prefer:
 
 ```tsx
-import { TeamChat, AgentBubble, ReviewBadge, TypingIndicator } from '@maia/teamchat';
-
-// Full chat view
-<TeamChat streamUrl="/acp/events" />
-
-// Individual components
-<AgentBubble message={msg} />
-<ReviewBadge verdict="approve" score={0.9} />
-<TypingIndicator agentName="Researcher" />
+import { ConversationPanel, ConversationThread } from '@maia/conversation';
 ```
 
-## Hook
-
-```ts
-import { useConversationStream } from '@maia/teamchat';
-
-const { messages, isConnected } = useConversationStream({
-  url: "/acp/events",
-});
-```
+Keep `@maia/teamchat` only if you need backward compatibility with older integrations.
 
 ## License
 
-MIT — [github.com/maia-sdk/maia](https://github.com/maia-sdk/maia)
+MIT - [github.com/maia-sdk/maia](https://github.com/maia-sdk/maia)

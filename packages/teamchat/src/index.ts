@@ -1,9 +1,8 @@
 /**
- * @maia/teamchat — live agent conversation UI.
+ * @maia/teamchat - legacy compatibility wrapper for agent conversation UI.
  *
- * Usage:
- *   import { TeamChat } from '@maia/teamchat';
- *   <TeamChat streamUrl="/acp/events" />
+ * Prefer:
+ *   import { ConversationPanel } from '@maia/conversation';
  */
 
 export { TeamChat } from "./components/TeamChat";
