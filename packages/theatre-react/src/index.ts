@@ -119,6 +119,7 @@ export {
   cursorLabelFromSemantics,
   deriveSurfaceCommit,
   desktopStatusForEventType,
+  deriveAgentActivityState,
   eventMetadataString,
   eventTab,
   findRecentMetadataString,
@@ -156,6 +157,7 @@ export {
   tabForEventType,
   tabForSceneSurface,
   URL_PATTERN,
+  isConversationOnlySceneSignal,
 } from "./panels/agentActivity";
 export type {
   ActivityEventLike,
@@ -170,6 +172,8 @@ export type {
   MergedInteractionSource as AgentActivityMergedInteractionSource,
   MergedInteractionState as AgentActivityMergedInteractionState,
   ZoomHistoryEntry as AgentActivityZoomHistoryEntry,
+  DeriveAgentActivityStateParams as AgentActivityDeriveStateParams,
+  StageAttachmentLike as AgentActivityStageAttachmentLike,
 } from "./panels/agentActivity";
 
 // Maia default theme
