@@ -51,6 +51,36 @@ brain = Brain(
 )
 ```
 
+### Collaboration helpers
+
+```python
+from maia_sdk import (
+    LLMConfig,
+    suggest_conversation_move,
+    draft_conversation_message,
+    summarize_conversation_thread,
+)
+
+llm = LLMConfig(api_key="sk-...", model="gpt-4o-mini")
+context = {
+    "objective": "Finish the client memo with verified numbers.",
+    "currentAgentId": "agent://researcher",
+    "participants": [
+        {"agentId": "agent://researcher", "name": "Researcher"},
+        {"agentId": "agent://analyst", "name": "Analyst", "role": "Verifier"},
+    ],
+    "events": [],
+}
+
+move = await suggest_conversation_move(
+    llm,
+    context,
+)
+
+draft = await draft_conversation_message(llm, context, move.move)
+digest = await summarize_conversation_thread(llm, context)
+```
+
 ### Theatre
 
 ```python
@@ -93,6 +123,7 @@ gmail = get_connector("gmail")
 | Theatre UI surface | Yes, React components | Yes, HTTP server export via `Theatre` |
 | Team chat UI surface | Yes, React components | Yes, HTTP server export via `TeamChat` |
 | Brain orchestration | Yes | Yes, different API shape |
+| Collaboration helper APIs | Yes | Yes |
 | Maia computer runtime client | Yes | Yes |
 | Theme and component composition | Yes | No |
 

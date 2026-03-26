@@ -80,6 +80,7 @@ Python `maia-sdk` now exports:
 - `ACPClient`
 - `Theatre`
 - `TeamChat`
+- collaboration helpers like `suggest_conversation_move`
 
 ## JS vs Python Parity
 
@@ -91,6 +92,7 @@ The SDKs share the same ACP foundation, but they are not identical surfaces.
 | Theatre | Yes, React components and desktop composition | Yes, HTTP server export via `Theatre` |
 | TeamChat | Yes, React components and conversation modeling | Yes, HTTP server export via `TeamChat` |
 | Brain orchestration | Yes | Yes |
+| Collaboration helper APIs | Yes | Yes |
 | Maia computer runtime client | Yes | Yes |
 | Theme and component composition | Yes | No |
 

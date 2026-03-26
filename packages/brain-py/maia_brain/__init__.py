@@ -30,6 +30,19 @@ from maia_brain.types import (
 from maia_brain.roles import get_role, get_all_roles, infer_role, AgentRole
 from maia_brain.memory import MemoryStore, MemoryEntry
 from maia_brain.llm import call_llm, call_llm_json
+from maia_brain.collaboration import (
+    CollaborationContext,
+    CollaborationParticipant,
+    ConversationMove,
+    MessageDraft,
+    MoveSuggestionResult,
+    MessageDraftResult,
+    ThreadDigest,
+    ThreadDigestResult,
+    suggest_conversation_move,
+    draft_conversation_message,
+    summarize_conversation_thread,
+)
 from maia_brain.research import brave_search, filter_results, SearchResult
 from maia_brain.env import load_env, resolve_api_key
 
@@ -47,11 +60,22 @@ __all__ = [
     "MemoryStore",
     "MemoryEntry",
     "SearchResult",
+    "CollaborationContext",
+    "CollaborationParticipant",
+    "ConversationMove",
+    "MessageDraft",
+    "MoveSuggestionResult",
+    "MessageDraftResult",
+    "ThreadDigest",
+    "ThreadDigestResult",
     "get_role",
     "get_all_roles",
     "infer_role",
     "call_llm",
     "call_llm_json",
+    "suggest_conversation_move",
+    "draft_conversation_message",
+    "summarize_conversation_thread",
     "brave_search",
     "filter_results",
 ]
