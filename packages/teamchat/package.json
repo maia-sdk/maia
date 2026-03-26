@@ -1,7 +1,7 @@
 {
   "name": "@maia/teamchat",
   "version": "0.1.0",
-  "description": "Legacy compatibility wrapper for Maia conversation UI; prefer @maia/conversation",
+  "description": "Maia multi-agent chat UI and conversation modeling for JavaScript and React",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -36,6 +36,8 @@
     "agent",
     "chat",
     "conversation",
+    "handoff",
+    "review",
     "multi-agent",
     "teamchat",
     "maia"

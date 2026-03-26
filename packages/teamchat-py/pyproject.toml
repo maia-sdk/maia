@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "maia-teamchat"
 version = "0.1.0"
-description = "Legacy Python TeamChat server for Maia conversation UI"
+description = "Python TeamChat server for Maia conversation UI"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"

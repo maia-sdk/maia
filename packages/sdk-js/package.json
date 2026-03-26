@@ -11,10 +11,10 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./conversation": {
-      "types": "./dist/conversation.d.ts",
-      "import": "./dist/conversation.mjs",
-      "require": "./dist/conversation.js"
+    "./teamchat": {
+      "types": "./dist/teamchat.d.ts",
+      "import": "./dist/teamchat.mjs",
+      "require": "./dist/teamchat.js"
     },
     "./theatre": {
       "types": "./dist/theatre.d.ts",
@@ -25,8 +25,8 @@
   },
   "files": ["dist", "src"],
   "scripts": {
-    "build": "tsup src/index.ts src/theatre.ts src/conversation.ts --format cjs,esm --dts --external react",
-    "dev": "tsup src/index.ts src/theatre.ts src/conversation.ts --format cjs,esm --dts --watch --external react",
+    "build": "tsup src/index.ts src/theatre.ts src/teamchat.ts --format cjs,esm --dts --external react",
+    "dev": "tsup src/index.ts src/theatre.ts src/teamchat.ts --format cjs,esm --dts --watch --external react",
     "test": "vitest run",
     "lint": "eslint src/"
   },
@@ -34,7 +34,7 @@
     "@maia/acp": "workspace:*",
     "@maia/brain": "workspace:*",
     "@maia/computer-use": "workspace:*",
-    "@maia/conversation": "workspace:*",
+    "@maia/teamchat": "workspace:*",
     "@maia/theatre": "workspace:*"
   },
   "peerDependencies": {

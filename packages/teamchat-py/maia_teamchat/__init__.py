@@ -1,4 +1,4 @@
-"""maia-teamchat - legacy Python TeamChat server for Maia conversation UI.
+"""maia-teamchat - Python TeamChat server for Maia conversation UI.
 
 Usage:
     from maia_teamchat import TeamChat
@@ -11,8 +11,6 @@ Usage:
     chat.start()
     chat.push(event)
     chat.stop()
-
-Prefer the JS `@maia/conversation` package for new conversation UI work.
 """
 
 from maia_teamchat.server import TeamChat

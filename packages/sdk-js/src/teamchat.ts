@@ -1,14 +1,15 @@
-export { ConversationPanel, ConversationThread } from "@maia/conversation";
+export { ConversationPanel, ConversationThread, TeamChat } from "@maia/teamchat";
 export type {
   ConversationPanelProps,
   ConversationThreadProps,
+  TeamChatProps,
   CollaborationEntryLike,
   ConversationBubble,
   ConversationGroup,
   ConversationRosterMember,
   ConversationRow,
   ConversationACPEvent,
-} from "@maia/conversation";
+} from "@maia/teamchat";
 export {
   filterConversationRows,
   mergeRows,
@@ -31,4 +32,8 @@ export {
   speakerRoleLabel,
   threadLabel,
   toTimestamp,
-} from "@maia/conversation";
+  AgentBubble,
+  ReviewBadge,
+  TypingIndicator,
+  useConversationStream,
+} from "@maia/teamchat";

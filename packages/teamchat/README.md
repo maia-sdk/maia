@@ -1,8 +1,6 @@
 # @maia/teamchat
 
-Legacy compatibility package for Maia conversation UI.
-
-`@maia/conversation` is the primary JS package for new development.
+Primary JS package for Maia multi-agent chat, handoffs, reviews, and conversation modeling.
 
 ## Install
 
@@ -13,20 +11,28 @@ npm install @maia/teamchat
 ## Quick Start
 
 ```tsx
-import { ConversationPanel } from '@maia/conversation';
+import { ConversationPanel } from '@maia/teamchat';
 
 <ConversationPanel rows={rows} loading={false} />
 ```
 
-## Migration
+## What it includes
 
-Prefer:
+- conversation panel UI
+- conversation thread UI
+- roster and grouping helpers
+- ACP conversion helpers
+- legacy `TeamChat` exports for backward compatibility
+
+## Legacy API
+
+If you already use the older stream-first chat component, it still exists:
 
 ```tsx
-import { ConversationPanel, ConversationThread } from '@maia/conversation';
-```
+import { TeamChat } from '@maia/teamchat';
 
-Keep `@maia/teamchat` only if you need backward compatibility with older integrations.
+<TeamChat streamUrl="/acp/events" showThinking />
+```
 
 ## License
 

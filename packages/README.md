@@ -10,8 +10,7 @@
 | [`acp-js`](./acp-js/) | `@maia/acp` - TypeScript/JS client | TypeScript |
 | [`acp-py`](./acp-py/) | `maia-acp` - Python client | Python |
 | [`theatre-react`](./theatre-react/) | `@maia/theatre` - React execution and desktop SDK | React/TypeScript |
-| [`conversation-react`](./conversation-react/) | `@maia/conversation` - React multi-agent conversation UI | React/TypeScript |
-| [`teamchat`](./teamchat/) | `@maia/teamchat` - legacy compatibility wrapper for conversation UI | React/TypeScript |
+| [`teamchat`](./teamchat/) | `@maia/teamchat` - React multi-agent chat UI and conversation modeling | React/TypeScript |
 | [`connector-adapters`](./connector-adapters/) | Framework adapters (LangChain, CrewAI, AutoGen) | Python |
 
 ## Quick Start
@@ -21,17 +20,14 @@
 ```tsx
 import { Theatre } from '@maia/theatre';
 
-// Live mode - connect to any SSE stream
 <Theatre streamUrl="/acp/events" />
-
-// Replay mode - feed recorded events
 <Theatre recordedEvents={events} />
 ```
 
 ### Render agent conversation (React)
 
 ```tsx
-import { ConversationPanel } from '@maia/conversation';
+import { ConversationPanel } from '@maia/teamchat';
 
 <ConversationPanel rows={rows} loading={false} />
 ```
@@ -53,19 +49,6 @@ msg = message(
 event = client.emit_message(msg)
 ```
 
-### Adapt existing frameworks
-
-```python
-from maia_acp.adapters.langchain import ACPLangChainAdapter
-acp_agent = ACPLangChainAdapter(agent=my_langchain_agent, agent_id="agent://researcher")
-
-from maia_acp.adapters.crewai import ACPCrewAIAdapter
-acp_crew = ACPCrewAIAdapter(crew=my_crew)
-
-from maia_acp.adapters.autogen import ACPAutoGenAdapter
-acp_chat = ACPAutoGenAdapter(group_chat=my_group_chat)
-```
-
 ## Architecture
 
 ```text
@@ -75,7 +58,7 @@ AG-UI --> UI           (CopilotKit - how agents stream to frontends)
 ```
 
 Theatre renders execution.
-Conversation renders agent-to-agent chat, handoffs, and review loops.
+TeamChat renders agent-to-agent chat, handoffs, and review loops.
 
 ## License
 

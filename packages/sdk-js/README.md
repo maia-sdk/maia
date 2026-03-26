@@ -26,15 +26,7 @@ import {
   createComputerUseClient,
 } from "@maia/sdk";
 
-import {
-  Theatre,
-  MaiaDesktop,
-  TheatreDesktop,
-  TeamThread,
-  ActivityTimeline,
-  useACPStream,
-  useReplay,
-} from "@maia/sdk/theatre";
+import {`r`n  Theatre,`r`n  MaiaDesktop,`r`n  TheatreDesktop,`r`n  TeamThread,`r`n  ActivityTimeline,`r`n  useACPStream,`r`n  useReplay,`r`n} from "@maia/sdk/theatre";`r`n`r`nimport { ConversationPanel } from "@maia/sdk/teamchat";
 ```
 
 ## Design Rule
@@ -501,3 +493,4 @@ Theatre can wrap generic SSE/JSON streams, but ACP-native events are the recomme
 ## License
 
 MIT
+
