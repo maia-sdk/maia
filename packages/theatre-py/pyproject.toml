@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "maia-theatre"
 version = "0.1.0"
-description = "Live agent visualization — serve the Theatre UI from Python with one line of code"
+description = "Live agent visualization - serve the Theatre UI from Python with one line of code"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
@@ -16,6 +16,9 @@ authors = [{name = "Maia AI"}]
 [project.urls]
 Homepage = "https://github.com/maia-sdk/maia"
 Repository = "https://github.com/maia-sdk/maia"
+
+[tool.setuptools]
+packages = ["maia_theatre"]
 
 [tool.setuptools.package-data]
 maia_theatre = ["static/**"]

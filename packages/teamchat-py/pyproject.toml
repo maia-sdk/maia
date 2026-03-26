@@ -17,5 +17,8 @@ authors = [{name = "Maia AI"}]
 Homepage = "https://github.com/maia-sdk/maia"
 Repository = "https://github.com/maia-sdk/maia"
 
+[tool.setuptools]
+packages = ["maia_teamchat"]
+
 [tool.setuptools.package-data]
 maia_teamchat = ["static/**"]

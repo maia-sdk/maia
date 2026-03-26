@@ -26,6 +26,7 @@ dependencies = [
     "maia-brain>=0.1.0",
     "maia-connectors>=0.1.0",
     "maia-teamchat>=0.1.0",
+    "maia-theatre>=0.1.0",
 ]
 
 [project.optional-dependencies]

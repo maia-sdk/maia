@@ -4,7 +4,7 @@ One import, everything you need.
 
 Quick start:
 
-    from maia_sdk import ACPClient, TeamChat, message, handoff, review
+    from maia_sdk import ACPClient, Theatre, TeamChat, message, handoff, review
 
     client = ACPClient(agent_id="agent://researcher")
     msg = message(
@@ -50,6 +50,7 @@ from maia_acp import (
     connect_sse,
 )
 from maia_teamchat import TeamChat
+from maia_theatre import Theatre
 
 __all__ = [
     "ACPEvent",
@@ -79,4 +80,5 @@ __all__ = [
     "stream_events",
     "connect_sse",
     "TeamChat",
+    "Theatre",
 ]
