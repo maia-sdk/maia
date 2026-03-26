@@ -1,3 +1,6 @@
+import type { RefObject, ReactNode } from "react";
+import type { InteractionSuggestion } from "./interactionSuggestionMerge";
+
 export type ClickRippleEntry = {
   id: string;
   x: number;
@@ -72,7 +75,43 @@ export type PdfPlaybackState = {
 export type SceneAnimationState = {
   copyPulseText: string;
   copyPulseVisible: boolean;
-  emailBodyScrollRef: React.RefObject<HTMLDivElement | null>;
+  emailBodyScrollRef: RefObject<HTMLDivElement>;
   typedDocBodyPreview: string;
   typedSheetBodyPreview: string;
+};
+
+export type AgentDesktopSceneProps = {
+  snapshotUrl: string;
+  isBrowserScene: boolean;
+  isEmailScene: boolean;
+  isDocumentScene: boolean;
+  isDocsScene: boolean;
+  isSheetsScene: boolean;
+  isSystemScene: boolean;
+  canRenderPdfFrame: boolean;
+  stageFileUrl: string;
+  stageFileName: string;
+  browserUrl: string;
+  emailRecipient: string;
+  emailSubject: string;
+  emailBodyHint: string;
+  docBodyHint: string;
+  sheetBodyHint: string;
+  sceneText: string;
+  activeTitle: string;
+  activeDetail: string;
+  activeEventType: string;
+  runId?: string;
+  activeStepIndex?: number | null;
+  interactionSuggestion?: InteractionSuggestion[] | null;
+  activeSceneData: Record<string, unknown>;
+  sceneDocumentUrl?: string;
+  sceneSpreadsheetUrl?: string;
+  computerUseSessionId?: string;
+  computerUseTask?: string;
+  computerUseModel?: string;
+  computerUseMaxIterations?: number | null;
+  onSnapshotError?: () => void;
+  renderRichText: (input: string) => string;
+  teamChatScene?: ReactNode;
 };

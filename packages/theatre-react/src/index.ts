@@ -125,6 +125,8 @@ export { DocsScene } from "./desktop-scenes/DocsScene";
 export { SheetsScene } from "./desktop-scenes/SheetsScene";
 export { BrowserScene } from "./desktop-scenes/BrowserScene";
 export { ApiScene } from "./desktop-scenes/ApiScene";
+export { AgentDesktopScene } from "./desktop-scenes/AgentDesktopScene";
+export type { AgentDesktopSceneProps } from "./desktop-scenes/types";
 export {
   asHttpUrl,
   compactValue,
@@ -147,6 +149,8 @@ export {
   shouldRenderTeamChatScene,
 } from "./desktop-scenes/sceneRuntime";
 export { useSceneAnimations } from "./desktop-scenes/useSceneAnimations";
+export { useComputerUseBootstrap } from "./desktop-scenes/useComputerUseBootstrap";
+export { useInteractionSceneState } from "./desktop-scenes/useInteractionSceneState";
 export { sanitizeComputerUseText } from "./desktop-scenes/text";
 export { TeamChatSkin } from "./desktop-scenes/team-chat/TeamChatSkin";
 export type { TeamChatMessage } from "./desktop-scenes/team-chat/TeamChatSkin";
@@ -159,6 +163,12 @@ export type {
   ApiSceneState,
   ApiValidationCheck,
 } from "./desktop-scenes/api/api_scene_state";
+export type {
+  InteractionSuggestion as DesktopInteractionSuggestion,
+  InteractionSuggestionRejectReason as DesktopInteractionSuggestionRejectReason,
+  MergedInteractionSource as DesktopMergedInteractionSource,
+  MergedInteractionState as DesktopMergedInteractionState,
+} from "./desktop-scenes/interactionSuggestionMerge";
 export { useComputerUseStream } from "./desktop-scenes/useComputerUseStream";
 export type { UseComputerUseStreamOptions } from "./desktop-scenes/useComputerUseStream";
 export type {
