@@ -22,7 +22,7 @@
     },
     "event_type": {
       "type": "string",
-      "enum": ["message", "handoff", "review", "artifact", "event", "capabilities"],
+      "enum": ["message", "handoff", "review", "artifact", "event", "capabilities", "provenance"],
       "description": "Which ACP primitive this event represents."
     },
     "timestamp": {

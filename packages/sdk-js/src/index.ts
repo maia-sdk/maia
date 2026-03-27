@@ -51,6 +51,11 @@ export type {
   ACPRegistryLike,
   AgentPersonality,
   AgentSkill,
+  ProvenanceTier,
+  ProvenanceSourceRef,
+  ProvenanceClaim,
+  ProvenanceContradiction,
+  ACPProvenanceGraph,
   ExecutionStage,
   ExecutionStatus,
   ExecutionSurface,
@@ -76,6 +81,7 @@ export {
   artifact,
   activity,
   capabilities,
+  provenanceGraph,
   executionActivity,
   executionEnvelope,
 } from "@maia/acp";
@@ -88,6 +94,10 @@ export {
   suggestConversationMove,
   draftConversationMessage,
   summarizeConversationThread,
+  buildProvenanceGraph,
+  detectContradictions,
+  extractClaimsFromText,
+  staleClaims,
 } from "@maia/brain";
 export type {
   LLMConfig,
@@ -96,6 +106,7 @@ export type {
   ConversationMove,
   MessageDraft,
   ThreadDigest,
+  ClaimExtractionResult,
 } from "@maia/brain";
 
 // Theatre theming

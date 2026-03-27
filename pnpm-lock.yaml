@@ -172,6 +172,9 @@ importers:
       '@maia/acp':
         specifier: workspace:*
         version: link:../acp-js
+      '@maia/brain':
+        specifier: workspace:*
+        version: link:../brain-runtime
       '@maia/computer-use':
         specifier: workspace:*
         version: link:../computer-use

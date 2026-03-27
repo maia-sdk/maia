@@ -29,6 +29,10 @@ from maia_acp.types import (
     ProgressInfo,
     CostInfo,
     AgentPresence,
+    ProvenanceSourceRef,
+    ProvenanceClaim,
+    ProvenanceContradiction,
+    ACPProvenanceGraph,
 )
 from maia_acp.builders import (
     envelope,
@@ -38,6 +42,7 @@ from maia_acp.builders import (
     artifact,
     activity,
     capabilities,
+    provenance_graph,
 )
 from maia_acp.client import ACPClient
 from maia_acp.registry import ACPAgentRegistry
@@ -62,6 +67,10 @@ __all__ = [
     "ProgressInfo",
     "CostInfo",
     "AgentPresence",
+    "ProvenanceSourceRef",
+    "ProvenanceClaim",
+    "ProvenanceContradiction",
+    "ACPProvenanceGraph",
     # Builders
     "envelope",
     "message",
@@ -70,6 +79,7 @@ __all__ = [
     "artifact",
     "activity",
     "capabilities",
+    "provenance_graph",
     # Client
     "ACPClient",
     "ACPAgentRegistry",

@@ -12,6 +12,7 @@ import { useACPStream } from "../hooks/useACPStream";
 import { useReplay } from "../hooks/useReplay";
 import { TeamThread } from "./TeamThread";
 import { ActivityTimeline } from "./ActivityTimeline";
+import { ProvenancePanel } from "./ProvenancePanel";
 import { CostBar } from "./CostBar";
 import { ReplayControls } from "./ReplayControls";
 import { resolveTheatreTheme } from "../theme";
@@ -26,8 +27,8 @@ export interface TheatreProps {
   budgetUsd?: number;
   /** Show agent thinking/reasoning text. */
   showThinking?: boolean;
-  /** Initial tab: "chat" or "activity". */
-  defaultTab?: "chat" | "activity";
+  /** Initial tab: "chat", "activity", or "proof". */
+  defaultTab?: "chat" | "activity" | "proof";
   /** Compact mode — smaller, no avatars. */
   compact?: boolean;
   /** Custom class name for the container. */
@@ -40,7 +41,7 @@ export interface TheatreProps {
   theme?: TheatreThemeOverride;
 }
 
-type Tab = "chat" | "activity";
+type Tab = "chat" | "activity" | "proof";
 
 export function Theatre({
   streamUrl = null,
@@ -79,6 +80,7 @@ export function Theatre({
       event.event_type === "handoff" ||
       event.event_type === "review",
   );
+  const provenanceEvents = events.filter((event) => event.event_type === "provenance");
   const connected = isReplayMode ? true : stream.connected;
 
   return (
@@ -130,6 +132,21 @@ export function Theatre({
           >
             Activity
           </button>
+          <button
+            onClick={() => setTab("proof")}
+            className={`${resolvedTheme.theatre.tabBase} ${
+              tab === "proof"
+                ? resolvedTheme.theatre.tabActive
+                : resolvedTheme.theatre.tabInactive
+            }`}
+          >
+            Proof
+            {(provenanceEvents.length > 0 || events.length > 0) && (
+              <span className={resolvedTheme.theatre.statusMeta}>
+                ({provenanceEvents.length > 0 ? provenanceEvents.length : "derived"})
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -144,6 +161,8 @@ export function Theatre({
             theme={resolvedTheme}
             className="h-full"
           />
+        ) : tab === "proof" ? (
+          <ProvenancePanel events={events} className="h-full" />
         ) : (
           <ActivityTimeline events={events} theme={resolvedTheme} className="h-full" />
         )}

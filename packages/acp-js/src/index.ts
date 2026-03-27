@@ -43,6 +43,11 @@ export type {
   ACPRegistryLike,
   AgentPersonality,
   AgentSkill,
+  ProvenanceTier,
+  ProvenanceSourceRef,
+  ProvenanceClaim,
+  ProvenanceContradiction,
+  ACPProvenanceGraph,
 } from "./types";
 export type {
   ExecutionStage,
@@ -71,6 +76,7 @@ export {
   artifact,
   activity,
   capabilities,
+  provenanceGraph,
 } from "./builders";
 export { executionActivity, executionEnvelope } from "./execution-builders";
 

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@maia/acp": "workspace:*",
+    "@maia/brain": "workspace:*",
     "@maia/computer-use": "workspace:*",
     "lucide-react": "^0.487.0"
   },

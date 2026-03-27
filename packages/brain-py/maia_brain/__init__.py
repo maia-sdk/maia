@@ -43,6 +43,12 @@ from maia_brain.collaboration import (
     draft_conversation_message,
     summarize_conversation_thread,
 )
+from maia_brain.provenance import (
+    build_provenance_graph,
+    detect_contradictions,
+    extract_claims_from_text,
+    stale_claims,
+)
 from maia_brain.research import brave_search, filter_results, SearchResult
 from maia_brain.env import load_env, resolve_api_key
 
@@ -76,6 +82,10 @@ __all__ = [
     "suggest_conversation_move",
     "draft_conversation_message",
     "summarize_conversation_thread",
+    "build_provenance_graph",
+    "detect_contradictions",
+    "extract_claims_from_text",
+    "stale_claims",
     "brave_search",
     "filter_results",
 ]

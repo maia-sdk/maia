@@ -89,7 +89,14 @@ export type EventType =
   | "review"
   | "artifact"
   | "event"
-  | "capabilities";
+  | "capabilities"
+  | "provenance";
+
+export type ProvenanceTier =
+  | "verified"
+  | "supported"
+  | "inferred"
+  | "unverified";
 
 // ── Core Structures ──────────────────────────────────────────────────────────
 
@@ -283,6 +290,45 @@ export interface AgentSkill {
   output_schema?: Record<string, unknown>;
 }
 
+export interface ProvenanceSourceRef {
+  source_id: string;
+  kind: "url" | "document" | "artifact" | "message" | "reasoning";
+  title?: string;
+  uri?: string;
+  artifact_id?: string;
+  event_id?: string;
+  excerpt?: string;
+  published_at?: string;
+  accessed_at?: string;
+}
+
+export interface ProvenanceClaim {
+  claim_id: string;
+  text: string;
+  agent_id: string;
+  tier: ProvenanceTier;
+  confidence: number;
+  source_refs: ProvenanceSourceRef[];
+  supports: string[];
+  contradicts: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface ProvenanceContradiction {
+  contradiction_id: string;
+  claim_a_id: string;
+  claim_b_id: string;
+  status: "unresolved" | "resolved" | "dismissed";
+  resolution_summary?: string;
+}
+
+export interface ACPProvenanceGraph {
+  graph_id: string;
+  run_id: string;
+  claims: ProvenanceClaim[];
+  contradictions: ProvenanceContradiction[];
+}
+
 // ── Client Options ───────────────────────────────────────────────────────────
 
 export interface ACPClientOptions {
@@ -326,5 +372,6 @@ export interface ACPEventMap {
   artifact: ACPEvent<ACPArtifact>;
   event: ACPEvent<ACPActivity>;
   capabilities: ACPEvent<ACPCapabilities>;
+  provenance: ACPEvent<ACPProvenanceGraph>;
   "*": ACPEvent;
 }

@@ -45,8 +45,10 @@ ArtifactKind = Literal[
 
 EventType = Literal[
     "message", "handoff", "review",
-    "artifact", "event", "capabilities",
+    "artifact", "event", "capabilities", "provenance",
 ]
+
+ProvenanceTier = Literal["verified", "supported", "inferred", "unverified"]
 
 Priority = Literal["low", "normal", "high", "critical"]
 
@@ -102,6 +104,45 @@ class AgentSkill(BaseModel):
     description: str
     input_schema: dict[str, Any] | None = None
     output_schema: dict[str, Any] | None = None
+
+
+class ProvenanceSourceRef(BaseModel):
+    source_id: str
+    kind: Literal["url", "document", "artifact", "message", "reasoning"]
+    title: str | None = None
+    uri: str | None = None
+    artifact_id: str | None = None
+    event_id: str | None = None
+    excerpt: str | None = None
+    published_at: str | None = None
+    accessed_at: str | None = None
+
+
+class ProvenanceClaim(BaseModel):
+    claim_id: str
+    text: str
+    agent_id: str
+    tier: ProvenanceTier
+    confidence: float
+    source_refs: list[ProvenanceSourceRef] = Field(default_factory=list)
+    supports: list[str] = Field(default_factory=list)
+    contradicts: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ProvenanceContradiction(BaseModel):
+    contradiction_id: str
+    claim_a_id: str
+    claim_b_id: str
+    status: Literal["unresolved", "resolved", "dismissed"]
+    resolution_summary: str | None = None
+
+
+class ACPProvenanceGraph(BaseModel):
+    graph_id: str
+    run_id: str
+    claims: list[ProvenanceClaim] = Field(default_factory=list)
+    contradictions: list[ProvenanceContradiction] = Field(default_factory=list)
 
 
 class ReviewIssue(BaseModel):
@@ -241,3 +282,6 @@ class ACPEvent(BaseModel):
 
     def as_capabilities(self) -> ACPCapabilities:
         return ACPCapabilities.model_validate(self.payload)
+
+    def as_provenance(self) -> ACPProvenanceGraph:
+        return ACPProvenanceGraph.model_validate(self.payload)

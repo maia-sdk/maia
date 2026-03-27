@@ -58,6 +58,15 @@ export type {
   ThreadDigest,
 } from "./collaboration";
 
+// Provenance
+export {
+  buildProvenanceGraph,
+  detectContradictions,
+  extractClaimsFromText,
+  staleClaims,
+} from "./provenance";
+export type { ClaimExtractionResult } from "./provenance";
+
 // Roles (27 roles, each in its own file under ./roles/)
 export {
   ROLE_CATALOG, getRole, getAllRoles, inferRole,

@@ -38,6 +38,12 @@ export { ResearchTodoList } from "./components/ResearchTodoList";
 export type { ResearchTodoListProps, RoadmapStep, TodoEvent } from "./components/ResearchTodoList";
 export { MessageBubble } from "./components/MessageBubble";
 export type { MessageBubbleProps } from "./components/MessageBubble";
+export { ProvenancePanel } from "./components/ProvenancePanel";
+export type { ProvenancePanelProps } from "./components/ProvenancePanel";
+export { ClaimCard } from "./components/ClaimCard";
+export type { ClaimCardProps } from "./components/ClaimCard";
+export { ContradictionBanner } from "./components/ContradictionBanner";
+export type { ContradictionBannerProps } from "./components/ContradictionBanner";
 export { AgentAvatar } from "./components/AgentAvatar";
 export type { AgentAvatarProps } from "./components/AgentAvatar";
 export { CostBar } from "./components/CostBar";
@@ -159,6 +165,8 @@ export {
   URL_PATTERN,
   isConversationOnlySceneSignal,
 } from "./panels/agentActivity";
+export { deriveProvenanceState } from "./panels/deriveProvenanceState";
+export type { ProvenanceState } from "./panels/deriveProvenanceState";
 export type {
   ActivityEventLike,
   ActivityPhaseKey as AgentActivityPhaseKey,

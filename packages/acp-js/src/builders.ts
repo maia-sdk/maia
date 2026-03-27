@@ -9,6 +9,7 @@ import type {
   ACPActivity,
   ACPCapabilities,
   ACPEvent,
+  ACPProvenanceGraph,
   MessageIntent,
   ReviewVerdict,
   ActivityType,
@@ -231,5 +232,19 @@ export function capabilities(opts: {
     accepts_intents: opts.acceptsIntents ?? [],
     max_concurrent_tasks: opts.maxConcurrentTasks ?? 1,
     presence: opts.presence,
+  };
+}
+
+export function provenanceGraph(opts: {
+  graphId?: string;
+  runId: string;
+  claims: ACPProvenanceGraph["claims"];
+  contradictions?: ACPProvenanceGraph["contradictions"];
+}): ACPProvenanceGraph {
+  return {
+    graph_id: opts.graphId ?? `graph_${uid()}`,
+    run_id: opts.runId,
+    claims: opts.claims,
+    contradictions: opts.contradictions ?? [],
   };
 }

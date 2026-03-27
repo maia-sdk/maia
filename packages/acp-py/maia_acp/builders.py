@@ -13,6 +13,7 @@ from maia_acp.types import (
     ACPEvent,
     ACPHandoff,
     ACPMessage,
+    ACPProvenanceGraph,
     ACPReview,
     AgentPersonality,
     AgentSkill,
@@ -251,4 +252,19 @@ def capabilities(
         "accepts_intents": accepts_intents or [],
         "max_concurrent_tasks": max_concurrent_tasks,
         "presence": presence,
+    }
+
+
+def provenance_graph(
+    *,
+    run_id: str,
+    claims: list[dict[str, Any]],
+    contradictions: list[dict[str, Any]] | None = None,
+    graph_id: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "graph_id": graph_id or f"graph_{_uid()}",
+        "run_id": run_id,
+        "claims": claims,
+        "contradictions": contradictions or [],
     }

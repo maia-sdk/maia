@@ -6,6 +6,13 @@ export type { TheatreProps } from "@maia/theatre";
 
 export { TeamThread } from "@maia/theatre";
 export type { TeamThreadProps } from "@maia/theatre";
+export { ProvenancePanel, ClaimCard, ContradictionBanner } from "@maia/theatre";
+export type {
+  ProvenancePanelProps,
+  ClaimCardProps,
+  ContradictionBannerProps,
+  ProvenanceState,
+} from "@maia/theatre";
 
 export { ActivityTimeline } from "@maia/theatre";
 export type { ActivityTimelineProps } from "@maia/theatre";
@@ -89,3 +96,4 @@ export type { UseReplayOptions, ReplayState } from "@maia/theatre";
 
 export { fromAgentActivityEvent, fromAgentActivityEvents } from "@maia/theatre";
 export type { AgentActivityEventLike } from "@maia/theatre";
+export { deriveProvenanceState } from "@maia/theatre";
