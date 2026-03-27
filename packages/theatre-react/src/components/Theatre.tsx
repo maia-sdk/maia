@@ -20,7 +20,11 @@ import { CostBar } from "./CostBar";
 import { ReplayControls } from "./ReplayControls";
 import { resolveTheatreTheme } from "../theme";
 import type { TheatreThemeOverride } from "../theme";
-import { deriveDebuggerState, planDebuggerBranch } from "../panels/deriveDebuggerState";
+import {
+  createDebuggerBranchPlanEvent,
+  deriveDebuggerState,
+  planDebuggerBranch,
+} from "../panels/deriveDebuggerState";
 
 export interface TheatreProps {
   streamUrl?: string | null;
@@ -31,6 +35,7 @@ export interface TheatreProps {
   compact?: boolean;
   className?: string;
   onEvent?: (event: ACPEvent) => void;
+  onBranchPlanEvent?: (event: ACPEvent) => void | Promise<void>;
   height?: string;
   theme?: TheatreThemeOverride;
 }
@@ -46,6 +51,7 @@ export function Theatre({
   compact = false,
   className = "",
   onEvent,
+  onBranchPlanEvent,
   height = "100%",
   theme,
 }: TheatreProps) {
@@ -53,6 +59,7 @@ export function Theatre({
   const [selectedDecisionId, setSelectedDecisionId] = useState<string>("");
   const [selectedBranchId, setSelectedBranchId] = useState<string>("");
   const [plannedBranchDecisionId, setPlannedBranchDecisionId] = useState<string>("");
+  const [localDebugEvents, setLocalDebugEvents] = useState<ACPEvent[]>([]);
   const resolvedTheme = resolveTheatreTheme(theme);
   const isReplayMode = !!recordedEvents && !streamUrl;
 
@@ -67,7 +74,23 @@ export function Theatre({
     autoPlay: false,
   });
 
-  const events = isReplayMode ? replay.visibleEvents : stream.events;
+  const sourceEvents = isReplayMode ? replay.visibleEvents : stream.events;
+  const persistedBranchIds = new Set(
+    sourceEvents
+      .filter((event) => event.event_type === "branch_plan")
+      .map((event) => ((event.payload as { branch_id?: string }).branch_id))
+      .filter(Boolean),
+  );
+  const events = [
+    ...sourceEvents,
+    ...localDebugEvents.filter((event) => {
+      if (event.event_type !== "branch_plan") {
+        return true;
+      }
+      const branchId = (event.payload as { branch_id?: string }).branch_id;
+      return !branchId || !persistedBranchIds.has(branchId);
+    }),
+  ];
   const communicationEvents = events.filter(
     (event) =>
       event.event_type === "message" ||
@@ -91,6 +114,36 @@ export function Theatre({
         : undefined
     );
   const connected = isReplayMode ? true : stream.connected;
+
+  function handleCreateBranchPlan(decisionId: string) {
+    const decisionNode = debuggerState.decisions.find((node) => node.decision.decision_id === decisionId);
+    if (!decisionNode) {
+      return;
+    }
+    const branchEvent = createDebuggerBranchPlanEvent(sourceEvents, {
+      agentId: decisionNode.decision.agent_id,
+      decisionId,
+    });
+    if (!branchEvent) {
+      return;
+    }
+    const branchId = (branchEvent.payload as { branch_id?: string }).branch_id;
+    setLocalDebugEvents((current) => {
+      const next = current.filter((event) => {
+        if (event.event_type !== "branch_plan") {
+          return true;
+        }
+        return (event.payload as { branch_id?: string }).branch_id !== branchId;
+      });
+      return [...next, branchEvent];
+    });
+    setSelectedBranchId(branchId ?? "");
+    setSelectedDecisionId(decisionId);
+    setPlannedBranchDecisionId("");
+    if (onBranchPlanEvent) {
+      void Promise.resolve(onBranchPlanEvent(branchEvent));
+    }
+  }
 
   return (
     <div className={`${resolvedTheme.theatre.shell} ${className}`} style={{ height }}>
@@ -200,10 +253,7 @@ export function Theatre({
             <DecisionInspector
               node={activeDecision}
               branchPlan={activeBranchPlan}
-              onPlanBranch={(decisionId) => {
-                setSelectedBranchId("");
-                setPlannedBranchDecisionId(decisionId);
-              }}
+              onPlanBranch={handleCreateBranchPlan}
             />
           </div>
         ) : (

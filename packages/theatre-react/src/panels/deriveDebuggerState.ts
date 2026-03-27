@@ -133,6 +133,23 @@ export function planDebuggerBranch(
   };
 }
 
+export function createDebuggerBranchPlanEvent(
+  events: ACPEvent[],
+  options: {
+    agentId: string;
+    decisionId: string;
+    parentEventId?: string;
+    overrides?: DebuggerBranchPlanOverride;
+  },
+): ACPEvent<Record<string, unknown>> | undefined {
+  return MaiaBrain.createBranchPlanEvent(events, {
+    agentId: options.agentId,
+    sourceDecisionId: options.decisionId,
+    parentEventId: options.parentEventId,
+    overrides: options.overrides,
+  }) as ACPEvent<Record<string, unknown>> | undefined;
+}
+
 export function decisionLabel(decision: ACPDecision): string {
   return decision.category.replace(/_/g, " ");
 }
