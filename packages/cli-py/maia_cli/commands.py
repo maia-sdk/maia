@@ -1,4 +1,4 @@
-"""CLI command implementations — each function handles one subcommand."""
+"""CLI command implementations - each function handles one subcommand."""
 
 from __future__ import annotations
 
@@ -11,15 +11,25 @@ from typing import Any
 
 from maia_cli import __version__
 from maia_cli.colors import (
-    BOLD, DIM, RESET, GREEN, YELLOW, RED, CYAN, MAGENTA, GRAY,
-    bold, colored, dim,
+    BOLD,
+    DIM,
+    RESET,
+    GREEN,
+    YELLOW,
+    RED,
+    CYAN,
+    MAGENTA,
+    GRAY,
+    bold,
+    colored,
+    dim,
+    supports_unicode_output,
 )
 from maia_cli.render import render_event
 
 LOGO = f"""{MAGENTA}{BOLD}
-  \u2554\u2566\u2557\u2554\u2550\u2557\u2566\u2554\u2550\u2557
-  \u2551\u2551\u2551\u2560\u2550\u2563\u2551\u2560\u2550\u2563
-  \u2569 \u2569\u2569 \u2569\u2569\u2569 \u2569{RESET} {dim(f'CLI v{__version__}')}
+  MAIA
+  CLI{RESET} {dim(f'v{__version__}')}
 """
 
 
@@ -107,7 +117,20 @@ def cmd_validate(args: argparse.Namespace) -> None:
     print(f"  Validating {colored(str(path), CYAN)}\n")
 
     required = {"acp_version", "run_id", "agent_id", "event_type", "timestamp", "payload"}
-    valid_types = {"message", "handoff", "review", "artifact", "event", "capabilities"}
+    valid_types = {
+        "message",
+        "handoff",
+        "review",
+        "artifact",
+        "event",
+        "capabilities",
+        "provenance",
+        "challenge",
+        "challenge_resolution",
+        "decision",
+        "branch_plan",
+        "branch_run",
+    }
     valid = invalid = warnings = 0
 
     with open(path, "r", encoding="utf-8") as f:
@@ -236,3 +259,8 @@ def _try_version(module_name: str) -> str:
         return getattr(mod, "__version__", "installed")
     except ImportError:
         return "not installed"
+
+
+
+
+

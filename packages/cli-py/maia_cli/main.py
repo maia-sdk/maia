@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from maia_cli import __version__
-from maia_cli.colors import GREEN, CYAN, YELLOW, RESET, colored, dim
+from maia_cli.colors import GREEN, CYAN, YELLOW, RESET, colored, dim, configure_terminal_output
 from maia_cli.commands import (
     LOGO,
     cmd_stream,
@@ -34,6 +34,7 @@ from maia_cli.commands import (
 
 def cli() -> None:
     """Entry point for the `maia` command."""
+    configure_terminal_output()
     parser = argparse.ArgumentParser(
         prog="maia",
         description="Maia CLI \u2014 stream, replay, and validate ACP agent events.",
@@ -228,3 +229,5 @@ def cmd_serve(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     cli()
+
+

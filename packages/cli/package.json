@@ -1,7 +1,7 @@
 {
   "name": "@maia/cli",
   "version": "0.1.0",
-  "description": "Maia CLI — stream, replay, and validate ACP agent events from the terminal",
+  "description": "Maia CLI — stream, replay, validate, emit, init, and serve ACP agent events from the terminal",
   "bin": {
     "maia": "dist/cli.js"
   },
@@ -37,3 +37,4 @@
     "url": "https://github.com/maia-sdk/maia"
   }
 }
+

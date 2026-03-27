@@ -1,6 +1,26 @@
-"""Terminal color helpers — ANSI escape codes for rich CLI output."""
+"""Terminal color helpers - ANSI escape codes for rich CLI output."""
 
 from __future__ import annotations
+
+import sys
+
+
+def configure_terminal_output() -> None:
+    """Avoid console encoding crashes by replacing unsupported characters."""
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if stream is None or not hasattr(stream, "reconfigure"):
+            continue
+        try:
+            stream.reconfigure(errors="replace")
+        except Exception:
+            continue
+
+
+def supports_unicode_output() -> bool:
+    stream = getattr(sys, "stdout", None)
+    encoding = getattr(stream, "encoding", "") or ""
+    return "utf" in encoding.lower()
 
 
 def _code(n: int) -> str:

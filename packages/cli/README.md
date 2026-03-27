@@ -1,6 +1,6 @@
 # @maia/cli
 
-Maia CLI for Node.js — stream, replay, and validate ACP agent events from the terminal.
+Maia CLI for Node.js - stream, replay, validate, emit, and serve ACP agent events from the terminal.
 
 ## Install
 
@@ -20,10 +20,19 @@ maia replay events.jsonl --speed 4
 # Validate event format
 maia validate events.jsonl
 
+# Send a test event
+maia emit http://localhost:8765/acp/events
+
+# Scaffold a new ACP project
+maia init my-agent
+
+# Serve a JSONL file as a live SSE endpoint
+maia serve events.jsonl
+
 # Show version and environment
 maia info
 ```
 
 ## License
 
-MIT — [github.com/maia-sdk/maia](https://github.com/maia-sdk/maia)
+MIT - [github.com/maia-sdk/maia](https://github.com/maia-sdk/maia)
