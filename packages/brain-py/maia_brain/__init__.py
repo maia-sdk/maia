@@ -54,6 +54,12 @@ from maia_brain.challenge import (
     challenge_claim,
     resolve_challenge,
 )
+from maia_brain.debugger import (
+    DecisionTimelineNode,
+    RunDebugger,
+    build_run_debugger,
+    get_decision_at,
+)
 from maia_brain.research import brave_search, filter_results, SearchResult
 from maia_brain.env import load_env, resolve_api_key
 
@@ -94,6 +100,10 @@ __all__ = [
     "ChallengeResolutionResult",
     "challenge_claim",
     "resolve_challenge",
+    "DecisionTimelineNode",
+    "RunDebugger",
+    "build_run_debugger",
+    "get_decision_at",
     "brave_search",
     "filter_results",
 ]

@@ -6,6 +6,7 @@
 
 import type { ACPEvent } from "@maia/acp";
 import { envelope, message, review } from "@maia/acp";
+import * as ACP from "@maia/acp";
 import type {
   AgentDefinition, BrainStep, ConversationThread, LLMConfig,
 } from "./types";
@@ -69,6 +70,19 @@ export async function runConversation(
     const responderId = trigger.agent_id ?? otherAgents[0]?.id;
     const responder = responderId ? ctx.findAgent(responderId) : null;
     if (!responder) break;
+
+    ctx.emit(envelope("agent://brain", ctx.runId, "decision", ACP.decision({
+      agentId: "agent://brain",
+      category: "routing",
+      stepIndex: step.index,
+      summary: `${responder.id.replace("agent://", "")} should respond to ${lastTurn.agentId.replace("agent://", "")}.`,
+      options: otherAgents.map((agent) => ({
+        option_id: agent.id,
+        label: agent.name,
+      })),
+      chosenOptionId: responder.id,
+      reasoning: trigger.reason ?? "The current thread benefits from an additional teammate response.",
+    })));
 
     ctx.emitActivity(responder.id, "thinking", `Considering response: ${(trigger.reason ?? "").slice(0, 60)}`);
 
@@ -151,6 +165,21 @@ export async function runReviewLoop(
     step.tokensUsed = (step.tokensUsed ?? 0) + cost.tokensUsed;
 
     const verdict = rev.verdict || "approve";
+
+    ctx.emit(envelope("agent://brain", ctx.runId, "decision", ACP.decision({
+      agentId: "agent://brain",
+      category: "review",
+      stepIndex: step.index,
+      summary: `Review verdict for ${step.agentId.replace("agent://", "")}: ${verdict}.`,
+      options: [
+        { option_id: "approve", label: "approve" },
+        { option_id: "revise", label: "revise" },
+        { option_id: "reject", label: "reject" },
+        { option_id: "escalate", label: "escalate" },
+      ],
+      chosenOptionId: verdict,
+      reasoning: rev.feedback ?? rev.revision_instructions ?? "Review decision captured from the Brain review loop.",
+    })));
 
     ctx.emit(envelope("agent://brain", ctx.runId, "review", review({
       reviewer: "agent://brain",

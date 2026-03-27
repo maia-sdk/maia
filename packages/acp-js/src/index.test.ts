@@ -11,6 +11,7 @@ import {
   parseSSELine,
   challenge,
   challengeResolution,
+  decision,
 } from "./index";
 
 describe("builders", () => {
@@ -94,6 +95,22 @@ describe("builders", () => {
     });
     expect(resolution.challenge_id).toBe("challenge_1");
     expect(resolution.outcome).toBe("defended");
+  });
+
+  it("decision() captures structured reasoning metadata", () => {
+    const d = decision({
+      agentId: "agent://brain",
+      category: "planning",
+      summary: "Use researcher then analyst.",
+      chosenOptionId: "plan_a",
+      options: [
+        { option_id: "plan_a", label: "researcher -> analyst" },
+        { option_id: "plan_b", label: "writer only" },
+      ],
+    });
+    expect(d.category).toBe("planning");
+    expect(d.options).toHaveLength(2);
+    expect(d.chosen_option_id).toBe("plan_a");
   });
 });
 

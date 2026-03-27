@@ -35,6 +35,8 @@ from maia_acp.types import (
     ACPProvenanceGraph,
     ACPChallenge,
     ACPChallengeResolution,
+    ACPDecisionOption,
+    ACPDecision,
 )
 from maia_acp.builders import (
     envelope,
@@ -47,6 +49,7 @@ from maia_acp.builders import (
     provenance_graph,
     challenge,
     challenge_resolution,
+    decision,
 )
 from maia_acp.client import ACPClient
 from maia_acp.registry import ACPAgentRegistry
@@ -77,6 +80,8 @@ __all__ = [
     "ACPProvenanceGraph",
     "ACPChallenge",
     "ACPChallengeResolution",
+    "ACPDecisionOption",
+    "ACPDecision",
     # Builders
     "envelope",
     "message",
@@ -88,6 +93,7 @@ __all__ = [
     "provenance_graph",
     "challenge",
     "challenge_resolution",
+    "decision",
     # Client
     "ACPClient",
     "ACPAgentRegistry",

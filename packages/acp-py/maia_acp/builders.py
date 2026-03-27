@@ -15,6 +15,7 @@ from maia_acp.types import (
     ACPMessage,
     ACPChallenge,
     ACPChallengeResolution,
+    ACPDecision,
     ACPProvenanceGraph,
     ACPReview,
     AgentPersonality,
@@ -325,4 +326,29 @@ def challenge_resolution(
         "thread_id": thread_id,
         "task_id": task_id,
         "task_title": task_title,
+    }
+
+
+def decision(
+    *,
+    agent_id: str,
+    category: str,
+    summary: str,
+    decision_id: str | None = None,
+    step_index: int | None = None,
+    options: list[dict[str, Any]] | None = None,
+    chosen_option_id: str | None = None,
+    reasoning: str | None = None,
+    related_event_ids: list[str] | None = None,
+) -> dict[str, Any]:
+    return {
+        "decision_id": decision_id or f"decision_{_uid()}",
+        "step_index": step_index,
+        "agent_id": agent_id,
+        "category": category,
+        "summary": summary,
+        "options": options or [],
+        "chosen_option_id": chosen_option_id,
+        "reasoning": reasoning,
+        "related_event_ids": related_event_ids or [],
     }

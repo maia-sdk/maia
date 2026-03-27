@@ -58,6 +58,8 @@ export type {
   ACPProvenanceGraph,
   ACPChallenge,
   ACPChallengeResolution,
+  ACPDecisionOption,
+  ACPDecision,
   ExecutionStage,
   ExecutionStatus,
   ExecutionSurface,
@@ -86,6 +88,7 @@ export {
   provenanceGraph,
   challenge,
   challengeResolution,
+  decision,
   executionActivity,
   executionEnvelope,
 } from "@maia/acp";
@@ -100,8 +103,10 @@ export {
   summarizeConversationThread,
   buildProvenanceGraph,
   challengeClaim,
+  buildRunDebugger,
   detectContradictions,
   extractClaimsFromText,
+  getDecisionAt,
   resolveChallenge,
   staleClaims,
 } from "@maia/brain";
@@ -116,6 +121,8 @@ export type {
   ChallengeClaimOptions,
   ResolveChallengeOptions,
   ChallengeResolutionResult,
+  DecisionTimelineNode,
+  RunDebugger,
 } from "@maia/brain";
 
 // Theatre theming

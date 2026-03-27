@@ -12,6 +12,7 @@ import type {
   ACPProvenanceGraph,
   ACPChallenge,
   ACPChallengeResolution,
+  ACPDecision,
   MessageIntent,
   ReviewVerdict,
   ActivityType,
@@ -302,5 +303,29 @@ export function challengeResolution(opts: {
     thread_id: opts.threadId,
     task_id: opts.taskId,
     task_title: opts.taskTitle,
+  };
+}
+
+export function decision(opts: {
+  decisionId?: string;
+  stepIndex?: number;
+  agentId: string;
+  category: ACPDecision["category"];
+  summary: string;
+  options?: ACPDecision["options"];
+  chosenOptionId?: string;
+  reasoning?: string;
+  relatedEventIds?: string[];
+}): ACPDecision {
+  return {
+    decision_id: opts.decisionId ?? `decision_${uid()}`,
+    step_index: opts.stepIndex,
+    agent_id: opts.agentId,
+    category: opts.category,
+    summary: opts.summary,
+    options: opts.options ?? [],
+    chosen_option_id: opts.chosenOptionId,
+    reasoning: opts.reasoning,
+    related_event_ids: opts.relatedEventIds ?? [],
   };
 }

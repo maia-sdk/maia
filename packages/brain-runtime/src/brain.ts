@@ -5,6 +5,7 @@
 
 import type { ACPEvent } from "@maia/acp";
 import { envelope, message, capabilities } from "@maia/acp";
+import * as ACP from "@maia/acp";
 import type {
   BrainOptions, BrainResult, BrainStep, AgentDefinition,
   SharedContext, ConversationThread,
@@ -115,14 +116,38 @@ export class Brain {
       this.options.llm, prompts.planSystemPrompt(), ctx, [],
     );
     this.trackCost(cost);
-    return (Array.isArray(data) ? data : []).slice(0, this.options.maxSteps)
+    const steps = (Array.isArray(data) ? data : []).slice(0, this.options.maxSteps)
       .map((s, i) => ({ index: i, agentId: s.agent_id ?? "agent://researcher", task: s.task ?? goal }));
+    this.emit(envelope("agent://brain", this.runId, "decision", ACP.decision({
+      agentId: "agent://brain",
+      category: "planning",
+      summary: steps.length > 0
+        ? `Planned ${steps.length} step(s): ${steps.map((step) => `${step.agentId.replace("agent://", "")} -> ${step.task}`).join("; ")}`
+        : `No explicit plan returned. Falling back to the goal: ${goal}`,
+      options: steps.map((step) => ({
+        option_id: `step_${step.index}`,
+        label: `${step.agentId.replace("agent://", "")}: ${step.task}`,
+      })),
+      chosenOptionId: steps[0] ? `step_${steps[0].index}` : undefined,
+      reasoning: "Brain plan generated from the current goal and available agents.",
+    })));
+    return steps;
   }
 
   private async synthesize(context: SharedContext, steps: BrainStep[]): Promise<string> {
     const result = await callLLM(this.options.llm, prompts.synthesizeSystemPrompt(),
       prompts.synthesizeUserPrompt(context.goal, steps, context.allConversations));
     this.trackCost(result);
+    this.emit(envelope("agent://brain", this.runId, "decision", ACP.decision({
+      agentId: "agent://brain",
+      category: "finalization",
+      summary: `Synthesized the final response from ${steps.length} completed step(s).`,
+      options: steps.map((step) => ({
+        option_id: `step_${step.index}`,
+        label: `${step.agentId.replace("agent://", "")}: ${step.task}`,
+      })),
+      reasoning: "The final synthesis combined the completed steps and conversation record into a single user-facing answer.",
+    })));
     return result.text;
   }
 

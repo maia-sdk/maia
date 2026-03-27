@@ -72,6 +72,8 @@ export type {
   ResolveChallengeOptions,
   ChallengeResolutionResult,
 } from "./challenge";
+export { buildRunDebugger, getDecisionAt } from "./debugger";
+export type { DecisionTimelineNode, RunDebugger } from "./debugger";
 
 // Roles (27 roles, each in its own file under ./roles/)
 export {

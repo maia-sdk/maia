@@ -13,6 +13,12 @@ export type {
   ContradictionBannerProps,
   ProvenanceState,
 } from "@maia/theatre";
+export { DecisionTimeline, DecisionInspector } from "@maia/theatre";
+export type {
+  DecisionTimelineProps,
+  DecisionInspectorProps,
+  DebuggerState,
+} from "@maia/theatre";
 
 export { ActivityTimeline } from "@maia/theatre";
 export type { ActivityTimelineProps } from "@maia/theatre";
@@ -97,3 +103,4 @@ export type { UseReplayOptions, ReplayState } from "@maia/theatre";
 export { fromAgentActivityEvent, fromAgentActivityEvents } from "@maia/theatre";
 export type { AgentActivityEventLike } from "@maia/theatre";
 export { deriveProvenanceState } from "@maia/theatre";
+export { deriveDebuggerState } from "@maia/theatre";

@@ -92,7 +92,8 @@ export type EventType =
   | "capabilities"
   | "provenance"
   | "challenge"
-  | "challenge_resolution";
+  | "challenge_resolution"
+  | "decision";
 
 export type ProvenanceTier =
   | "verified"
@@ -358,6 +359,25 @@ export interface ACPChallengeResolution {
   task_title?: string;
 }
 
+export interface ACPDecisionOption {
+  option_id: string;
+  label: string;
+  score?: number;
+  rationale?: string;
+}
+
+export interface ACPDecision {
+  decision_id: string;
+  step_index?: number;
+  agent_id: string;
+  category: "planning" | "routing" | "tool_selection" | "source_selection" | "review" | "finalization";
+  summary: string;
+  options?: ACPDecisionOption[];
+  chosen_option_id?: string;
+  reasoning?: string;
+  related_event_ids?: string[];
+}
+
 // ── Client Options ───────────────────────────────────────────────────────────
 
 export interface ACPClientOptions {
@@ -404,5 +424,6 @@ export interface ACPEventMap {
   provenance: ACPEvent<ACPProvenanceGraph>;
   challenge: ACPEvent<ACPChallenge>;
   challenge_resolution: ACPEvent<ACPChallengeResolution>;
+  decision: ACPEvent<ACPDecision>;
   "*": ACPEvent;
 }

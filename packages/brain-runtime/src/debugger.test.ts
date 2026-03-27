@@ -1,0 +1,27 @@
+import { describe, expect, it } from "vitest";
+import { decision, envelope, message } from "@maia/acp";
+import { buildRunDebugger, getDecisionAt } from "./debugger";
+
+describe("debugger", () => {
+  it("builds a decision timeline from ACP events", () => {
+    const events = [
+      envelope("agent://brain", "run_1", "message", message({
+        from: "agent://brain",
+        to: "agent://broadcast",
+        intent: "propose",
+        content: "Starting run.",
+      })),
+      envelope("agent://brain", "run_1", "decision", decision({
+        agentId: "agent://brain",
+        category: "planning",
+        summary: "Use researcher then analyst.",
+        chosenOptionId: "plan_a",
+      })),
+    ];
+
+    const debuggerState = buildRunDebugger(events);
+    expect(debuggerState.decisions).toHaveLength(1);
+    expect(debuggerState.decisions[0].decision.category).toBe("planning");
+    expect(getDecisionAt(events, debuggerState.decisions[0].decision.decision_id)?.decision.summary).toContain("Use researcher");
+  });
+});

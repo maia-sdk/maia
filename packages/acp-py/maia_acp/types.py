@@ -45,7 +45,7 @@ ArtifactKind = Literal[
 
 EventType = Literal[
     "message", "handoff", "review",
-    "artifact", "event", "capabilities", "provenance", "challenge", "challenge_resolution",
+    "artifact", "event", "capabilities", "provenance", "challenge", "challenge_resolution", "decision",
 ]
 
 ProvenanceTier = Literal["verified", "supported", "inferred", "unverified"]
@@ -170,6 +170,25 @@ class ACPChallengeResolution(BaseModel):
     thread_id: str | None = None
     task_id: str | None = None
     task_title: str | None = None
+
+
+class ACPDecisionOption(BaseModel):
+    option_id: str
+    label: str
+    score: float | None = None
+    rationale: str | None = None
+
+
+class ACPDecision(BaseModel):
+    decision_id: str
+    step_index: int | None = None
+    agent_id: str
+    category: Literal["planning", "routing", "tool_selection", "source_selection", "review", "finalization"]
+    summary: str
+    options: list[ACPDecisionOption] = Field(default_factory=list)
+    chosen_option_id: str | None = None
+    reasoning: str | None = None
+    related_event_ids: list[str] = Field(default_factory=list)
 
 
 class ReviewIssue(BaseModel):
@@ -318,3 +337,6 @@ class ACPEvent(BaseModel):
 
     def as_challenge_resolution(self) -> ACPChallengeResolution:
         return ACPChallengeResolution.model_validate(self.payload)
+
+    def as_decision(self) -> ACPDecision:
+        return ACPDecision.model_validate(self.payload)

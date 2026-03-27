@@ -50,6 +50,8 @@ export type {
   ACPProvenanceGraph,
   ACPChallenge,
   ACPChallengeResolution,
+  ACPDecisionOption,
+  ACPDecision,
 } from "./types";
 export type {
   ExecutionStage,
@@ -81,6 +83,7 @@ export {
   provenanceGraph,
   challenge,
   challengeResolution,
+  decision,
 } from "./builders";
 export { executionActivity, executionEnvelope } from "./execution-builders";
 

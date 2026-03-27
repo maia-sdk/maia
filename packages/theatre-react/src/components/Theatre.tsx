@@ -13,10 +13,13 @@ import { useReplay } from "../hooks/useReplay";
 import { TeamThread } from "./TeamThread";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { ProvenancePanel } from "./ProvenancePanel";
+import { DecisionTimeline } from "./DecisionTimeline";
+import { DecisionInspector } from "./DecisionInspector";
 import { CostBar } from "./CostBar";
 import { ReplayControls } from "./ReplayControls";
 import { resolveTheatreTheme } from "../theme";
 import type { TheatreThemeOverride } from "../theme";
+import { deriveDebuggerState } from "../panels/deriveDebuggerState";
 
 export interface TheatreProps {
   /** SSE endpoint URL for live mode. */
@@ -27,8 +30,8 @@ export interface TheatreProps {
   budgetUsd?: number;
   /** Show agent thinking/reasoning text. */
   showThinking?: boolean;
-  /** Initial tab: "chat", "activity", or "proof". */
-  defaultTab?: "chat" | "activity" | "proof";
+  /** Initial tab: "chat", "activity", "proof", or "debug". */
+  defaultTab?: "chat" | "activity" | "proof" | "debug";
   /** Compact mode — smaller, no avatars. */
   compact?: boolean;
   /** Custom class name for the container. */
@@ -41,7 +44,7 @@ export interface TheatreProps {
   theme?: TheatreThemeOverride;
 }
 
-type Tab = "chat" | "activity" | "proof";
+type Tab = "chat" | "activity" | "proof" | "debug";
 
 export function Theatre({
   streamUrl = null,
@@ -56,6 +59,7 @@ export function Theatre({
   theme,
 }: TheatreProps) {
   const [tab, setTab] = useState<Tab>(defaultTab);
+  const [selectedDecisionId, setSelectedDecisionId] = useState<string>("");
   const resolvedTheme = resolveTheatreTheme(theme);
   const isReplayMode = !!recordedEvents && !streamUrl;
 
@@ -81,6 +85,10 @@ export function Theatre({
       event.event_type === "review",
   );
   const provenanceEvents = events.filter((event) => event.event_type === "provenance");
+  const debuggerState = deriveDebuggerState(events);
+  const activeDecision =
+    debuggerState.decisions.find((node) => node.decision.decision_id === selectedDecisionId)
+    ?? debuggerState.decisions[0];
   const connected = isReplayMode ? true : stream.connected;
 
   return (
@@ -147,6 +155,21 @@ export function Theatre({
               </span>
             )}
           </button>
+          <button
+            onClick={() => setTab("debug")}
+            className={`${resolvedTheme.theatre.tabBase} ${
+              tab === "debug"
+                ? resolvedTheme.theatre.tabActive
+                : resolvedTheme.theatre.tabInactive
+            }`}
+          >
+            Debug
+            {debuggerState.decisions.length > 0 && (
+              <span className={resolvedTheme.theatre.statusMeta}>
+                ({debuggerState.decisions.length})
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -163,6 +186,15 @@ export function Theatre({
           />
         ) : tab === "proof" ? (
           <ProvenancePanel events={events} className="h-full" />
+        ) : tab === "debug" ? (
+          <div className="grid h-full gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <DecisionTimeline
+              decisions={debuggerState.decisions}
+              selectedDecisionId={activeDecision?.decision.decision_id}
+              onSelect={setSelectedDecisionId}
+            />
+            <DecisionInspector node={activeDecision} />
+          </div>
         ) : (
           <ActivityTimeline events={events} theme={resolvedTheme} className="h-full" />
         )}

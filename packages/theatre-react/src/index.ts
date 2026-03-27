@@ -44,6 +44,10 @@ export { ClaimCard } from "./components/ClaimCard";
 export type { ClaimCardProps } from "./components/ClaimCard";
 export { ContradictionBanner } from "./components/ContradictionBanner";
 export type { ContradictionBannerProps } from "./components/ContradictionBanner";
+export { DecisionTimeline } from "./components/DecisionTimeline";
+export type { DecisionTimelineProps } from "./components/DecisionTimeline";
+export { DecisionInspector } from "./components/DecisionInspector";
+export type { DecisionInspectorProps } from "./components/DecisionInspector";
 export { AgentAvatar } from "./components/AgentAvatar";
 export type { AgentAvatarProps } from "./components/AgentAvatar";
 export { CostBar } from "./components/CostBar";
@@ -167,6 +171,8 @@ export {
 } from "./panels/agentActivity";
 export { deriveProvenanceState } from "./panels/deriveProvenanceState";
 export type { ProvenanceState } from "./panels/deriveProvenanceState";
+export { deriveDebuggerState, decisionLabel } from "./panels/deriveDebuggerState";
+export type { DebuggerState } from "./panels/deriveDebuggerState";
 export type {
   ActivityEventLike,
   ActivityPhaseKey as AgentActivityPhaseKey,
