@@ -78,6 +78,30 @@ class BranchExecutionResult(BaseModel):
     comparison: BranchRunComparison
 
 
+class BranchGraphNode(BaseModel):
+    node_id: str
+    kind: str
+    run_id: str | None = None
+    branch_id: str | None = None
+    label: str
+    status: str
+    event_count: int | None = None
+    decision_count: int | None = None
+
+
+class BranchGraphEdge(BaseModel):
+    edge_id: str
+    from_node_id: str
+    to_node_id: str
+    label: str
+
+
+class BranchGraph(BaseModel):
+    root_run_id: str
+    nodes: list[BranchGraphNode] = Field(default_factory=list)
+    edges: list[BranchGraphEdge] = Field(default_factory=list)
+
+
 class RunDebugger(BaseModel):
     run_id: str = ""
     decisions: list[DecisionTimelineNode] = Field(default_factory=list)
@@ -125,6 +149,10 @@ def _uid() -> str:
     import uuid
 
     return uuid.uuid4().hex[:12]
+
+
+def _short_id(value: str) -> str:
+    return f"{value[:18]}..." if len(value) > 18 else value
 
 
 def _branch_reasons(decision_payload: ACPDecision) -> list[str]:
@@ -441,6 +469,103 @@ def compare_branch_run(events: list[ACPEvent], branch_run_id: str) -> BranchRunC
         original_chosen_option_id=source_decision.chosen_option_id if source_decision is not None else None,
         branch_chosen_option_id=branch_decision.chosen_option_id if branch_decision is not None else None,
         divergence_summary=branch_run.outcome_summary or branch_run.summary,
+    )
+
+
+def build_branch_graph(events: list[ACPEvent]) -> BranchGraph:
+    debugger = build_run_debugger(events)
+    events_by_run: dict[str, list[ACPEvent]] = {}
+    for event in debugger.events:
+        events_by_run.setdefault(event.run_id, []).append(event)
+
+    nodes: list[BranchGraphNode] = []
+    edges: list[BranchGraphEdge] = []
+    seen_node_ids: set[str] = set()
+    seen_edge_ids: set[str] = set()
+
+    def add_node(node: BranchGraphNode) -> None:
+        if node.node_id in seen_node_ids:
+            return
+        seen_node_ids.add(node.node_id)
+        nodes.append(node)
+
+    def add_edge(edge: BranchGraphEdge) -> None:
+        if edge.edge_id in seen_edge_ids:
+            return
+        seen_edge_ids.add(edge.edge_id)
+        edges.append(edge)
+
+    for run_id, run_events in events_by_run.items():
+        source_events = [event for event in run_events if event.event_type not in ("branch_plan", "branch_run")]
+        add_node(
+            BranchGraphNode(
+                node_id=f"run:{run_id}",
+                kind="source_run",
+                run_id=run_id,
+                label=f"Run { _short_id(run_id) }",
+                status="active" if source_events else "lineage_only",
+                event_count=len(source_events),
+                decision_count=len([event for event in source_events if event.event_type == "decision"]),
+            )
+        )
+
+    for plan in debugger.branch_plans:
+        add_node(
+            BranchGraphNode(
+                node_id=f"plan:{plan.branch_id}",
+                kind="branch_plan",
+                run_id=plan.run_id,
+                branch_id=plan.branch_id,
+                label=f"Plan { _short_id(plan.branch_id) }",
+                status=plan.status,
+            )
+        )
+        add_edge(
+            BranchGraphEdge(
+                edge_id=f"run:{plan.run_id}->plan:{plan.branch_id}",
+                from_node_id=f"run:{plan.run_id}",
+                to_node_id=f"plan:{plan.branch_id}",
+                label="plan",
+            )
+        )
+
+    latest_runs: dict[str, BranchRun] = {}
+    for branch_run in debugger.branch_runs:
+        latest_runs[branch_run.branch_run_id] = branch_run
+
+    for branch_run in latest_runs.values():
+        branch_events = events_by_run.get(branch_run.branched_run_id, [])
+        add_node(
+            BranchGraphNode(
+                node_id=f"branch_run:{branch_run.branch_run_id}",
+                kind="branch_run",
+                run_id=branch_run.branched_run_id,
+                branch_id=branch_run.branch_id,
+                label=f"Branch { _short_id(branch_run.branched_run_id) }",
+                status=branch_run.status,
+                event_count=len(branch_events),
+                decision_count=len([event for event in branch_events if event.event_type == "decision"]),
+            )
+        )
+        add_edge(
+            BranchGraphEdge(
+                edge_id=f"plan:{branch_run.branch_id}->branch_run:{branch_run.branch_run_id}",
+                from_node_id=f"plan:{branch_run.branch_id}",
+                to_node_id=f"branch_run:{branch_run.branch_run_id}",
+                label=branch_run.status,
+            )
+        )
+
+    root_run_id = (
+        debugger.branch_plans[0].run_id
+        if debugger.branch_plans
+        else (next(iter(latest_runs.values())).source_run_id if latest_runs else debugger.run_id)
+    )
+
+    return BranchGraph(
+        root_run_id=root_run_id,
+        nodes=nodes,
+        edges=edges,
     )
 
 

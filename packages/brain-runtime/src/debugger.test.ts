@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { decision, envelope, message } from "@maia/acp";
 import {
+  buildBranchGraph,
   buildRunDebugger,
   compareBranchRun,
   createBranchPlanEvent,
@@ -168,5 +169,44 @@ describe("debugger", () => {
     expect(comparison?.branchChosenOptionId).toBe("finance");
     expect(comparison?.originalChosenOptionId).toBe("analyst");
     expect(comparison?.branchStatus).toBe("completed");
+  });
+
+  it("builds a branch graph from persisted plans and runs", () => {
+    const decisionPayload = decision({
+      agentId: "agent://brain",
+      category: "routing",
+      summary: "Route analysis to analyst.",
+      options: [
+        { option_id: "analyst", label: "analyst" },
+        { option_id: "finance", label: "finance" },
+      ],
+      chosenOptionId: "analyst",
+    });
+    const events = [
+      envelope("agent://brain", "run_1", "message", message({
+        from: "agent://brain",
+        to: "agent://broadcast",
+        intent: "propose",
+        content: "Start run.",
+      })),
+      envelope("agent://brain", "run_1", "decision", decisionPayload),
+    ];
+
+    const branchPlanEvent = createBranchPlanEvent(events, {
+      agentId: "agent://brain",
+      sourceDecisionId: decisionPayload.decision_id,
+      overrides: { chosenOptionId: "finance" },
+    });
+    const execution = executeBranchRun([...events, branchPlanEvent!], {
+      agentId: "agent://brain",
+      branchId: (branchPlanEvent!.payload as { branch_id: string }).branch_id,
+    });
+
+    const graph = buildBranchGraph([...events, branchPlanEvent!, ...execution!.lineageEvents, ...execution!.branchEvents]);
+    expect(graph.rootRunId).toBe("run_1");
+    expect(graph.nodes.some((node) => node.kind === "source_run" && node.runId === "run_1")).toBe(true);
+    expect(graph.nodes.some((node) => node.kind === "branch_plan")).toBe(true);
+    expect(graph.nodes.some((node) => node.kind === "branch_run" && node.runId === execution!.branchRun.branchedRunId)).toBe(true);
+    expect(graph.edges).toHaveLength(2);
   });
 });

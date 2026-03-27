@@ -16,6 +16,7 @@ import { ProvenancePanel } from "./ProvenancePanel";
 import { DecisionTimeline } from "./DecisionTimeline";
 import { DecisionInspector } from "./DecisionInspector";
 import { BranchPlanList } from "./BranchPlanList";
+import { BranchGraphPanel } from "./BranchGraphPanel";
 import { BranchComparisonPanel } from "./BranchComparisonPanel";
 import { CostBar } from "./CostBar";
 import { ReplayControls } from "./ReplayControls";
@@ -301,15 +302,18 @@ export function Theatre({
           <ProvenancePanel events={events} className="h-full" />
         ) : tab === "debug" ? (
           <div className="grid h-full gap-4 xl:grid-cols-[0.9fr_1.05fr_1fr]">
-            <BranchPlanList
-              branchPlans={debuggerState.branchPlans}
-              selectedBranchId={selectedPersistedBranchPlan?.branchId}
-              onSelect={(branchId, sourceDecisionId) => {
-                setSelectedBranchId(branchId);
-                setSelectedDecisionId(sourceDecisionId);
-                setPlannedBranchDecisionId("");
-              }}
-            />
+            <div className="grid gap-4">
+              <BranchPlanList
+                branchPlans={debuggerState.branchPlans}
+                selectedBranchId={selectedPersistedBranchPlan?.branchId}
+                onSelect={(branchId, sourceDecisionId) => {
+                  setSelectedBranchId(branchId);
+                  setSelectedDecisionId(sourceDecisionId);
+                  setPlannedBranchDecisionId("");
+                }}
+              />
+              <BranchGraphPanel graph={debuggerState.branchGraph} />
+            </div>
             <DecisionTimeline
               decisions={debuggerState.decisions}
               selectedDecisionId={activeDecision?.decision.decision_id}

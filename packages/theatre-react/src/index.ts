@@ -50,6 +50,8 @@ export { DecisionInspector } from "./components/DecisionInspector";
 export type { DecisionInspectorProps } from "./components/DecisionInspector";
 export { BranchPlanList } from "./components/BranchPlanList";
 export type { BranchPlanListProps } from "./components/BranchPlanList";
+export { BranchGraphPanel } from "./components/BranchGraphPanel";
+export type { BranchGraphPanelProps } from "./components/BranchGraphPanel";
 export { BranchComparisonPanel } from "./components/BranchComparisonPanel";
 export type { BranchComparisonPanelProps } from "./components/BranchComparisonPanel";
 export { AgentAvatar } from "./components/AgentAvatar";
@@ -179,12 +181,16 @@ export {
   compareDebuggerBranchRun,
   createDebuggerBranchPlanEvent,
   createDebuggerBranchRunEvent,
+  deriveDebuggerBranchGraph,
   deriveDebuggerState,
   executeDebuggerBranchRun,
   planDebuggerBranch,
   decisionLabel,
 } from "./panels/deriveDebuggerState";
 export type {
+  DebuggerBranchGraph,
+  DebuggerBranchGraphEdge,
+  DebuggerBranchGraphNode,
   DebuggerBranchExecution,
   DebuggerBranchRunComparison,
   DebuggerState,

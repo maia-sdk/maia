@@ -73,6 +73,7 @@ export type {
   ChallengeResolutionResult,
 } from "./challenge";
 export {
+  buildBranchGraph,
   buildRunDebugger,
   compareBranchRun,
   createBranchPlanEvent,
@@ -82,6 +83,9 @@ export {
   planBranchFromDecision,
 } from "./debugger";
 export type {
+  BranchGraph,
+  BranchGraphEdge,
+  BranchGraphNode,
   BranchPlan,
   BranchExecutionResult,
   BranchRun,

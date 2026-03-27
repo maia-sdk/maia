@@ -1,5 +1,6 @@
 from maia_acp.builders import decision, envelope
 from maia_brain.debugger import (
+    build_branch_graph,
     CreateBranchPlanEventOptions,
     CreateBranchRunEventOptions,
     ExecuteBranchRunOptions,
@@ -165,3 +166,43 @@ def test_execute_branch_run_builds_descendant_run_and_comparison() -> None:
     assert comparison is not None
     assert comparison.original_chosen_option_id == "analyst"
     assert comparison.branch_chosen_option_id == "finance"
+
+
+def test_build_branch_graph_from_persisted_branch_records() -> None:
+    decision_payload = decision(
+        agent_id="agent://brain",
+        category="routing",
+        summary="Route verification to analyst.",
+        options=[
+            {"option_id": "analyst", "label": "analyst"},
+            {"option_id": "finance", "label": "finance"},
+        ],
+        chosen_option_id="analyst",
+    )
+    events = [envelope("agent://brain", "run_1", "decision", decision_payload)]
+
+    branch_event = create_branch_plan_event(
+        events,
+        CreateBranchPlanEventOptions(
+            agent_id="agent://brain",
+            source_decision_id=decision_payload["decision_id"],
+            overrides={"chosen_option_id": "finance"},
+        ),
+    )
+    assert branch_event is not None
+
+    execution = execute_branch_run(
+        events + [branch_event],
+        ExecuteBranchRunOptions(
+            agent_id="agent://brain",
+            branch_id=branch_event.payload["branch_id"],
+        ),
+    )
+    assert execution is not None
+
+    graph = build_branch_graph(events + [branch_event] + execution.lineage_events + execution.branch_events)
+    assert graph.root_run_id == "run_1"
+    assert any(node.kind == "source_run" and node.run_id == "run_1" for node in graph.nodes)
+    assert any(node.kind == "branch_plan" for node in graph.nodes)
+    assert any(node.kind == "branch_run" and node.run_id == execution.branch_run.branched_run_id for node in graph.nodes)
+    assert len(graph.edges) == 2

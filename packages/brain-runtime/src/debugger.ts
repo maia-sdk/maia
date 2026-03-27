@@ -73,6 +73,30 @@ export interface BranchExecutionResult {
   comparison: BranchRunComparison;
 }
 
+export interface BranchGraphNode {
+  nodeId: string;
+  kind: "source_run" | "branch_plan" | "branch_run";
+  runId?: string;
+  branchId?: string;
+  label: string;
+  status: string;
+  eventCount?: number;
+  decisionCount?: number;
+}
+
+export interface BranchGraphEdge {
+  edgeId: string;
+  fromNodeId: string;
+  toNodeId: string;
+  label: string;
+}
+
+export interface BranchGraph {
+  rootRunId: string;
+  nodes: BranchGraphNode[];
+  edges: BranchGraphEdge[];
+}
+
 export interface RunDebugger {
   runId: string;
   decisions: DecisionTimelineNode[];
@@ -214,6 +238,10 @@ function toBranchPlan(payload: ACPBranchPlanPayload): BranchPlan {
   };
 }
 
+function shortId(value: string): string {
+  return value.length > 18 ? `${value.slice(0, 18)}...` : value;
+}
+
 function latestBranchRuns(events: ACPEvent[]): BranchRun[] {
   const latest = new Map<string, BranchRun>();
   for (const event of events) {
@@ -337,6 +365,93 @@ export function buildRunDebugger(events: ACPEvent[]): RunDebugger {
     events,
     branchPlans,
     branchRuns: latestBranchRuns(events),
+  };
+}
+
+export function buildBranchGraph(events: ACPEvent[]): BranchGraph {
+  const debuggerState = buildRunDebugger(events);
+  const eventCountByRunId = new Map<string, number>();
+  const decisionCountByRunId = new Map<string, number>();
+
+  for (const event of events) {
+    eventCountByRunId.set(event.run_id, (eventCountByRunId.get(event.run_id) ?? 0) + 1);
+    if (event.event_type === "decision") {
+      decisionCountByRunId.set(event.run_id, (decisionCountByRunId.get(event.run_id) ?? 0) + 1);
+    }
+  }
+
+  const nodes = new Map<string, BranchGraphNode>();
+  const edges = new Map<string, BranchGraphEdge>();
+  const rootRunId = debuggerState.branchPlans[0]?.runId
+    ?? debuggerState.branchRuns[0]?.sourceRunId
+    ?? debuggerState.runId;
+
+  for (const plan of debuggerState.branchPlans) {
+    const sourceNodeId = `run:${plan.runId}`;
+    if (!nodes.has(sourceNodeId)) {
+      nodes.set(sourceNodeId, {
+        nodeId: sourceNodeId,
+        kind: "source_run",
+        runId: plan.runId,
+        label: shortId(plan.runId),
+        status: plan.runId === rootRunId ? "root" : "source",
+        eventCount: eventCountByRunId.get(plan.runId) ?? 0,
+        decisionCount: decisionCountByRunId.get(plan.runId) ?? 0,
+      });
+    }
+
+    const planNodeId = `plan:${plan.branchId}`;
+    nodes.set(planNodeId, {
+      nodeId: planNodeId,
+      kind: "branch_plan",
+      branchId: plan.branchId,
+      runId: plan.runId,
+      label: shortId(plan.branchId),
+      status: plan.status,
+    });
+    edges.set(`edge:${sourceNodeId}->${planNodeId}`, {
+      edgeId: `edge:${sourceNodeId}->${planNodeId}`,
+      fromNodeId: sourceNodeId,
+      toNodeId: planNodeId,
+      label: "plan",
+    });
+  }
+
+  for (const branchRun of debuggerState.branchRuns) {
+    const runNodeId = `branch_run:${branchRun.branchRunId}`;
+    nodes.set(runNodeId, {
+      nodeId: runNodeId,
+      kind: "branch_run",
+      runId: branchRun.branchedRunId,
+      branchId: branchRun.branchId,
+      label: shortId(branchRun.branchedRunId),
+      status: branchRun.status,
+      eventCount: eventCountByRunId.get(branchRun.branchedRunId) ?? branchRun.branchEventCount ?? 0,
+      decisionCount: decisionCountByRunId.get(branchRun.branchedRunId) ?? 0,
+    });
+    const planNodeId = `plan:${branchRun.branchId}`;
+    if (!nodes.has(planNodeId)) {
+      nodes.set(planNodeId, {
+        nodeId: planNodeId,
+        kind: "branch_plan",
+        branchId: branchRun.branchId,
+        runId: branchRun.sourceRunId,
+        label: shortId(branchRun.branchId),
+        status: "planned",
+      });
+    }
+    edges.set(`edge:${planNodeId}->${runNodeId}`, {
+      edgeId: `edge:${planNodeId}->${runNodeId}`,
+      fromNodeId: planNodeId,
+      toNodeId: runNodeId,
+      label: branchRun.status,
+    });
+  }
+
+  return {
+    rootRunId,
+    nodes: [...nodes.values()],
+    edges: [...edges.values()],
   };
 }
 

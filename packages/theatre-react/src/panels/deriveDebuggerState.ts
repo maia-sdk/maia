@@ -1,5 +1,12 @@
 import type { ACPDecision, ACPEvent } from "@maia/acp";
-import * as MaiaBrain from "@maia/brain";
+import {
+  buildBranchGraph,
+  buildRunDebugger,
+  compareBranchRun,
+  createBranchPlanEvent,
+  createBranchRunEvent,
+  executeBranchRun,
+} from "@maia/brain";
 
 export interface DebuggerDecisionNode {
   decision: ACPDecision;
@@ -73,12 +80,37 @@ export interface DebuggerBranchExecution {
   comparison: DebuggerBranchRunComparison;
 }
 
+export interface DebuggerBranchGraphNode {
+  nodeId: string;
+  kind: "source_run" | "branch_plan" | "branch_run";
+  runId?: string;
+  branchId?: string;
+  label: string;
+  status: string;
+  eventCount?: number;
+  decisionCount?: number;
+}
+
+export interface DebuggerBranchGraphEdge {
+  edgeId: string;
+  fromNodeId: string;
+  toNodeId: string;
+  label: string;
+}
+
+export interface DebuggerBranchGraph {
+  rootRunId: string;
+  nodes: DebuggerBranchGraphNode[];
+  edges: DebuggerBranchGraphEdge[];
+}
+
 export interface DebuggerState {
   runId: string;
   decisions: DebuggerDecisionNode[];
   events: ACPEvent[];
   branchPlans: DebuggerBranchPlan[];
   branchRuns: DebuggerBranchRun[];
+  branchGraph: DebuggerBranchGraph;
 }
 
 function now(): string {
@@ -94,7 +126,8 @@ function syntheticEventId(event: ACPEvent, index: number): string {
 }
 
 export function deriveDebuggerState(events: ACPEvent[]): DebuggerState {
-  const debuggerState = MaiaBrain.buildRunDebugger(events);
+  const debuggerState = buildRunDebugger(events);
+  const branchGraph = buildBranchGraph(events);
   return {
     runId: debuggerState.runId,
     decisions: debuggerState.decisions.map((node) => ({
@@ -139,7 +172,30 @@ export function deriveDebuggerState(events: ACPEvent[]): DebuggerState {
       notes: branchRun.notes,
       createdAt: branchRun.createdAt,
     })),
+    branchGraph: {
+      rootRunId: branchGraph.rootRunId,
+      nodes: branchGraph.nodes.map((node) => ({
+        nodeId: node.nodeId,
+        kind: node.kind,
+        runId: node.runId,
+        branchId: node.branchId,
+        label: node.label,
+        status: node.status,
+        eventCount: node.eventCount,
+        decisionCount: node.decisionCount,
+      })),
+      edges: branchGraph.edges.map((edge) => ({
+        edgeId: edge.edgeId,
+        fromNodeId: edge.fromNodeId,
+        toNodeId: edge.toNodeId,
+        label: edge.label,
+      })),
+    },
   };
+}
+
+export function deriveDebuggerBranchGraph(events: ACPEvent[]): DebuggerBranchGraph {
+  return deriveDebuggerState(events).branchGraph;
 }
 
 export function planDebuggerBranch(
@@ -202,7 +258,7 @@ export function createDebuggerBranchPlanEvent(
     overrides?: DebuggerBranchPlanOverride;
   },
 ): ACPEvent<Record<string, unknown>> | undefined {
-  return MaiaBrain.createBranchPlanEvent(events, {
+  return createBranchPlanEvent(events, {
     agentId: options.agentId,
     sourceDecisionId: options.decisionId,
     parentEventId: options.parentEventId,
@@ -220,7 +276,7 @@ export function createDebuggerBranchRunEvent(
     notes?: string[];
   },
 ): ACPEvent<Record<string, unknown>> | undefined {
-  return MaiaBrain.createBranchRunEvent(events, {
+  return createBranchRunEvent(events, {
     agentId: options.agentId,
     branchId: options.branchId,
     parentEventId: options.parentEventId,
@@ -233,7 +289,7 @@ export function compareDebuggerBranchRun(
   events: ACPEvent[],
   branchRunId: string,
 ): DebuggerBranchRunComparison | undefined {
-  const comparison = MaiaBrain.compareBranchRun(events, branchRunId);
+  const comparison = compareBranchRun(events, branchRunId);
   if (!comparison) {
     return undefined;
   }
@@ -270,7 +326,7 @@ export function executeDebuggerBranchRun(
     notes?: string[];
   },
 ): DebuggerBranchExecution | undefined {
-  const execution = MaiaBrain.executeBranchRun(events, {
+  const execution = executeBranchRun(events, {
     agentId: options.agentId,
     branchId: options.branchId,
     parentEventId: options.parentEventId,
