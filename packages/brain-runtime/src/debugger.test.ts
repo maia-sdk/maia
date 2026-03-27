@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { decision, envelope, message } from "@maia/acp";
-import { buildRunDebugger, createBranchPlanEvent, createBranchRunEvent, getDecisionAt, planBranchFromDecision } from "./debugger";
+import {
+  buildRunDebugger,
+  compareBranchRun,
+  createBranchPlanEvent,
+  createBranchRunEvent,
+  executeBranchRun,
+  getDecisionAt,
+  planBranchFromDecision,
+} from "./debugger";
 
 describe("debugger", () => {
   it("builds a decision timeline from ACP events", () => {
@@ -109,5 +117,56 @@ describe("debugger", () => {
     const debuggerState = buildRunDebugger([...events, branchPlanEvent!, branchRunEvent!]);
     expect(debuggerState.branchRuns).toHaveLength(1);
     expect(debuggerState.branchRuns[0].branchId).toBe((branchPlanEvent!.payload as { branch_id: string }).branch_id);
+  });
+
+  it("executes a branch run and derives a comparison", () => {
+    const decisionPayload = decision({
+      agentId: "agent://brain",
+      category: "routing",
+      summary: "Route analysis to analyst.",
+      options: [
+        { option_id: "analyst", label: "analyst" },
+        { option_id: "finance", label: "finance" },
+      ],
+      chosenOptionId: "analyst",
+    });
+    const events = [
+      envelope("agent://brain", "run_1", "message", message({
+        from: "agent://brain",
+        to: "agent://broadcast",
+        intent: "propose",
+        content: "Start run.",
+      })),
+      envelope("agent://brain", "run_1", "decision", decisionPayload),
+      envelope("agent://analyst", "run_1", "message", message({
+        from: "agent://analyst",
+        to: "agent://brain",
+        intent: "summarize",
+        content: "Analysis completed.",
+      })),
+    ];
+
+    const branchPlanEvent = createBranchPlanEvent(events, {
+      agentId: "agent://brain",
+      sourceDecisionId: decisionPayload.decision_id,
+      overrides: { chosenOptionId: "finance" },
+    });
+
+    const execution = executeBranchRun([...events, branchPlanEvent!], {
+      agentId: "agent://brain",
+      branchId: (branchPlanEvent!.payload as { branch_id: string }).branch_id,
+    });
+
+    expect(execution).toBeDefined();
+    expect(execution?.branchRun.status).toBe("completed");
+    expect(execution?.branchEvents.some((event) => event.run_id === execution.branchRun.branchedRunId)).toBe(true);
+
+    const comparison = compareBranchRun(
+      [...events, branchPlanEvent!, ...execution!.lineageEvents, ...execution!.branchEvents],
+      execution!.branchRun.branchRunId,
+    );
+    expect(comparison?.branchChosenOptionId).toBe("finance");
+    expect(comparison?.originalChosenOptionId).toBe("analyst");
+    expect(comparison?.branchStatus).toBe("completed");
   });
 });

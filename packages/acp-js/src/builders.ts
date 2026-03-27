@@ -368,6 +368,9 @@ export function branchRun(opts: {
   requestedByAgentId: string;
   sourceDecisionId?: string;
   sourceStepIndex?: number;
+  branchEventCount?: number;
+  replayedSourceEventCount?: number;
+  outcomeSummary?: string;
   notes?: string[];
   createdAt?: string;
 }): ACPBranchRun {
@@ -381,6 +384,9 @@ export function branchRun(opts: {
     requested_by_agent_id: opts.requestedByAgentId,
     source_decision_id: opts.sourceDecisionId,
     source_step_index: opts.sourceStepIndex,
+    branch_event_count: opts.branchEventCount,
+    replayed_source_event_count: opts.replayedSourceEventCount,
+    outcome_summary: opts.outcomeSummary,
     notes: opts.notes ?? [],
     created_at: opts.createdAt ?? now(),
   };

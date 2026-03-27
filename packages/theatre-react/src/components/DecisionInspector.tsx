@@ -7,7 +7,7 @@ export interface DecisionInspectorProps {
   branchPlan?: DebuggerState["branchPlans"][number];
   branchRuns?: DebuggerState["branchRuns"];
   onPlanBranch?: (decisionId: string) => void;
-  onCreateBranchRun?: (branchId: string) => void;
+  onExecuteBranchRun?: (branchId: string) => void;
   className?: string;
 }
 
@@ -22,7 +22,7 @@ export function DecisionInspector({
   branchPlan,
   branchRuns = [],
   onPlanBranch,
-  onCreateBranchRun,
+  onExecuteBranchRun,
   className = "",
 }: DecisionInspectorProps) {
   if (!node) {
@@ -162,18 +162,18 @@ export function DecisionInspector({
           <div className="mt-3 rounded-xl border border-indigo-100 bg-white px-3 py-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Branch run contract</div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Branch execution</div>
                 <div className="mt-1 text-sm text-slate-700">
-                  Persist a branch-run record for this plan before implementing real branched execution.
+                  Execute a descendant run from this branch plan and record its lineage on the source run.
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => onCreateBranchRun?.(branchPlan.branchId)}
+                onClick={() => onExecuteBranchRun?.(branchPlan.branchId)}
                 className="rounded-xl border border-indigo-300 bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={linkedBranchRuns.length > 0}
               >
-                {linkedBranchRuns.length > 0 ? "Branch run created" : "Create branch run"}
+                {linkedBranchRuns.length > 0 ? "Branch executed" : "Execute branch run"}
               </button>
             </div>
             {linkedBranchRuns.length > 0 ? (

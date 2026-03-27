@@ -35,13 +35,42 @@ export interface DebuggerBranchRun {
   sourceRunId: string;
   branchId: string;
   branchedRunId: string;
-  status: "created";
+  status: "created" | "running" | "completed" | "failed";
   summary: string;
   requestedByAgentId: string;
   sourceDecisionId?: string;
   sourceStepIndex?: number;
+  branchEventCount?: number;
+  replayedSourceEventCount?: number;
+  outcomeSummary?: string;
   notes: string[];
   createdAt: string;
+}
+
+export interface DebuggerBranchRunComparison {
+  branchRunId: string;
+  branchId: string;
+  sourceRunId: string;
+  branchedRunId: string;
+  sourceDecisionId?: string;
+  sourceDecisionSummary?: string;
+  branchDecisionSummary?: string;
+  sourceEventCount: number;
+  sourceTailCount: number;
+  branchEventCount: number;
+  inheritedPrefixCount: number;
+  replayedTailCount: number;
+  branchStatus: DebuggerBranchRun["status"];
+  originalChosenOptionId?: string;
+  branchChosenOptionId?: string;
+  divergenceSummary: string;
+}
+
+export interface DebuggerBranchExecution {
+  branchRun: DebuggerBranchRun;
+  lineageEvents: ACPEvent[];
+  branchEvents: ACPEvent[];
+  comparison: DebuggerBranchRunComparison;
 }
 
 export interface DebuggerState {
@@ -104,6 +133,9 @@ export function deriveDebuggerState(events: ACPEvent[]): DebuggerState {
       requestedByAgentId: branchRun.requestedByAgentId,
       sourceDecisionId: branchRun.sourceDecisionId,
       sourceStepIndex: branchRun.sourceStepIndex,
+      branchEventCount: branchRun.branchEventCount,
+      replayedSourceEventCount: branchRun.replayedSourceEventCount,
+      outcomeSummary: branchRun.outcomeSummary,
       notes: branchRun.notes,
       createdAt: branchRun.createdAt,
     })),
@@ -195,6 +227,100 @@ export function createDebuggerBranchRunEvent(
     branchedRunId: options.branchedRunId,
     notes: options.notes,
   }) as ACPEvent<Record<string, unknown>> | undefined;
+}
+
+export function compareDebuggerBranchRun(
+  events: ACPEvent[],
+  branchRunId: string,
+): DebuggerBranchRunComparison | undefined {
+  const comparison = MaiaBrain.compareBranchRun(events, branchRunId);
+  if (!comparison) {
+    return undefined;
+  }
+
+  return {
+    branchRunId: comparison.branchRunId,
+    branchId: comparison.branchId,
+    sourceRunId: comparison.sourceRunId,
+    branchedRunId: comparison.branchedRunId,
+    sourceDecisionId: comparison.sourceDecisionId,
+    sourceDecisionSummary: comparison.sourceDecisionSummary,
+    branchDecisionSummary: comparison.branchDecisionSummary,
+    sourceEventCount: comparison.sourceEventCount,
+    sourceTailCount: comparison.sourceTailCount,
+    branchEventCount: comparison.branchEventCount,
+    inheritedPrefixCount: comparison.inheritedPrefixCount,
+    replayedTailCount: comparison.replayedTailCount,
+    branchStatus: comparison.branchStatus,
+    originalChosenOptionId: comparison.originalChosenOptionId,
+    branchChosenOptionId: comparison.branchChosenOptionId,
+    divergenceSummary: comparison.divergenceSummary,
+  };
+}
+
+export function executeDebuggerBranchRun(
+  events: ACPEvent[],
+  options: {
+    agentId: string;
+    branchId: string;
+    parentEventId?: string;
+    branchRunId?: string;
+    branchedRunId?: string;
+    replaySourceTail?: boolean;
+    notes?: string[];
+  },
+): DebuggerBranchExecution | undefined {
+  const execution = MaiaBrain.executeBranchRun(events, {
+    agentId: options.agentId,
+    branchId: options.branchId,
+    parentEventId: options.parentEventId,
+    branchRunId: options.branchRunId,
+    branchedRunId: options.branchedRunId,
+    replaySourceTail: options.replaySourceTail,
+    notes: options.notes,
+  });
+  if (!execution) {
+    return undefined;
+  }
+
+  return {
+    branchRun: {
+      branchRunId: execution.branchRun.branchRunId,
+      sourceRunId: execution.branchRun.sourceRunId,
+      branchId: execution.branchRun.branchId,
+      branchedRunId: execution.branchRun.branchedRunId,
+      status: execution.branchRun.status,
+      summary: execution.branchRun.summary,
+      requestedByAgentId: execution.branchRun.requestedByAgentId,
+      sourceDecisionId: execution.branchRun.sourceDecisionId,
+      sourceStepIndex: execution.branchRun.sourceStepIndex,
+      branchEventCount: execution.branchRun.branchEventCount,
+      replayedSourceEventCount: execution.branchRun.replayedSourceEventCount,
+      outcomeSummary: execution.branchRun.outcomeSummary,
+      notes: execution.branchRun.notes,
+      createdAt: execution.branchRun.createdAt,
+    },
+    lineageEvents: execution.lineageEvents as ACPEvent[],
+    branchEvents: execution.branchEvents as ACPEvent[],
+    comparison: {
+      branchRunId: execution.comparison.branchRunId,
+      branchId: execution.comparison.branchId,
+      sourceRunId: execution.comparison.sourceRunId,
+      branchedRunId: execution.comparison.branchedRunId,
+      sourceDecisionId: execution.comparison.sourceDecisionId,
+      sourceDecisionSummary: execution.comparison.sourceDecisionSummary,
+      branchDecisionSummary: execution.comparison.branchDecisionSummary,
+      sourceEventCount: execution.comparison.sourceEventCount,
+      sourceTailCount: execution.comparison.sourceTailCount,
+      branchEventCount: execution.comparison.branchEventCount,
+      inheritedPrefixCount: execution.comparison.inheritedPrefixCount,
+      replayedTailCount: execution.comparison.replayedTailCount,
+      branchStatus: execution.comparison.branchStatus,
+      originalChosenOptionId: execution.comparison.originalChosenOptionId,
+      branchChosenOptionId: execution.comparison.branchChosenOptionId,
+      divergenceSummary: execution.comparison.divergenceSummary,
+    },
+  };
 }
 
 export function decisionLabel(decision: ACPDecision): string {

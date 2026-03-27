@@ -50,6 +50,8 @@ export { DecisionInspector } from "./components/DecisionInspector";
 export type { DecisionInspectorProps } from "./components/DecisionInspector";
 export { BranchPlanList } from "./components/BranchPlanList";
 export type { BranchPlanListProps } from "./components/BranchPlanList";
+export { BranchComparisonPanel } from "./components/BranchComparisonPanel";
+export type { BranchComparisonPanelProps } from "./components/BranchComparisonPanel";
 export { AgentAvatar } from "./components/AgentAvatar";
 export type { AgentAvatarProps } from "./components/AgentAvatar";
 export { CostBar } from "./components/CostBar";
@@ -174,13 +176,19 @@ export {
 export { deriveProvenanceState } from "./panels/deriveProvenanceState";
 export type { ProvenanceState } from "./panels/deriveProvenanceState";
 export {
+  compareDebuggerBranchRun,
   createDebuggerBranchPlanEvent,
   createDebuggerBranchRunEvent,
   deriveDebuggerState,
+  executeDebuggerBranchRun,
   planDebuggerBranch,
   decisionLabel,
 } from "./panels/deriveDebuggerState";
-export type { DebuggerState } from "./panels/deriveDebuggerState";
+export type {
+  DebuggerBranchExecution,
+  DebuggerBranchRunComparison,
+  DebuggerState,
+} from "./panels/deriveDebuggerState";
 export type {
   ActivityEventLike,
   ActivityPhaseKey as AgentActivityPhaseKey,

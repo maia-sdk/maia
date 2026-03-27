@@ -17,10 +17,14 @@ export { DecisionTimeline, DecisionInspector } from "@maia/theatre";
 export type {
   DecisionTimelineProps,
   DecisionInspectorProps,
+  DebuggerBranchExecution,
+  DebuggerBranchRunComparison,
   DebuggerState,
 } from "@maia/theatre";
 export { BranchPlanList } from "@maia/theatre";
 export type { BranchPlanListProps } from "@maia/theatre";
+export { BranchComparisonPanel } from "@maia/theatre";
+export type { BranchComparisonPanelProps } from "@maia/theatre";
 
 export { ActivityTimeline } from "@maia/theatre";
 export type { ActivityTimelineProps } from "@maia/theatre";
@@ -106,8 +110,10 @@ export { fromAgentActivityEvent, fromAgentActivityEvents } from "@maia/theatre";
 export type { AgentActivityEventLike } from "@maia/theatre";
 export { deriveProvenanceState } from "@maia/theatre";
 export {
+  compareDebuggerBranchRun,
   createDebuggerBranchPlanEvent,
   createDebuggerBranchRunEvent,
   deriveDebuggerState,
+  executeDebuggerBranchRun,
   planDebuggerBranch,
 } from "@maia/theatre";

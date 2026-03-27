@@ -405,11 +405,14 @@ export interface ACPBranchRun {
   source_run_id: string;
   branch_id: string;
   branched_run_id: string;
-  status: "created";
+  status: "created" | "running" | "completed" | "failed";
   summary: string;
   requested_by_agent_id: string;
   source_decision_id?: string;
   source_step_index?: number;
+  branch_event_count?: number;
+  replayed_source_event_count?: number;
+  outcome_summary?: string;
   notes?: string[];
   created_at: string;
 }

@@ -16,16 +16,19 @@ import { ProvenancePanel } from "./ProvenancePanel";
 import { DecisionTimeline } from "./DecisionTimeline";
 import { DecisionInspector } from "./DecisionInspector";
 import { BranchPlanList } from "./BranchPlanList";
+import { BranchComparisonPanel } from "./BranchComparisonPanel";
 import { CostBar } from "./CostBar";
 import { ReplayControls } from "./ReplayControls";
 import { resolveTheatreTheme } from "../theme";
 import type { TheatreThemeOverride } from "../theme";
 import {
+  compareDebuggerBranchRun,
   createDebuggerBranchPlanEvent,
-  createDebuggerBranchRunEvent,
   deriveDebuggerState,
+  executeDebuggerBranchRun,
   planDebuggerBranch,
 } from "../panels/deriveDebuggerState";
+import type { DebuggerBranchExecution } from "../panels/deriveDebuggerState";
 
 export interface TheatreProps {
   streamUrl?: string | null;
@@ -38,6 +41,7 @@ export interface TheatreProps {
   onEvent?: (event: ACPEvent) => void;
   onBranchPlanEvent?: (event: ACPEvent) => void | Promise<void>;
   onBranchRunEvent?: (event: ACPEvent) => void | Promise<void>;
+  onBranchExecution?: (execution: DebuggerBranchExecution) => void | Promise<void>;
   height?: string;
   theme?: TheatreThemeOverride;
 }
@@ -55,6 +59,7 @@ export function Theatre({
   onEvent,
   onBranchPlanEvent,
   onBranchRunEvent,
+  onBranchExecution,
   height = "100%",
   theme,
 }: TheatreProps) {
@@ -129,6 +134,10 @@ export function Theatre({
   const activeBranchRuns = activeBranchPlan
     ? debuggerState.branchRuns.filter((branchRun) => branchRun.branchId === activeBranchPlan.branchId)
     : [];
+  const activeBranchRun = activeBranchRuns.at(-1);
+  const activeBranchComparison = activeBranchRun
+    ? compareDebuggerBranchRun(events, activeBranchRun.branchRunId)
+    : undefined;
   const connected = isReplayMode ? true : stream.connected;
 
   function mergeLocalDebugEvent(nextEvent: ACPEvent, key: "branch_id" | "branch_run_id") {
@@ -142,6 +151,18 @@ export function Theatre({
       });
       return [...next, nextEvent];
     });
+  }
+
+  function mergeLocalDebugEvents(nextEvents: ACPEvent[]) {
+    for (const event of nextEvents) {
+      if (event.event_type === "branch_plan") {
+        mergeLocalDebugEvent(event, "branch_id");
+      } else if (event.event_type === "branch_run") {
+        mergeLocalDebugEvent(event, "branch_run_id");
+      } else {
+        setLocalDebugEvents((current) => [...current, event]);
+      }
+    }
   }
 
   function handleCreateBranchPlan(decisionId: string) {
@@ -166,7 +187,7 @@ export function Theatre({
     }
   }
 
-  function handleCreateBranchRun(branchId: string) {
+  function handleExecuteBranchRun(branchId: string) {
     const branchPlan = debuggerState.branchPlans.find((plan) => plan.branchId === branchId);
     if (!branchPlan) {
       return;
@@ -174,19 +195,24 @@ export function Theatre({
     const sourceDecision =
       debuggerState.decisions.find((node) => node.decision.decision_id === branchPlan.sourceDecisionId)
       ?? activeDecision;
-    const branchEvent = createDebuggerBranchRunEvent(events, {
+    const execution = executeDebuggerBranchRun(events, {
       agentId: sourceDecision?.decision.agent_id ?? "agent://debugger",
       branchId,
       notes: ["Created from Theatre debugger branch-run contract."],
     });
-    if (!branchEvent) {
+    if (!execution) {
       return;
     }
-    mergeLocalDebugEvent(branchEvent, "branch_run_id");
+    mergeLocalDebugEvents([...execution.lineageEvents, ...execution.branchEvents]);
     setSelectedBranchId(branchId);
     setSelectedDecisionId(branchPlan.sourceDecisionId);
     if (onBranchRunEvent) {
-      void Promise.resolve(onBranchRunEvent(branchEvent));
+      for (const event of execution.lineageEvents) {
+        void Promise.resolve(onBranchRunEvent(event));
+      }
+    }
+    if (onBranchExecution) {
+      void Promise.resolve(onBranchExecution(execution));
     }
   }
 
@@ -295,13 +321,16 @@ export function Theatre({
                 }
               }}
             />
-            <DecisionInspector
-              node={activeDecision}
-              branchPlan={activeBranchPlan}
-              branchRuns={activeBranchRuns}
-              onPlanBranch={handleCreateBranchPlan}
-              onCreateBranchRun={handleCreateBranchRun}
-            />
+            <div className="grid gap-4">
+              <DecisionInspector
+                node={activeDecision}
+                branchPlan={activeBranchPlan}
+                branchRuns={activeBranchRuns}
+                onPlanBranch={handleCreateBranchPlan}
+                onExecuteBranchRun={handleExecuteBranchRun}
+              />
+              <BranchComparisonPanel comparison={activeBranchComparison} />
+            </div>
           </div>
         ) : (
           <ActivityTimeline events={events} theme={resolvedTheme} className="h-full" />

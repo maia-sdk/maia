@@ -216,11 +216,14 @@ class ACPBranchRun(BaseModel):
     source_run_id: str
     branch_id: str
     branched_run_id: str
-    status: Literal["created"]
+    status: Literal["created", "running", "completed", "failed"]
     summary: str
     requested_by_agent_id: str
     source_decision_id: str | None = None
     source_step_index: int | None = None
+    branch_event_count: int | None = None
+    replayed_source_event_count: int | None = None
+    outcome_summary: str | None = None
     notes: list[str] = Field(default_factory=list)
     created_at: str
 

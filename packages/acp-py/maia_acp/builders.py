@@ -394,6 +394,9 @@ def branch_run(
     status: str = "created",
     source_decision_id: str | None = None,
     source_step_index: int | None = None,
+    branch_event_count: int | None = None,
+    replayed_source_event_count: int | None = None,
+    outcome_summary: str | None = None,
     notes: list[str] | None = None,
     created_at: str | None = None,
 ) -> dict[str, Any]:
@@ -407,6 +410,9 @@ def branch_run(
         "requested_by_agent_id": requested_by_agent_id,
         "source_decision_id": source_decision_id,
         "source_step_index": source_step_index,
+        "branch_event_count": branch_event_count,
+        "replayed_source_event_count": replayed_source_event_count,
+        "outcome_summary": outcome_summary,
         "notes": notes or [],
         "created_at": created_at or _now(),
     }
