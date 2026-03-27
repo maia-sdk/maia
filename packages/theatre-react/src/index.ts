@@ -48,6 +48,8 @@ export { DecisionTimeline } from "./components/DecisionTimeline";
 export type { DecisionTimelineProps } from "./components/DecisionTimeline";
 export { DecisionInspector } from "./components/DecisionInspector";
 export type { DecisionInspectorProps } from "./components/DecisionInspector";
+export { BranchPlanList } from "./components/BranchPlanList";
+export type { BranchPlanListProps } from "./components/BranchPlanList";
 export { AgentAvatar } from "./components/AgentAvatar";
 export type { AgentAvatarProps } from "./components/AgentAvatar";
 export { CostBar } from "./components/CostBar";

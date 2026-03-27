@@ -19,6 +19,8 @@ export type {
   DecisionInspectorProps,
   DebuggerState,
 } from "@maia/theatre";
+export { BranchPlanList } from "@maia/theatre";
+export type { BranchPlanListProps } from "@maia/theatre";
 
 export { ActivityTimeline } from "@maia/theatre";
 export type { ActivityTimelineProps } from "@maia/theatre";

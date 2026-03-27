@@ -15,6 +15,7 @@ import { ActivityTimeline } from "./ActivityTimeline";
 import { ProvenancePanel } from "./ProvenancePanel";
 import { DecisionTimeline } from "./DecisionTimeline";
 import { DecisionInspector } from "./DecisionInspector";
+import { BranchPlanList } from "./BranchPlanList";
 import { CostBar } from "./CostBar";
 import { ReplayControls } from "./ReplayControls";
 import { resolveTheatreTheme } from "../theme";
@@ -50,6 +51,7 @@ export function Theatre({
 }: TheatreProps) {
   const [tab, setTab] = useState<Tab>(defaultTab);
   const [selectedDecisionId, setSelectedDecisionId] = useState<string>("");
+  const [selectedBranchId, setSelectedBranchId] = useState<string>("");
   const [plannedBranchDecisionId, setPlannedBranchDecisionId] = useState<string>("");
   const resolvedTheme = resolveTheatreTheme(theme);
   const isReplayMode = !!recordedEvents && !streamUrl;
@@ -77,10 +79,12 @@ export function Theatre({
   const activeDecision =
     debuggerState.decisions.find((node) => node.decision.decision_id === selectedDecisionId)
     ?? debuggerState.decisions[0];
+  const selectedPersistedBranchPlan = debuggerState.branchPlans.find((plan) => plan.branchId === selectedBranchId);
   const persistedBranchPlan = activeDecision
     ? debuggerState.branchPlans.find((plan) => plan.sourceDecisionId === activeDecision.decision.decision_id)
     : undefined;
-  const activeBranchPlan = persistedBranchPlan
+  const activeBranchPlan = selectedPersistedBranchPlan
+    ?? persistedBranchPlan
     ?? (
       activeDecision?.decision.decision_id === plannedBranchDecisionId
         ? planDebuggerBranch(events, plannedBranchDecisionId)
@@ -172,12 +176,22 @@ export function Theatre({
         ) : tab === "proof" ? (
           <ProvenancePanel events={events} className="h-full" />
         ) : tab === "debug" ? (
-          <div className="grid h-full gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid h-full gap-4 xl:grid-cols-[0.9fr_1.05fr_1fr]">
+            <BranchPlanList
+              branchPlans={debuggerState.branchPlans}
+              selectedBranchId={selectedPersistedBranchPlan?.branchId}
+              onSelect={(branchId, sourceDecisionId) => {
+                setSelectedBranchId(branchId);
+                setSelectedDecisionId(sourceDecisionId);
+                setPlannedBranchDecisionId("");
+              }}
+            />
             <DecisionTimeline
               decisions={debuggerState.decisions}
               selectedDecisionId={activeDecision?.decision.decision_id}
               onSelect={(decisionId) => {
                 setSelectedDecisionId(decisionId);
+                setSelectedBranchId("");
                 if (plannedBranchDecisionId && plannedBranchDecisionId !== decisionId) {
                   setPlannedBranchDecisionId("");
                 }
@@ -186,7 +200,10 @@ export function Theatre({
             <DecisionInspector
               node={activeDecision}
               branchPlan={activeBranchPlan}
-              onPlanBranch={setPlannedBranchDecisionId}
+              onPlanBranch={(decisionId) => {
+                setSelectedBranchId("");
+                setPlannedBranchDecisionId(decisionId);
+              }}
             />
           </div>
         ) : (
