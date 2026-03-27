@@ -77,10 +77,15 @@ export function Theatre({
   const activeDecision =
     debuggerState.decisions.find((node) => node.decision.decision_id === selectedDecisionId)
     ?? debuggerState.decisions[0];
-  const activeBranchPlan =
-    activeDecision?.decision.decision_id === plannedBranchDecisionId
-      ? planDebuggerBranch(events, plannedBranchDecisionId)
-      : undefined;
+  const persistedBranchPlan = activeDecision
+    ? debuggerState.branchPlans.find((plan) => plan.sourceDecisionId === activeDecision.decision.decision_id)
+    : undefined;
+  const activeBranchPlan = persistedBranchPlan
+    ?? (
+      activeDecision?.decision.decision_id === plannedBranchDecisionId
+        ? planDebuggerBranch(events, plannedBranchDecisionId)
+        : undefined
+    );
   const connected = isReplayMode ? true : stream.connected;
 
   return (

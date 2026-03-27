@@ -45,7 +45,7 @@ ArtifactKind = Literal[
 
 EventType = Literal[
     "message", "handoff", "review",
-    "artifact", "event", "capabilities", "provenance", "challenge", "challenge_resolution", "decision",
+    "artifact", "event", "capabilities", "provenance", "challenge", "challenge_resolution", "decision", "branch_plan",
 ]
 
 ProvenanceTier = Literal["verified", "supported", "inferred", "unverified"]
@@ -189,6 +189,26 @@ class ACPDecision(BaseModel):
     chosen_option_id: str | None = None
     reasoning: str | None = None
     related_event_ids: list[str] = Field(default_factory=list)
+
+
+class ACPBranchPlanOverride(BaseModel):
+    agent_id: str | None = None
+    model: str | None = None
+    chosen_option_id: str | None = None
+    note: str | None = None
+
+
+class ACPBranchPlan(BaseModel):
+    branch_id: str
+    run_id: str
+    source_decision_id: str
+    source_step_index: int | None = None
+    status: Literal["planned"]
+    summary: str
+    assumptions: list[str] = Field(default_factory=list)
+    preview_event_ids: list[str] = Field(default_factory=list)
+    overrides: ACPBranchPlanOverride = Field(default_factory=ACPBranchPlanOverride)
+    created_at: str
 
 
 class ReviewIssue(BaseModel):
@@ -340,3 +360,6 @@ class ACPEvent(BaseModel):
 
     def as_decision(self) -> ACPDecision:
         return ACPDecision.model_validate(self.payload)
+
+    def as_branch_plan(self) -> ACPBranchPlan:
+        return ACPBranchPlan.model_validate(self.payload)

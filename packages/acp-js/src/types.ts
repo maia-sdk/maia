@@ -93,7 +93,8 @@ export type EventType =
   | "provenance"
   | "challenge"
   | "challenge_resolution"
-  | "decision";
+  | "decision"
+  | "branch_plan";
 
 export type ProvenanceTier =
   | "verified"
@@ -378,6 +379,26 @@ export interface ACPDecision {
   related_event_ids?: string[];
 }
 
+export interface ACPBranchPlanOverride {
+  agent_id?: string;
+  model?: string;
+  chosen_option_id?: string;
+  note?: string;
+}
+
+export interface ACPBranchPlan {
+  branch_id: string;
+  run_id: string;
+  source_decision_id: string;
+  source_step_index?: number;
+  status: "planned";
+  summary: string;
+  assumptions: string[];
+  preview_event_ids: string[];
+  overrides: ACPBranchPlanOverride;
+  created_at: string;
+}
+
 // ── Client Options ───────────────────────────────────────────────────────────
 
 export interface ACPClientOptions {
@@ -425,5 +446,6 @@ export interface ACPEventMap {
   challenge: ACPEvent<ACPChallenge>;
   challenge_resolution: ACPEvent<ACPChallengeResolution>;
   decision: ACPEvent<ACPDecision>;
+  branch_plan: ACPEvent<ACPBranchPlan>;
   "*": ACPEvent;
 }

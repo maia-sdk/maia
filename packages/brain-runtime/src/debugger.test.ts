@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { decision, envelope, message } from "@maia/acp";
-import { buildRunDebugger, getDecisionAt, planBranchFromDecision } from "./debugger";
+import { buildRunDebugger, createBranchPlanEvent, getDecisionAt, planBranchFromDecision } from "./debugger";
 
 describe("debugger", () => {
   it("builds a decision timeline from ACP events", () => {
@@ -49,5 +49,33 @@ describe("debugger", () => {
     expect(plan?.status).toBe("planned");
     expect(plan?.overrides.chosenOptionId).toBe("finance");
     expect(plan?.previewEventIds.length).toBeGreaterThan(0);
+  });
+
+  it("creates and rehydrates a persisted branch plan event", () => {
+    const decisionPayload = decision({
+      agentId: "agent://brain",
+      category: "routing",
+      summary: "Route analysis to analyst.",
+      options: [
+        { option_id: "analyst", label: "analyst" },
+        { option_id: "finance", label: "finance" },
+      ],
+      chosenOptionId: "analyst",
+    });
+    const events = [
+      envelope("agent://brain", "run_1", "decision", decisionPayload),
+    ];
+
+    const branchEvent = createBranchPlanEvent(events, {
+      agentId: "agent://brain",
+      sourceDecisionId: decisionPayload.decision_id,
+      overrides: { chosenOptionId: "finance" },
+    });
+
+    expect(branchEvent?.event_type).toBe("branch_plan");
+
+    const debuggerState = buildRunDebugger([...events, branchEvent!]);
+    expect(debuggerState.branchPlans).toHaveLength(1);
+    expect(debuggerState.branchPlans[0].sourceDecisionId).toBe(decisionPayload.decision_id);
   });
 });

@@ -12,6 +12,7 @@ import {
   challenge,
   challengeResolution,
   decision,
+  branchPlan,
 } from "./index";
 
 describe("builders", () => {
@@ -111,6 +112,20 @@ describe("builders", () => {
     expect(d.category).toBe("planning");
     expect(d.options).toHaveLength(2);
     expect(d.chosen_option_id).toBe("plan_a");
+  });
+
+  it("branchPlan() captures a persisted debugger branch plan", () => {
+    const plan = branchPlan({
+      runId: "run_1",
+      sourceDecisionId: "decision_1",
+      summary: "Plan a finance-first branch.",
+      assumptions: ["Branch execution is not started automatically."],
+      previewEventIds: ["evt_1", "evt_2"],
+      overrides: { chosen_option_id: "finance" },
+    });
+    expect(plan.status).toBe("planned");
+    expect(plan.source_decision_id).toBe("decision_1");
+    expect(plan.overrides.chosen_option_id).toBe("finance");
   });
 });
 

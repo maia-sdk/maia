@@ -13,6 +13,7 @@ import type {
   ACPChallenge,
   ACPChallengeResolution,
   ACPDecision,
+  ACPBranchPlan,
   MessageIntent,
   ReviewVerdict,
   ActivityType,
@@ -327,5 +328,31 @@ export function decision(opts: {
     chosen_option_id: opts.chosenOptionId,
     reasoning: opts.reasoning,
     related_event_ids: opts.relatedEventIds ?? [],
+  };
+}
+
+export function branchPlan(opts: {
+  branchId?: string;
+  runId: string;
+  sourceDecisionId: string;
+  sourceStepIndex?: number;
+  status?: ACPBranchPlan["status"];
+  summary: string;
+  assumptions?: string[];
+  previewEventIds?: string[];
+  overrides?: ACPBranchPlan["overrides"];
+  createdAt?: string;
+}): ACPBranchPlan {
+  return {
+    branch_id: opts.branchId ?? `branch_${uid()}`,
+    run_id: opts.runId,
+    source_decision_id: opts.sourceDecisionId,
+    source_step_index: opts.sourceStepIndex,
+    status: opts.status ?? "planned",
+    summary: opts.summary,
+    assumptions: opts.assumptions ?? [],
+    preview_event_ids: opts.previewEventIds ?? [],
+    overrides: opts.overrides ?? {},
+    created_at: opts.createdAt ?? now(),
   };
 }

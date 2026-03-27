@@ -35,6 +35,8 @@ from maia_acp.types import (
     ACPProvenanceGraph,
     ACPChallenge,
     ACPChallengeResolution,
+    ACPBranchPlanOverride,
+    ACPBranchPlan,
     ACPDecisionOption,
     ACPDecision,
 )
@@ -49,6 +51,7 @@ from maia_acp.builders import (
     provenance_graph,
     challenge,
     challenge_resolution,
+    branch_plan,
     decision,
 )
 from maia_acp.client import ACPClient
@@ -80,6 +83,8 @@ __all__ = [
     "ACPProvenanceGraph",
     "ACPChallenge",
     "ACPChallengeResolution",
+    "ACPBranchPlanOverride",
+    "ACPBranchPlan",
     "ACPDecisionOption",
     "ACPDecision",
     # Builders
@@ -93,6 +98,7 @@ __all__ = [
     "provenance_graph",
     "challenge",
     "challenge_resolution",
+    "branch_plan",
     "decision",
     # Client
     "ACPClient",

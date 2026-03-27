@@ -57,9 +57,11 @@ from maia_brain.challenge import (
 from maia_brain.debugger import (
     BranchPlan,
     BranchPlanOverride,
+    CreateBranchPlanEventOptions,
     DecisionTimelineNode,
     RunDebugger,
     build_run_debugger,
+    create_branch_plan_event,
     get_decision_at,
     plan_branch_from_decision,
 )
@@ -105,9 +107,11 @@ __all__ = [
     "resolve_challenge",
     "BranchPlan",
     "BranchPlanOverride",
+    "CreateBranchPlanEventOptions",
     "DecisionTimelineNode",
     "RunDebugger",
     "build_run_debugger",
+    "create_branch_plan_event",
     "get_decision_at",
     "plan_branch_from_decision",
     "brave_search",

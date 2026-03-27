@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from maia_acp import ACPDecision, ACPEvent
+from maia_acp import ACPBranchPlan, ACPDecision, ACPEvent, branch_plan, envelope
 
 
 class DecisionTimelineNode(BaseModel):
@@ -41,6 +41,13 @@ class RunDebugger(BaseModel):
     branch_plans: list[BranchPlan] = Field(default_factory=list)
 
 
+class CreateBranchPlanEventOptions(BaseModel):
+    agent_id: str
+    source_decision_id: str
+    overrides: BranchPlanOverride = Field(default_factory=BranchPlanOverride)
+    parent_event_id: str | None = None
+
+
 def _synthetic_event_id(event: ACPEvent, index: int) -> str:
     return f"{event.run_id}_{event.sequence or index}_{event.event_type}"
 
@@ -68,8 +75,31 @@ def build_run_debugger(events: list[ACPEvent]) -> RunDebugger:
         for index, event in enumerate(events)
     ]
     decisions: list[DecisionTimelineNode] = []
+    branch_plans: list[BranchPlan] = []
     for index, item in enumerate(decorated):
         event = item["event"]
+        if event.event_type == "branch_plan":
+            payload = event.as_branch_plan()
+            branch_plans.append(
+                BranchPlan(
+                    branch_id=payload.branch_id,
+                    run_id=payload.run_id,
+                    source_decision_id=payload.source_decision_id,
+                    source_step_index=payload.source_step_index,
+                    status=payload.status,
+                    summary=payload.summary,
+                    assumptions=payload.assumptions,
+                    preview_event_ids=payload.preview_event_ids,
+                    overrides=BranchPlanOverride(
+                        agent_id=payload.overrides.agent_id,
+                        model=payload.overrides.model,
+                        chosen_option_id=payload.overrides.chosen_option_id,
+                        note=payload.overrides.note,
+                    ),
+                    created_at=payload.created_at,
+                )
+            )
+            continue
         if event.event_type != "decision":
             continue
         reasons = _branch_reasons(event.as_decision())
@@ -88,7 +118,7 @@ def build_run_debugger(events: list[ACPEvent]) -> RunDebugger:
         run_id=events[-1].run_id if events else "",
         decisions=decisions,
         events=events,
-        branch_plans=[],
+        branch_plans=branch_plans,
     )
 
 
@@ -153,4 +183,37 @@ def plan_branch_from_decision(
         ],
         overrides=branch_overrides,
         created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    )
+
+
+def create_branch_plan_event(
+    events: list[ACPEvent],
+    options: CreateBranchPlanEventOptions,
+) -> ACPEvent | None:
+    plan = plan_branch_from_decision(events, options.source_decision_id, options.overrides)
+    if plan is None:
+        return None
+
+    return envelope(
+        options.agent_id,
+        plan.run_id,
+        "branch_plan",
+        branch_plan(
+            branch_id=plan.branch_id,
+            run_id=plan.run_id,
+            source_decision_id=plan.source_decision_id,
+            source_step_index=plan.source_step_index,
+            status=plan.status,
+            summary=plan.summary,
+            assumptions=plan.assumptions,
+            preview_event_ids=plan.preview_event_ids,
+            overrides={
+                "agent_id": plan.overrides.agent_id,
+                "model": plan.overrides.model,
+                "chosen_option_id": plan.overrides.chosen_option_id,
+                "note": plan.overrides.note,
+            },
+            created_at=plan.created_at,
+        ),
+        options.parent_event_id,
     )

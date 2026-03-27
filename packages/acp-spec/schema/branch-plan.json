@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://maia.ai/acp/v1/branch-plan.json",
+  "title": "ACP Branch Plan",
+  "description": "A persisted debugger branch plan. This records a planned branch without executing it.",
+  "type": "object",
+  "required": [
+    "branch_id",
+    "run_id",
+    "source_decision_id",
+    "status",
+    "summary",
+    "assumptions",
+    "preview_event_ids",
+    "overrides",
+    "created_at"
+  ],
+  "properties": {
+    "branch_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "source_decision_id": { "type": "string" },
+    "source_step_index": { "type": "integer" },
+    "status": {
+      "type": "string",
+      "enum": ["planned"]
+    },
+    "summary": { "type": "string" },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "preview_event_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "overrides": {
+      "type": "object",
+      "properties": {
+        "agent_id": { "type": "string" },
+        "model": { "type": "string" },
+        "chosen_option_id": { "type": "string" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

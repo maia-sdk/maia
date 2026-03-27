@@ -62,7 +62,23 @@ export function deriveDebuggerState(events: ACPEvent[]): DebuggerState {
       branchReasons: "branchReasons" in node && Array.isArray(node.branchReasons) ? node.branchReasons : [],
     })),
     events: debuggerState.events,
-    branchPlans: [],
+    branchPlans: debuggerState.branchPlans.map((plan) => ({
+      branchId: plan.branchId,
+      runId: plan.runId,
+      sourceDecisionId: plan.sourceDecisionId,
+      sourceStepIndex: plan.sourceStepIndex,
+      status: plan.status,
+      summary: plan.summary,
+      assumptions: plan.assumptions,
+      previewEventIds: plan.previewEventIds,
+      overrides: {
+        agentId: plan.overrides.agentId,
+        model: plan.overrides.model,
+        chosenOptionId: plan.overrides.chosenOptionId,
+        note: plan.overrides.note,
+      },
+      createdAt: plan.createdAt,
+    })),
   };
 }
 

@@ -1,4 +1,5 @@
-import type { ACPDecision, ACPEvent } from "@maia/acp";
+import type { ACPEvent, ACPDecision } from "@maia/acp";
+import * as ACP from "@maia/acp";
 
 export interface DecisionTimelineNode {
   decision: ACPDecision;
@@ -34,6 +35,31 @@ export interface RunDebugger {
   decisions: DecisionTimelineNode[];
   events: ACPEvent[];
   branchPlans: BranchPlan[];
+}
+
+export interface CreateBranchPlanEventOptions {
+  agentId: string;
+  sourceDecisionId: string;
+  overrides?: BranchPlanOverride;
+  parentEventId?: string;
+}
+
+interface ACPBranchPlanPayload {
+  branch_id: string;
+  run_id: string;
+  source_decision_id: string;
+  source_step_index?: number;
+  status: "planned";
+  summary: string;
+  assumptions: string[];
+  preview_event_ids: string[];
+  overrides: {
+    agent_id?: string;
+    model?: string;
+    chosen_option_id?: string;
+    note?: string;
+  };
+  created_at: string;
 }
 
 function syntheticEventId(event: ACPEvent, index: number): string {
@@ -78,7 +104,29 @@ export function buildRunDebugger(events: ACPEvent[]): RunDebugger {
   }));
 
   const decisions: DecisionTimelineNode[] = [];
+  const branchPlans: BranchPlan[] = [];
   decorated.forEach((item, index) => {
+    if ((item.event.event_type as string) === "branch_plan") {
+      const payload = item.event.payload as ACPBranchPlanPayload;
+      branchPlans.push({
+        branchId: payload.branch_id,
+        runId: payload.run_id,
+        sourceDecisionId: payload.source_decision_id,
+        sourceStepIndex: payload.source_step_index,
+        status: payload.status,
+        summary: payload.summary,
+        assumptions: payload.assumptions,
+        previewEventIds: payload.preview_event_ids,
+        overrides: {
+          agentId: payload.overrides.agent_id,
+          model: payload.overrides.model,
+          chosenOptionId: payload.overrides.chosen_option_id,
+          note: payload.overrides.note,
+        },
+        createdAt: payload.created_at,
+      });
+      return;
+    }
     if (item.event.event_type !== "decision") {
       return;
     }
@@ -98,7 +146,7 @@ export function buildRunDebugger(events: ACPEvent[]): RunDebugger {
     runId: events.at(-1)?.run_id ?? "",
     decisions,
     events,
-    branchPlans: [],
+    branchPlans,
   };
 }
 
@@ -153,4 +201,38 @@ export function planBranchFromDecision(
     overrides,
     createdAt: now(),
   };
+}
+
+export function createBranchPlanEvent(
+  events: ACPEvent[],
+  options: CreateBranchPlanEventOptions,
+): ACPEvent<ACPBranchPlanPayload> | undefined {
+  const plan = planBranchFromDecision(events, options.sourceDecisionId, options.overrides);
+  if (!plan) {
+    return undefined;
+  }
+
+  return ACP.envelope(
+    options.agentId,
+    plan.runId,
+    "branch_plan",
+    {
+      branch_id: plan.branchId,
+      run_id: plan.runId,
+      source_decision_id: plan.sourceDecisionId,
+      source_step_index: plan.sourceStepIndex,
+      status: plan.status,
+      summary: plan.summary,
+      assumptions: plan.assumptions,
+      preview_event_ids: plan.previewEventIds,
+      overrides: {
+        agent_id: plan.overrides.agentId,
+        model: plan.overrides.model,
+        chosen_option_id: plan.overrides.chosenOptionId,
+        note: plan.overrides.note,
+      },
+      created_at: plan.createdAt,
+    },
+    options.parentEventId,
+  );
 }

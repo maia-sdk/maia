@@ -1,5 +1,10 @@
 from maia_acp.builders import decision, envelope
-from maia_brain.debugger import build_run_debugger, plan_branch_from_decision
+from maia_brain.debugger import (
+    CreateBranchPlanEventOptions,
+    build_run_debugger,
+    create_branch_plan_event,
+    plan_branch_from_decision,
+)
 
 
 def test_build_run_debugger_marks_branchable_decisions() -> None:
@@ -44,3 +49,33 @@ def test_plan_branch_from_decision_returns_plan_only_preview() -> None:
     assert plan.status == "planned"
     assert plan.source_decision_id == decision_payload["decision_id"]
     assert len(plan.preview_event_ids) > 0
+
+
+def test_create_branch_plan_event_persists_branch_plan() -> None:
+    decision_payload = decision(
+        agent_id="agent://brain",
+        category="routing",
+        summary="Route verification to analyst.",
+        options=[
+            {"option_id": "analyst", "label": "analyst"},
+            {"option_id": "finance", "label": "finance"},
+        ],
+        chosen_option_id="analyst",
+    )
+    events = [envelope("agent://brain", "run_1", "decision", decision_payload)]
+
+    branch_event = create_branch_plan_event(
+        events,
+        CreateBranchPlanEventOptions(
+            agent_id="agent://brain",
+            source_decision_id=decision_payload["decision_id"],
+            overrides={"chosen_option_id": "finance"},
+        ),
+    )
+
+    assert branch_event is not None
+    assert branch_event.event_type == "branch_plan"
+
+    debugger = build_run_debugger(events + [branch_event])
+    assert len(debugger.branch_plans) == 1
+    assert debugger.branch_plans[0].source_decision_id == decision_payload["decision_id"]
