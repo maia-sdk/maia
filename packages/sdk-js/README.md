@@ -50,6 +50,9 @@ That gives you stable tool calling, validation, optional fields, and backward-co
 
 ## Quick Start
 
+Full end-to-end sample:
+- [`examples/js-live-workbench`](../../examples/js-live-workbench/)
+
 ### ACP message
 
 ```ts

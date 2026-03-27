@@ -15,6 +15,7 @@ Runnable demos showing how to use the Maia SDK.
 | Example | Language | What it does |
 |---------|----------|-------------|
 | [**brain-quickstart**](brain-quickstart/) | TypeScript | Run a multi-agent task with Brain orchestration |
+| [**js-live-workbench**](js-live-workbench/) | TypeScript | End-to-end SDK sample: ACP + collaboration helpers + Theatre + TeamChat + computer runtime |
 | [**langchain-acp-demo**](langchain-acp-demo/) | Python | Wrap a LangChain agent with ACP event emission |
 | [**crewai-acp-demo**](crewai-acp-demo/) | Python | Wrap a CrewAI Crew with ACP observability |
 | [**autogen-acp-demo**](autogen-acp-demo/) | Python | Wrap an AutoGen group chat with ACP events |
