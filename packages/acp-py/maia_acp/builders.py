@@ -13,6 +13,8 @@ from maia_acp.types import (
     ACPEvent,
     ACPHandoff,
     ACPMessage,
+    ACPChallenge,
+    ACPChallengeResolution,
     ACPProvenanceGraph,
     ACPReview,
     AgentPersonality,
@@ -267,4 +269,60 @@ def provenance_graph(
         "run_id": run_id,
         "claims": claims,
         "contradictions": contradictions or [],
+    }
+
+
+def challenge(
+    *,
+    claim_id: str,
+    challenger: str,
+    target_agent_id: str,
+    reason: str,
+    challenge_id: str | None = None,
+    status: str = "open",
+    requested_action: str | None = None,
+    claim_excerpt: str | None = None,
+    thread_id: str | None = None,
+    task_id: str | None = None,
+    task_title: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "challenge_id": challenge_id or f"challenge_{_uid()}",
+        "claim_id": claim_id,
+        "challenger": challenger,
+        "target_agent_id": target_agent_id,
+        "reason": reason,
+        "status": status,
+        "requested_action": requested_action,
+        "claim_excerpt": claim_excerpt,
+        "thread_id": thread_id,
+        "task_id": task_id,
+        "task_title": task_title,
+    }
+
+
+def challenge_resolution(
+    *,
+    challenge_id: str,
+    resolver_agent_id: str,
+    outcome: str,
+    summary: str,
+    claim_id: str | None = None,
+    target_agent_id: str | None = None,
+    replacement_claim_ids: list[str] | None = None,
+    thread_id: str | None = None,
+    task_id: str | None = None,
+    task_title: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "challenge_id": challenge_id,
+        "claim_id": claim_id,
+        "resolver_agent_id": resolver_agent_id,
+        "target_agent_id": target_agent_id,
+        "outcome": outcome,
+        "summary": summary,
+        "replacement_claim_ids": replacement_claim_ids or [],
+        "thread_id": thread_id,
+        "task_id": task_id,
+        "task_title": task_title,
     }

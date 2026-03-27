@@ -49,6 +49,11 @@ from maia_brain.provenance import (
     extract_claims_from_text,
     stale_claims,
 )
+from maia_brain.challenge import (
+    ChallengeResolutionResult,
+    challenge_claim,
+    resolve_challenge,
+)
 from maia_brain.research import brave_search, filter_results, SearchResult
 from maia_brain.env import load_env, resolve_api_key
 
@@ -86,6 +91,9 @@ __all__ = [
     "detect_contradictions",
     "extract_claims_from_text",
     "stale_claims",
+    "ChallengeResolutionResult",
+    "challenge_claim",
+    "resolve_challenge",
     "brave_search",
     "filter_results",
 ]

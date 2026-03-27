@@ -35,7 +35,7 @@ export function TeamChat({
   onEvent,
 }: TeamChatProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { messages, reviews, agents, typingAgent, connected } = useConversationStream({
+  const { messages, reviews, challenges, agents, typingAgent, connected } = useConversationStream({
     url: streamUrl,
     recordedEvents,
     onEvent,
@@ -47,7 +47,7 @@ export function TeamChat({
   }, [messages.length, reviews.length]);
 
   // Merge messages + reviews by timestamp for correct ordering
-  const allEvents = [...messages, ...reviews].sort(
+  const allEvents = [...messages, ...reviews, ...challenges].sort(
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
   );
 

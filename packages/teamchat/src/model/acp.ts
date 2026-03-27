@@ -1,10 +1,20 @@
-import type { ACPEvent, ACPHandoff, ACPMessage, ACPReview, DeliveryStatus, MessageIntent, ReviewVerdict } from "@maia/acp";
-import { envelope, handoff, message, review } from "@maia/acp";
+import type {
+  ACPChallenge,
+  ACPChallengeResolution,
+  ACPEvent,
+  ACPHandoff,
+  ACPMessage,
+  ACPReview,
+  DeliveryStatus,
+  MessageIntent,
+  ReviewVerdict,
+} from "@maia/acp";
+import { challenge, challengeResolution, envelope, handoff, message, review } from "@maia/acp";
 
 import type { ConversationRow } from "./types";
 import { metadataMap } from "./utils";
 
-type ConversationACPEvent = ACPEvent<ACPMessage | ACPHandoff | ACPReview>;
+type ConversationACPEvent = ACPEvent<ACPMessage | ACPHandoff | ACPReview | ACPChallenge | ACPChallengeResolution>;
 
 function toAgentUri(value: unknown, fallback: string): string {
   const normalized = String(value || "").trim();
@@ -147,8 +157,56 @@ function reviewEvent(row: ConversationRow, metadata: Record<string, unknown>): A
   return withTimestamp(event, row.timestamp);
 }
 
+function challengeEvent(row: ConversationRow, metadata: Record<string, unknown>): ACPEvent<ACPChallenge> {
+  const challenger = toAgentUri(metadata.speaker_id || metadata.from_agent || row.from_agent, "agent://challenger");
+  const targetAgentId = toAgentUri(metadata.to_agent || row.to_agent, "agent://target");
+  const payload = challenge({
+    challengeId: String(metadata.challenge_id || "").trim() || undefined,
+    claimId: String(metadata.claim_id || "").trim() || "claim_unknown",
+    challenger,
+    targetAgentId,
+    reason: String(row.message || metadata.reason || "").trim() || "Claim challenged.",
+    claimExcerpt: String(metadata.claim_excerpt || "").trim() || undefined,
+    requestedAction: String(metadata.requested_action || "").trim() as ACPChallenge["requested_action"] || undefined,
+    threadId: String(metadata.thread_id || "").trim() || undefined,
+    taskId: String(metadata.task_id || "").trim() || undefined,
+    taskTitle: String(metadata.task_title || "").trim() || undefined,
+  });
+  const event = envelope(challenger, String(row.run_id || "").trim(), "challenge", payload, String(metadata.reply_to_id || "").trim() || undefined);
+  return withTimestamp(event, row.timestamp);
+}
+
+function challengeResolutionEvent(row: ConversationRow, metadata: Record<string, unknown>): ACPEvent<ACPChallengeResolution> {
+  const resolverAgentId = toAgentUri(metadata.speaker_id || metadata.from_agent || row.from_agent, "agent://resolver");
+  const targetAgentId = String(metadata.to_agent || row.to_agent || "").trim()
+    ? toAgentUri(metadata.to_agent || row.to_agent, "agent://target")
+    : undefined;
+  const payload = challengeResolution({
+    challengeId: String(metadata.challenge_id || "").trim() || "challenge_unknown",
+    claimId: String(metadata.claim_id || "").trim() || undefined,
+    resolverAgentId,
+    targetAgentId,
+    outcome: (String(metadata.outcome || "").trim().toLowerCase() as ACPChallengeResolution["outcome"]) || "defended",
+    summary: String(row.message || metadata.summary || "").trim() || "Challenge resolved.",
+    replacementClaimIds: Array.isArray(metadata.replacement_claim_ids)
+      ? metadata.replacement_claim_ids.map((item) => String(item).trim()).filter(Boolean)
+      : undefined,
+    threadId: String(metadata.thread_id || "").trim() || undefined,
+    taskId: String(metadata.task_id || "").trim() || undefined,
+    taskTitle: String(metadata.task_title || "").trim() || undefined,
+  });
+  const event = envelope(resolverAgentId, String(row.run_id || "").trim(), "challenge_resolution", payload, String(metadata.reply_to_id || "").trim() || undefined);
+  return withTimestamp(event, row.timestamp);
+}
+
 export function toACPConversationEvent(row: ConversationRow): ConversationACPEvent {
   const metadata = metadataMap(row);
+  if (String(metadata.event_type || "").trim().toLowerCase() === "challenge_resolution" || row.entry_type === "resolution") {
+    return challengeResolutionEvent(row, metadata);
+  }
+  if (String(metadata.event_type || "").trim().toLowerCase() === "challenge" || (row.entry_type === "challenge" && Boolean(metadata.claim_id || metadata.challenge_id))) {
+    return challengeEvent(row, metadata);
+  }
   if (row.entry_type === "handoff") {
     return handoffEvent(row, metadata);
   }

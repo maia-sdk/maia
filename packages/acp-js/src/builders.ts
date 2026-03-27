@@ -10,6 +10,8 @@ import type {
   ACPCapabilities,
   ACPEvent,
   ACPProvenanceGraph,
+  ACPChallenge,
+  ACPChallengeResolution,
   MessageIntent,
   ReviewVerdict,
   ActivityType,
@@ -246,5 +248,59 @@ export function provenanceGraph(opts: {
     run_id: opts.runId,
     claims: opts.claims,
     contradictions: opts.contradictions ?? [],
+  };
+}
+
+export function challenge(opts: {
+  challengeId?: string;
+  claimId: string;
+  challenger: string;
+  targetAgentId: string;
+  reason: string;
+  status?: ACPChallenge["status"];
+  requestedAction?: ACPChallenge["requested_action"];
+  claimExcerpt?: string;
+  threadId?: string;
+  taskId?: string;
+  taskTitle?: string;
+}): ACPChallenge {
+  return {
+    challenge_id: opts.challengeId ?? `challenge_${uid()}`,
+    claim_id: opts.claimId,
+    challenger: opts.challenger,
+    target_agent_id: opts.targetAgentId,
+    reason: opts.reason,
+    status: opts.status ?? "open",
+    requested_action: opts.requestedAction,
+    claim_excerpt: opts.claimExcerpt,
+    thread_id: opts.threadId,
+    task_id: opts.taskId,
+    task_title: opts.taskTitle,
+  };
+}
+
+export function challengeResolution(opts: {
+  challengeId: string;
+  resolverAgentId: string;
+  outcome: ACPChallengeResolution["outcome"];
+  summary: string;
+  claimId?: string;
+  targetAgentId?: string;
+  replacementClaimIds?: string[];
+  threadId?: string;
+  taskId?: string;
+  taskTitle?: string;
+}): ACPChallengeResolution {
+  return {
+    challenge_id: opts.challengeId,
+    claim_id: opts.claimId,
+    resolver_agent_id: opts.resolverAgentId,
+    target_agent_id: opts.targetAgentId,
+    outcome: opts.outcome,
+    summary: opts.summary,
+    replacement_claim_ids: opts.replacementClaimIds ?? [],
+    thread_id: opts.threadId,
+    task_id: opts.taskId,
+    task_title: opts.taskTitle,
   };
 }

@@ -66,6 +66,12 @@ export {
   staleClaims,
 } from "./provenance";
 export type { ClaimExtractionResult } from "./provenance";
+export { challengeClaim, resolveChallenge } from "./challenge";
+export type {
+  ChallengeClaimOptions,
+  ResolveChallengeOptions,
+  ChallengeResolutionResult,
+} from "./challenge";
 
 // Roles (27 roles, each in its own file under ./roles/)
 export {

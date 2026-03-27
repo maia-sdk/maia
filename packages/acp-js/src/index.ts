@@ -48,6 +48,8 @@ export type {
   ProvenanceClaim,
   ProvenanceContradiction,
   ACPProvenanceGraph,
+  ACPChallenge,
+  ACPChallengeResolution,
 } from "./types";
 export type {
   ExecutionStage,
@@ -77,6 +79,8 @@ export {
   activity,
   capabilities,
   provenanceGraph,
+  challenge,
+  challengeResolution,
 } from "./builders";
 export { executionActivity, executionEnvelope } from "./execution-builders";
 

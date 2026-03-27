@@ -1,6 +1,6 @@
 /**
  * useConversationStream — React hook that filters ACP events for conversations.
- * Only tracks message, review, and capabilities events (ignores activity/tool events).
+ * Tracks message, review, challenge, and capabilities events and ignores activity/tool events except typing.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ACPEvent, ACPCapabilities } from "@maia/acp";
@@ -14,6 +14,7 @@ export interface UseConversationStreamOptions {
 export interface ConversationStreamState {
   messages: ACPEvent[];
   reviews: ACPEvent[];
+  challenges: ACPEvent[];
   agents: Map<string, ACPCapabilities>;
   typingAgent: string | null;
   connected: boolean;
@@ -23,6 +24,7 @@ export function useConversationStream(options: UseConversationStreamOptions): Co
   const { url, recordedEvents, onEvent } = options;
   const [messages, setMessages] = useState<ACPEvent[]>([]);
   const [reviews, setReviews] = useState<ACPEvent[]>([]);
+  const [challenges, setChallenges] = useState<ACPEvent[]>([]);
   const [connected, setConnected] = useState(false);
   const [typingAgent, setTypingAgent] = useState<string | null>(null);
   const agentsRef = useRef<Map<string, ACPCapabilities>>(new Map());
@@ -37,6 +39,8 @@ export function useConversationStream(options: UseConversationStreamOptions): Co
         setTypingAgent(null);
       } else if (event.event_type === "review") {
         setReviews((prev) => [...prev, event]);
+      } else if (event.event_type === "challenge" || event.event_type === "challenge_resolution") {
+        setChallenges((prev) => [...prev, event]);
       } else if (event.event_type === "capabilities") {
         const caps = event.payload as unknown as ACPCapabilities;
         agentsRef.current.set(caps.agent_id, caps);
@@ -94,6 +98,7 @@ export function useConversationStream(options: UseConversationStreamOptions): Co
   return {
     messages,
     reviews,
+    challenges,
     agents: agentsRef.current,
     typingAgent,
     connected,

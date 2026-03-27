@@ -45,7 +45,7 @@ ArtifactKind = Literal[
 
 EventType = Literal[
     "message", "handoff", "review",
-    "artifact", "event", "capabilities", "provenance",
+    "artifact", "event", "capabilities", "provenance", "challenge", "challenge_resolution",
 ]
 
 ProvenanceTier = Literal["verified", "supported", "inferred", "unverified"]
@@ -143,6 +143,33 @@ class ACPProvenanceGraph(BaseModel):
     run_id: str
     claims: list[ProvenanceClaim] = Field(default_factory=list)
     contradictions: list[ProvenanceContradiction] = Field(default_factory=list)
+
+
+class ACPChallenge(BaseModel):
+    challenge_id: str
+    claim_id: str
+    challenger: str
+    target_agent_id: str
+    reason: str
+    status: Literal["open", "defended", "retracted", "resolved"]
+    requested_action: Literal["defend", "retract", "reframe"] | None = None
+    claim_excerpt: str | None = None
+    thread_id: str | None = None
+    task_id: str | None = None
+    task_title: str | None = None
+
+
+class ACPChallengeResolution(BaseModel):
+    challenge_id: str
+    claim_id: str | None = None
+    resolver_agent_id: str
+    target_agent_id: str | None = None
+    outcome: Literal["defended", "retracted", "reframed", "escalated"]
+    summary: str
+    replacement_claim_ids: list[str] = Field(default_factory=list)
+    thread_id: str | None = None
+    task_id: str | None = None
+    task_title: str | None = None
 
 
 class ReviewIssue(BaseModel):
@@ -285,3 +312,9 @@ class ACPEvent(BaseModel):
 
     def as_provenance(self) -> ACPProvenanceGraph:
         return ACPProvenanceGraph.model_validate(self.payload)
+
+    def as_challenge(self) -> ACPChallenge:
+        return ACPChallenge.model_validate(self.payload)
+
+    def as_challenge_resolution(self) -> ACPChallengeResolution:
+        return ACPChallengeResolution.model_validate(self.payload)

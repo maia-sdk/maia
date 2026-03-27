@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ACP Challenge Resolution",
+  "type": "object",
+  "required": ["challenge_id", "resolver_agent_id", "outcome", "summary"],
+  "properties": {
+    "challenge_id": { "type": "string" },
+    "claim_id": { "type": "string" },
+    "resolver_agent_id": { "type": "string" },
+    "target_agent_id": { "type": "string" },
+    "outcome": {
+      "type": "string",
+      "enum": ["defended", "retracted", "reframed", "escalated"]
+    },
+    "summary": { "type": "string" },
+    "replacement_claim_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "thread_id": { "type": "string" },
+    "task_id": { "type": "string" },
+    "task_title": { "type": "string" }
+  },
+  "additionalProperties": false
+}

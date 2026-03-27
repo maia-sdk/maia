@@ -9,6 +9,8 @@ import {
   capabilities,
   envelope,
   parseSSELine,
+  challenge,
+  challengeResolution,
 } from "./index";
 
 describe("builders", () => {
@@ -68,6 +70,30 @@ describe("builders", () => {
     expect(e.event_type).toBe("message");
     expect(typeof e.sequence).toBe("number");
     expect(typeof e.timestamp).toBe("string");
+  });
+
+  it("challenge() captures a challenge against a claim", () => {
+    const c = challenge({
+      claimId: "claim_1",
+      challenger: "agent://analyst",
+      targetAgentId: "agent://researcher",
+      reason: "The source is stale.",
+      requestedAction: "retract",
+    });
+    expect(c.claim_id).toBe("claim_1");
+    expect(c.status).toBe("open");
+    expect(c.requested_action).toBe("retract");
+  });
+
+  it("challengeResolution() captures the resolution outcome", () => {
+    const resolution = challengeResolution({
+      challengeId: "challenge_1",
+      resolverAgentId: "agent://researcher",
+      outcome: "defended",
+      summary: "Two current sources confirm the figure.",
+    });
+    expect(resolution.challenge_id).toBe("challenge_1");
+    expect(resolution.outcome).toBe("defended");
   });
 });
 

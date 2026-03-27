@@ -45,6 +45,8 @@ export function normalizeEntryType(row: CollaborationEntryLike): string {
   if (raw === "response") return "answer";
   if (raw === "request") return "question";
   if (raw === "integration") return "dialogue";
+  if (raw === "challenge_resolution") return "resolution";
+  if (raw === "resolution") return "resolution";
   if (raw === "disagreement") return "challenge";
   return raw || "message";
 }
@@ -96,7 +98,7 @@ export function initials(name: string): string {
 }
 
 function entryLabel(entryType: string): string {
-  if (["handoff", "question", "answer", "challenge", "revision", "review", "dialogue", "summary", "chat"].includes(entryType)) {
+  if (["handoff", "question", "answer", "challenge", "resolution", "revision", "review", "dialogue", "summary", "chat"].includes(entryType)) {
     return entryType;
   }
   return "message";
@@ -159,6 +161,7 @@ export function bubbleClass(entryType: string, fromAgent: string): string {
   if (entryType === "question") return "border-[#bfdbfe] bg-[#eff6ff]";
   if (entryType === "answer") return "border-[#bbf7d0] bg-[#ecfdf3]";
   if (entryType === "challenge" || entryType === "revision") return "border-[#fed7aa] bg-[#fff7ed]";
+  if (entryType === "resolution") return "border-[#bfdbfe] bg-[#eff6ff]";
   if (entryType === "review") return "border-[#ddd6fe] bg-[#f5f3ff]";
   if (entryType === "summary") return "border-[#bfdbfe] bg-[#ecfeff]";
   return "border-[#e4e7ec] bg-[#f8fafc]";

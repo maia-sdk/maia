@@ -90,7 +90,9 @@ export type EventType =
   | "artifact"
   | "event"
   | "capabilities"
-  | "provenance";
+  | "provenance"
+  | "challenge"
+  | "challenge_resolution";
 
 export type ProvenanceTier =
   | "verified"
@@ -329,6 +331,33 @@ export interface ACPProvenanceGraph {
   contradictions: ProvenanceContradiction[];
 }
 
+export interface ACPChallenge {
+  challenge_id: string;
+  claim_id: string;
+  challenger: string;
+  target_agent_id: string;
+  reason: string;
+  status: "open" | "defended" | "retracted" | "resolved";
+  requested_action?: "defend" | "retract" | "reframe";
+  claim_excerpt?: string;
+  thread_id?: string;
+  task_id?: string;
+  task_title?: string;
+}
+
+export interface ACPChallengeResolution {
+  challenge_id: string;
+  claim_id?: string;
+  resolver_agent_id: string;
+  target_agent_id?: string;
+  outcome: "defended" | "retracted" | "reframed" | "escalated";
+  summary: string;
+  replacement_claim_ids?: string[];
+  thread_id?: string;
+  task_id?: string;
+  task_title?: string;
+}
+
 // ── Client Options ───────────────────────────────────────────────────────────
 
 export interface ACPClientOptions {
@@ -373,5 +402,7 @@ export interface ACPEventMap {
   event: ACPEvent<ACPActivity>;
   capabilities: ACPEvent<ACPCapabilities>;
   provenance: ACPEvent<ACPProvenanceGraph>;
+  challenge: ACPEvent<ACPChallenge>;
+  challenge_resolution: ACPEvent<ACPChallengeResolution>;
   "*": ACPEvent;
 }

@@ -18,6 +18,7 @@ export const CONVERSATION_ENTRY_TYPES = new Set<string>([
   "question",
   "answer",
   "challenge",
+  "resolution",
   "revision",
   "dialogue",
   "disagreement",
@@ -32,6 +33,7 @@ export const PRIMARY_CONVERSATION_ENTRY_TYPES = new Set<string>([
   "question",
   "answer",
   "challenge",
+  "resolution",
   "revision",
   "summary",
 ]);
