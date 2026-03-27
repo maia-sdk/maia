@@ -1,5 +1,5 @@
 /**
- * Theatre — the main component. Drop it in and watch agents collaborate.
+ * Theatre - the main component. Drop it in and watch agents collaborate.
  *
  * Usage:
  *   <Theatre streamUrl="/acp/events" />
@@ -19,28 +19,18 @@ import { CostBar } from "./CostBar";
 import { ReplayControls } from "./ReplayControls";
 import { resolveTheatreTheme } from "../theme";
 import type { TheatreThemeOverride } from "../theme";
-import { deriveDebuggerState } from "../panels/deriveDebuggerState";
+import { deriveDebuggerState, planDebuggerBranch } from "../panels/deriveDebuggerState";
 
 export interface TheatreProps {
-  /** SSE endpoint URL for live mode. */
   streamUrl?: string | null;
-  /** Pre-recorded events for replay mode. */
   recordedEvents?: ACPEvent[];
-  /** Budget in USD — shows a budget bar with warning. */
   budgetUsd?: number;
-  /** Show agent thinking/reasoning text. */
   showThinking?: boolean;
-  /** Initial tab: "chat", "activity", "proof", or "debug". */
   defaultTab?: "chat" | "activity" | "proof" | "debug";
-  /** Compact mode — smaller, no avatars. */
   compact?: boolean;
-  /** Custom class name for the container. */
   className?: string;
-  /** Callback for each event. */
   onEvent?: (event: ACPEvent) => void;
-  /** Height of the Theatre (default "100%"). */
   height?: string;
-  /** Override Maia default theme tokens. */
   theme?: TheatreThemeOverride;
 }
 
@@ -60,23 +50,21 @@ export function Theatre({
 }: TheatreProps) {
   const [tab, setTab] = useState<Tab>(defaultTab);
   const [selectedDecisionId, setSelectedDecisionId] = useState<string>("");
+  const [plannedBranchDecisionId, setPlannedBranchDecisionId] = useState<string>("");
   const resolvedTheme = resolveTheatreTheme(theme);
   const isReplayMode = !!recordedEvents && !streamUrl;
 
-  // Live mode
   const stream = useACPStream({
     url: streamUrl,
     autoConnect: !!streamUrl,
     onEvent,
   });
 
-  // Replay mode
   const replay = useReplay({
     events: recordedEvents ?? [],
     autoPlay: false,
   });
 
-  // Pick the right event source
   const events = isReplayMode ? replay.visibleEvents : stream.events;
   const communicationEvents = events.filter(
     (event) =>
@@ -89,19 +77,17 @@ export function Theatre({
   const activeDecision =
     debuggerState.decisions.find((node) => node.decision.decision_id === selectedDecisionId)
     ?? debuggerState.decisions[0];
+  const activeBranchPlan =
+    activeDecision?.decision.decision_id === plannedBranchDecisionId
+      ? planDebuggerBranch(events, plannedBranchDecisionId)
+      : undefined;
   const connected = isReplayMode ? true : stream.connected;
 
   return (
-    <div
-      className={`${resolvedTheme.theatre.shell} ${className}`}
-      style={{ height }}
-    >
-      {/* Header */}
+    <div className={`${resolvedTheme.theatre.shell} ${className}`} style={{ height }}>
       <div className={resolvedTheme.theatre.header}>
         <div className="flex items-center gap-3">
-          <h3 className={resolvedTheme.theatre.title}>
-            Theatre
-          </h3>
+          <h3 className={resolvedTheme.theatre.title}>Theatre</h3>
           <span
             className={`h-2 w-2 rounded-full ${connected ? resolvedTheme.theatre.statusConnected : resolvedTheme.theatre.statusDisconnected}`}
             title={connected ? "Connected" : "Disconnected"}
@@ -113,7 +99,6 @@ export function Theatre({
           )}
         </div>
 
-        {/* Tabs */}
         <div className={resolvedTheme.theatre.tabsWrap}>
           <button
             onClick={() => setTab("chat")}
@@ -125,9 +110,7 @@ export function Theatre({
           >
             Team Chat
             {communicationEvents.length > 0 && (
-              <span className={resolvedTheme.theatre.statusMeta}>
-                ({communicationEvents.length})
-              </span>
+              <span className={resolvedTheme.theatre.statusMeta}>({communicationEvents.length})</span>
             )}
           </button>
           <button
@@ -165,15 +148,12 @@ export function Theatre({
           >
             Debug
             {debuggerState.decisions.length > 0 && (
-              <span className={resolvedTheme.theatre.statusMeta}>
-                ({debuggerState.decisions.length})
-              </span>
+              <span className={resolvedTheme.theatre.statusMeta}>({debuggerState.decisions.length})</span>
             )}
           </button>
         </div>
       </div>
 
-      {/* Content */}
       <div className={resolvedTheme.theatre.content}>
         {tab === "chat" ? (
           <TeamThread
@@ -191,19 +171,26 @@ export function Theatre({
             <DecisionTimeline
               decisions={debuggerState.decisions}
               selectedDecisionId={activeDecision?.decision.decision_id}
-              onSelect={setSelectedDecisionId}
+              onSelect={(decisionId) => {
+                setSelectedDecisionId(decisionId);
+                if (plannedBranchDecisionId && plannedBranchDecisionId !== decisionId) {
+                  setPlannedBranchDecisionId("");
+                }
+              }}
             />
-            <DecisionInspector node={activeDecision} />
+            <DecisionInspector
+              node={activeDecision}
+              branchPlan={activeBranchPlan}
+              onPlanBranch={setPlannedBranchDecisionId}
+            />
           </div>
         ) : (
           <ActivityTimeline events={events} theme={resolvedTheme} className="h-full" />
         )}
       </div>
 
-      {/* Cost bar */}
       <CostBar events={events} budgetUsd={budgetUsd} />
 
-      {/* Replay controls (only in replay mode) */}
       {isReplayMode && <ReplayControls replay={replay} />}
     </div>
   );

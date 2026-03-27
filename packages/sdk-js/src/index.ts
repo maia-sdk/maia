@@ -107,6 +107,7 @@ export {
   detectContradictions,
   extractClaimsFromText,
   getDecisionAt,
+  planBranchFromDecision,
   resolveChallenge,
   staleClaims,
 } from "@maia/brain";
@@ -121,6 +122,8 @@ export type {
   ChallengeClaimOptions,
   ResolveChallengeOptions,
   ChallengeResolutionResult,
+  BranchPlan,
+  BranchPlanOverride,
   DecisionTimelineNode,
   RunDebugger,
 } from "@maia/brain";

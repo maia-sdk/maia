@@ -50,8 +50,20 @@ export function DecisionTimeline({
               <div className="mt-1 text-sm font-medium leading-6">
                 {node.decision.summary}
               </div>
-              <div className={`mt-2 text-[11px] ${isSelected ? "text-white/70" : "text-slate-500"}`}>
-                {node.decision.options?.length ?? 0} option(s) • {node.beforeEventIds.length} earlier event(s)
+              <div className={`mt-2 flex flex-wrap items-center gap-2 text-[11px] ${isSelected ? "text-white/70" : "text-slate-500"}`}>
+                <span>{node.decision.options?.length ?? 0} option(s)</span>
+                <span>&bull;</span>
+                <span>{node.beforeEventIds.length} earlier event(s)</span>
+                {node.branchable ? (
+                  <>
+                    <span>&bull;</span>
+                    <span className={`rounded-full border px-2 py-0.5 font-semibold uppercase tracking-[0.05em] ${
+                      isSelected ? "border-white/20 bg-white/10 text-white" : "border-amber-200 bg-amber-50 text-amber-700"
+                    }`}>
+                      branch-ready
+                    </span>
+                  </>
+                ) : null}
               </div>
             </div>
           </button>

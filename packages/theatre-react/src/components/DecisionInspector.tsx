@@ -4,10 +4,17 @@ import { decisionLabel } from "../panels/deriveDebuggerState";
 
 export interface DecisionInspectorProps {
   node?: DebuggerState["decisions"][number];
+  branchPlan?: DebuggerState["branchPlans"][number];
+  onPlanBranch?: (decisionId: string) => void;
   className?: string;
 }
 
-export function DecisionInspector({ node, className = "" }: DecisionInspectorProps) {
+export function DecisionInspector({
+  node,
+  branchPlan,
+  onPlanBranch,
+  className = "",
+}: DecisionInspectorProps) {
   if (!node) {
     return (
       <div className={`rounded-2xl border border-dashed border-slate-300 bg-white/70 px-4 py-6 text-sm text-slate-500 ${className}`}>
@@ -29,6 +36,40 @@ export function DecisionInspector({ node, className = "" }: DecisionInspectorPro
           <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600">
             step {node.decision.step_index}
           </span>
+        ) : null}
+      </div>
+
+      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Branch planning</div>
+            <div className="mt-1 text-sm text-slate-700">
+              {node.branchable
+                ? "This decision can be used as a branch point."
+                : "This decision is not currently marked as branchable."}
+            </div>
+          </div>
+          {node.branchable ? (
+            <button
+              type="button"
+              onClick={() => onPlanBranch?.(node.decision.decision_id)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
+            >
+              Plan branch
+            </button>
+          ) : null}
+        </div>
+        {node.branchReasons.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {node.branchReasons.map((reason) => (
+              <span
+                key={reason}
+                className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-600"
+              >
+                {reason}
+              </span>
+            ))}
+          </div>
         ) : null}
       </div>
 
@@ -69,6 +110,42 @@ export function DecisionInspector({ node, className = "" }: DecisionInspectorPro
                 </div>
               );
             })}
+          </div>
+        </div>
+      ) : null}
+
+      {branchPlan ? (
+        <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-indigo-700">Planned branch</div>
+              <div className="mt-1 text-sm font-medium text-slate-900">{branchPlan.summary}</div>
+            </div>
+            <span className="rounded-full border border-indigo-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-indigo-700">
+              {branchPlan.status}
+            </span>
+          </div>
+          <div className="mt-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Assumptions</div>
+            <ul className="mt-1 space-y-1 text-sm leading-6 text-slate-700">
+              {branchPlan.assumptions.map((assumption) => (
+                <li key={assumption}>• {assumption}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-indigo-100 bg-white px-3 py-2">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Preview window</div>
+              <div className="mt-1 text-sm text-slate-700">{branchPlan.previewEventIds.length} event id(s)</div>
+            </div>
+            <div className="rounded-xl border border-indigo-100 bg-white px-3 py-2">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Overrides</div>
+              <div className="mt-1 text-sm text-slate-700">
+                {branchPlan.overrides.chosenOptionId || branchPlan.overrides.agentId || branchPlan.overrides.model
+                  ? [branchPlan.overrides.chosenOptionId, branchPlan.overrides.agentId, branchPlan.overrides.model].filter(Boolean).join(" • ")
+                  : "No overrides applied"}
+              </div>
+            </div>
           </div>
         </div>
       ) : null}

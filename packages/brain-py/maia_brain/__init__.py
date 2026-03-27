@@ -55,10 +55,13 @@ from maia_brain.challenge import (
     resolve_challenge,
 )
 from maia_brain.debugger import (
+    BranchPlan,
+    BranchPlanOverride,
     DecisionTimelineNode,
     RunDebugger,
     build_run_debugger,
     get_decision_at,
+    plan_branch_from_decision,
 )
 from maia_brain.research import brave_search, filter_results, SearchResult
 from maia_brain.env import load_env, resolve_api_key
@@ -100,10 +103,13 @@ __all__ = [
     "ChallengeResolutionResult",
     "challenge_claim",
     "resolve_challenge",
+    "BranchPlan",
+    "BranchPlanOverride",
     "DecisionTimelineNode",
     "RunDebugger",
     "build_run_debugger",
     "get_decision_at",
+    "plan_branch_from_decision",
     "brave_search",
     "filter_results",
 ]
