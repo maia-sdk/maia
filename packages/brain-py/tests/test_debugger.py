@@ -1,8 +1,10 @@
 from maia_acp.builders import decision, envelope
 from maia_brain.debugger import (
     CreateBranchPlanEventOptions,
+    CreateBranchRunEventOptions,
     build_run_debugger,
     create_branch_plan_event,
+    create_branch_run_event,
     plan_branch_from_decision,
 )
 
@@ -79,3 +81,41 @@ def test_create_branch_plan_event_persists_branch_plan() -> None:
     debugger = build_run_debugger(events + [branch_event])
     assert len(debugger.branch_plans) == 1
     assert debugger.branch_plans[0].source_decision_id == decision_payload["decision_id"]
+
+
+def test_create_branch_run_event_persists_branch_run() -> None:
+    decision_payload = decision(
+        agent_id="agent://brain",
+        category="routing",
+        summary="Route verification to analyst.",
+        options=[
+            {"option_id": "analyst", "label": "analyst"},
+            {"option_id": "finance", "label": "finance"},
+        ],
+        chosen_option_id="analyst",
+    )
+    events = [envelope("agent://brain", "run_1", "decision", decision_payload)]
+
+    branch_event = create_branch_plan_event(
+        events,
+        CreateBranchPlanEventOptions(
+            agent_id="agent://brain",
+            source_decision_id=decision_payload["decision_id"],
+            overrides={"chosen_option_id": "finance"},
+        ),
+    )
+    assert branch_event is not None
+
+    branch_run_event = create_branch_run_event(
+        events + [branch_event],
+        CreateBranchRunEventOptions(
+            agent_id="agent://brain",
+            branch_id=branch_event.payload["branch_id"],
+        ),
+    )
+    assert branch_run_event is not None
+    assert branch_run_event.event_type == "branch_run"
+
+    debugger = build_run_debugger(events + [branch_event, branch_run_event])
+    assert len(debugger.branch_runs) == 1
+    assert debugger.branch_runs[0].branch_id == branch_event.payload["branch_id"]

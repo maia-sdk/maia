@@ -30,11 +30,26 @@ export interface BranchPlan {
   createdAt: string;
 }
 
+export interface BranchRun {
+  branchRunId: string;
+  sourceRunId: string;
+  branchId: string;
+  branchedRunId: string;
+  status: "created";
+  summary: string;
+  requestedByAgentId: string;
+  sourceDecisionId?: string;
+  sourceStepIndex?: number;
+  notes: string[];
+  createdAt: string;
+}
+
 export interface RunDebugger {
   runId: string;
   decisions: DecisionTimelineNode[];
   events: ACPEvent[];
   branchPlans: BranchPlan[];
+  branchRuns: BranchRun[];
 }
 
 export interface CreateBranchPlanEventOptions {
@@ -42,6 +57,14 @@ export interface CreateBranchPlanEventOptions {
   sourceDecisionId: string;
   overrides?: BranchPlanOverride;
   parentEventId?: string;
+}
+
+export interface CreateBranchRunEventOptions {
+  agentId: string;
+  branchId: string;
+  parentEventId?: string;
+  branchedRunId?: string;
+  notes?: string[];
 }
 
 interface ACPBranchPlanPayload {
@@ -59,6 +82,20 @@ interface ACPBranchPlanPayload {
     chosen_option_id?: string;
     note?: string;
   };
+  created_at: string;
+}
+
+interface ACPBranchRunPayload {
+  branch_run_id: string;
+  source_run_id: string;
+  branch_id: string;
+  branched_run_id: string;
+  status: "created";
+  summary: string;
+  requested_by_agent_id: string;
+  source_decision_id?: string;
+  source_step_index?: number;
+  notes?: string[];
   created_at: string;
 }
 
@@ -105,7 +142,25 @@ export function buildRunDebugger(events: ACPEvent[]): RunDebugger {
 
   const decisions: DecisionTimelineNode[] = [];
   const branchPlans: BranchPlan[] = [];
+  const branchRuns: BranchRun[] = [];
   decorated.forEach((item, index) => {
+    if ((item.event.event_type as string) === "branch_run") {
+      const payload = item.event.payload as ACPBranchRunPayload;
+      branchRuns.push({
+        branchRunId: payload.branch_run_id,
+        sourceRunId: payload.source_run_id,
+        branchId: payload.branch_id,
+        branchedRunId: payload.branched_run_id,
+        status: payload.status,
+        summary: payload.summary,
+        requestedByAgentId: payload.requested_by_agent_id,
+        sourceDecisionId: payload.source_decision_id,
+        sourceStepIndex: payload.source_step_index,
+        notes: payload.notes ?? [],
+        createdAt: payload.created_at,
+      });
+      return;
+    }
     if ((item.event.event_type as string) === "branch_plan") {
       const payload = item.event.payload as ACPBranchPlanPayload;
       branchPlans.push({
@@ -147,6 +202,7 @@ export function buildRunDebugger(events: ACPEvent[]): RunDebugger {
     decisions,
     events,
     branchPlans,
+    branchRuns,
   };
 }
 
@@ -232,6 +288,38 @@ export function createBranchPlanEvent(
         note: plan.overrides.note,
       },
       created_at: plan.createdAt,
+    },
+    options.parentEventId,
+  );
+}
+
+export function createBranchRunEvent(
+  events: ACPEvent[],
+  options: CreateBranchRunEventOptions,
+): ACPEvent<ACPBranchRunPayload> | undefined {
+  const debuggerState = buildRunDebugger(events);
+  const plan = debuggerState.branchPlans.find((entry) => entry.branchId === options.branchId);
+  if (!plan) {
+    return undefined;
+  }
+
+  const branchedRunId = options.branchedRunId ?? `${plan.runId}__${plan.branchId}`;
+  return ACP.envelope(
+    options.agentId,
+    plan.runId,
+    "branch_run",
+    {
+      branch_run_id: `branch_run_${uid()}`,
+      source_run_id: plan.runId,
+      branch_id: plan.branchId,
+      branched_run_id: branchedRunId,
+      status: "created",
+      summary: `Created branch run ${branchedRunId} from ${plan.branchId}.`,
+      requested_by_agent_id: options.agentId,
+      source_decision_id: plan.sourceDecisionId,
+      source_step_index: plan.sourceStepIndex,
+      notes: options.notes ?? [],
+      created_at: now(),
     },
     options.parentEventId,
   );

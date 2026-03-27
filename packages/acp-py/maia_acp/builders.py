@@ -16,6 +16,7 @@ from maia_acp.types import (
     ACPChallenge,
     ACPChallengeResolution,
     ACPBranchPlan,
+    ACPBranchRun,
     ACPDecision,
     ACPProvenanceGraph,
     ACPReview,
@@ -378,5 +379,34 @@ def branch_plan(
         "assumptions": assumptions or [],
         "preview_event_ids": preview_event_ids or [],
         "overrides": overrides or {},
+        "created_at": created_at or _now(),
+    }
+
+
+def branch_run(
+    *,
+    source_run_id: str,
+    branch_id: str,
+    branched_run_id: str,
+    summary: str,
+    requested_by_agent_id: str,
+    branch_run_id: str | None = None,
+    status: str = "created",
+    source_decision_id: str | None = None,
+    source_step_index: int | None = None,
+    notes: list[str] | None = None,
+    created_at: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "branch_run_id": branch_run_id or f"branch_run_{_uid()}",
+        "source_run_id": source_run_id,
+        "branch_id": branch_id,
+        "branched_run_id": branched_run_id,
+        "status": status,
+        "summary": summary,
+        "requested_by_agent_id": requested_by_agent_id,
+        "source_decision_id": source_decision_id,
+        "source_step_index": source_step_index,
+        "notes": notes or [],
         "created_at": created_at or _now(),
     }

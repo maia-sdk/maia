@@ -173,7 +173,13 @@ export {
 } from "./panels/agentActivity";
 export { deriveProvenanceState } from "./panels/deriveProvenanceState";
 export type { ProvenanceState } from "./panels/deriveProvenanceState";
-export { createDebuggerBranchPlanEvent, deriveDebuggerState, planDebuggerBranch, decisionLabel } from "./panels/deriveDebuggerState";
+export {
+  createDebuggerBranchPlanEvent,
+  createDebuggerBranchRunEvent,
+  deriveDebuggerState,
+  planDebuggerBranch,
+  decisionLabel,
+} from "./panels/deriveDebuggerState";
 export type { DebuggerState } from "./panels/deriveDebuggerState";
 export type {
   ActivityEventLike,

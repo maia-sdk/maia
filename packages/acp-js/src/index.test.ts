@@ -13,6 +13,7 @@ import {
   challengeResolution,
   decision,
   branchPlan,
+  branchRun,
 } from "./index";
 
 describe("builders", () => {
@@ -126,6 +127,19 @@ describe("builders", () => {
     expect(plan.status).toBe("planned");
     expect(plan.source_decision_id).toBe("decision_1");
     expect(plan.overrides.chosen_option_id).toBe("finance");
+  });
+
+  it("branchRun() captures a persisted branch run record", () => {
+    const run = branchRun({
+      sourceRunId: "run_1",
+      branchId: "branch_1",
+      branchedRunId: "run_branch_1",
+      summary: "Create a branch run from the finance-first branch.",
+      requestedByAgentId: "agent://brain",
+    });
+    expect(run.status).toBe("created");
+    expect(run.branch_id).toBe("branch_1");
+    expect(run.branched_run_id).toBe("run_branch_1");
   });
 });
 

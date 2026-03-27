@@ -94,7 +94,8 @@ export type EventType =
   | "challenge"
   | "challenge_resolution"
   | "decision"
-  | "branch_plan";
+  | "branch_plan"
+  | "branch_run";
 
 export type ProvenanceTier =
   | "verified"
@@ -399,6 +400,20 @@ export interface ACPBranchPlan {
   created_at: string;
 }
 
+export interface ACPBranchRun {
+  branch_run_id: string;
+  source_run_id: string;
+  branch_id: string;
+  branched_run_id: string;
+  status: "created";
+  summary: string;
+  requested_by_agent_id: string;
+  source_decision_id?: string;
+  source_step_index?: number;
+  notes?: string[];
+  created_at: string;
+}
+
 // ── Client Options ───────────────────────────────────────────────────────────
 
 export interface ACPClientOptions {
@@ -447,5 +462,6 @@ export interface ACPEventMap {
   challenge_resolution: ACPEvent<ACPChallengeResolution>;
   decision: ACPEvent<ACPDecision>;
   branch_plan: ACPEvent<ACPBranchPlan>;
+  branch_run: ACPEvent<ACPBranchRun>;
   "*": ACPEvent;
 }

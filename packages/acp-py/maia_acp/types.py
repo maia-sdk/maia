@@ -45,7 +45,7 @@ ArtifactKind = Literal[
 
 EventType = Literal[
     "message", "handoff", "review",
-    "artifact", "event", "capabilities", "provenance", "challenge", "challenge_resolution", "decision", "branch_plan",
+    "artifact", "event", "capabilities", "provenance", "challenge", "challenge_resolution", "decision", "branch_plan", "branch_run",
 ]
 
 ProvenanceTier = Literal["verified", "supported", "inferred", "unverified"]
@@ -211,6 +211,20 @@ class ACPBranchPlan(BaseModel):
     created_at: str
 
 
+class ACPBranchRun(BaseModel):
+    branch_run_id: str
+    source_run_id: str
+    branch_id: str
+    branched_run_id: str
+    status: Literal["created"]
+    summary: str
+    requested_by_agent_id: str
+    source_decision_id: str | None = None
+    source_step_index: int | None = None
+    notes: list[str] = Field(default_factory=list)
+    created_at: str
+
+
 class ReviewIssue(BaseModel):
     severity: Literal["minor", "major", "critical"]
     description: str
@@ -363,3 +377,6 @@ class ACPEvent(BaseModel):
 
     def as_branch_plan(self) -> ACPBranchPlan:
         return ACPBranchPlan.model_validate(self.payload)
+
+    def as_branch_run(self) -> ACPBranchRun:
+        return ACPBranchRun.model_validate(self.payload)

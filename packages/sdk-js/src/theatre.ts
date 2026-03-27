@@ -105,4 +105,9 @@ export type { UseReplayOptions, ReplayState } from "@maia/theatre";
 export { fromAgentActivityEvent, fromAgentActivityEvents } from "@maia/theatre";
 export type { AgentActivityEventLike } from "@maia/theatre";
 export { deriveProvenanceState } from "@maia/theatre";
-export { createDebuggerBranchPlanEvent, deriveDebuggerState, planDebuggerBranch } from "@maia/theatre";
+export {
+  createDebuggerBranchPlanEvent,
+  createDebuggerBranchRunEvent,
+  deriveDebuggerState,
+  planDebuggerBranch,
+} from "@maia/theatre";

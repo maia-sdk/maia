@@ -37,6 +37,7 @@ from maia_acp.types import (
     ACPChallengeResolution,
     ACPBranchPlanOverride,
     ACPBranchPlan,
+    ACPBranchRun,
     ACPDecisionOption,
     ACPDecision,
 )
@@ -52,6 +53,7 @@ from maia_acp.builders import (
     challenge,
     challenge_resolution,
     branch_plan,
+    branch_run,
     decision,
 )
 from maia_acp.client import ACPClient
@@ -85,6 +87,7 @@ __all__ = [
     "ACPChallengeResolution",
     "ACPBranchPlanOverride",
     "ACPBranchPlan",
+    "ACPBranchRun",
     "ACPDecisionOption",
     "ACPDecision",
     # Builders
@@ -99,6 +102,7 @@ __all__ = [
     "challenge",
     "challenge_resolution",
     "branch_plan",
+    "branch_run",
     "decision",
     # Client
     "ACPClient",

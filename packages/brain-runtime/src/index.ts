@@ -72,11 +72,13 @@ export type {
   ResolveChallengeOptions,
   ChallengeResolutionResult,
 } from "./challenge";
-export { buildRunDebugger, createBranchPlanEvent, getDecisionAt, planBranchFromDecision } from "./debugger";
+export { buildRunDebugger, createBranchPlanEvent, createBranchRunEvent, getDecisionAt, planBranchFromDecision } from "./debugger";
 export type {
   BranchPlan,
+  BranchRun,
   BranchPlanOverride,
   CreateBranchPlanEventOptions,
+  CreateBranchRunEventOptions,
   DecisionTimelineNode,
   RunDebugger,
 } from "./debugger";

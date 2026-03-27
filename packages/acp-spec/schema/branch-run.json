@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://maia.ai/acp/v1/branch-run.json",
+  "title": "ACP Branch Run",
+  "description": "A persisted branch run record derived from a branch plan. This defines the fork contract without executing it.",
+  "type": "object",
+  "required": [
+    "branch_run_id",
+    "source_run_id",
+    "branch_id",
+    "branched_run_id",
+    "status",
+    "summary",
+    "requested_by_agent_id",
+    "created_at"
+  ],
+  "properties": {
+    "branch_run_id": { "type": "string" },
+    "source_run_id": { "type": "string" },
+    "branch_id": { "type": "string" },
+    "branched_run_id": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["created"]
+    },
+    "summary": { "type": "string" },
+    "requested_by_agent_id": { "type": "string" },
+    "source_decision_id": { "type": "string" },
+    "source_step_index": { "type": "integer" },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

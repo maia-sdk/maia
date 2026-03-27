@@ -54,6 +54,7 @@ export type {
   ACPDecision,
   ACPBranchPlanOverride,
   ACPBranchPlan,
+  ACPBranchRun,
 } from "./types";
 export type {
   ExecutionStage,
@@ -87,6 +88,7 @@ export {
   challengeResolution,
   decision,
   branchPlan,
+  branchRun,
 } from "./builders";
 export { executionActivity, executionEnvelope } from "./execution-builders";
 

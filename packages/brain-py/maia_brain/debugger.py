@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from maia_acp import ACPBranchPlan, ACPDecision, ACPEvent, branch_plan, envelope
+from maia_acp import ACPBranchPlan, ACPBranchRun, ACPDecision, ACPEvent, branch_plan, branch_run, envelope
 
 
 class DecisionTimelineNode(BaseModel):
@@ -34,11 +34,26 @@ class BranchPlan(BaseModel):
     created_at: str
 
 
+class BranchRun(BaseModel):
+    branch_run_id: str
+    source_run_id: str = ""
+    branch_id: str
+    branched_run_id: str
+    status: str = "created"
+    summary: str
+    requested_by_agent_id: str
+    source_decision_id: str | None = None
+    source_step_index: int | None = None
+    notes: list[str] = Field(default_factory=list)
+    created_at: str
+
+
 class RunDebugger(BaseModel):
     run_id: str = ""
     decisions: list[DecisionTimelineNode] = Field(default_factory=list)
     events: list[ACPEvent] = Field(default_factory=list)
     branch_plans: list[BranchPlan] = Field(default_factory=list)
+    branch_runs: list[BranchRun] = Field(default_factory=list)
 
 
 class CreateBranchPlanEventOptions(BaseModel):
@@ -46,6 +61,14 @@ class CreateBranchPlanEventOptions(BaseModel):
     source_decision_id: str
     overrides: BranchPlanOverride = Field(default_factory=BranchPlanOverride)
     parent_event_id: str | None = None
+
+
+class CreateBranchRunEventOptions(BaseModel):
+    agent_id: str
+    branch_id: str
+    parent_event_id: str | None = None
+    branched_run_id: str | None = None
+    notes: list[str] = Field(default_factory=list)
 
 
 def _synthetic_event_id(event: ACPEvent, index: int) -> str:
@@ -76,8 +99,27 @@ def build_run_debugger(events: list[ACPEvent]) -> RunDebugger:
     ]
     decisions: list[DecisionTimelineNode] = []
     branch_plans: list[BranchPlan] = []
+    branch_runs: list[BranchRun] = []
     for index, item in enumerate(decorated):
         event = item["event"]
+        if event.event_type == "branch_run":
+            payload = event.as_branch_run()
+            branch_runs.append(
+                BranchRun(
+                    branch_run_id=payload.branch_run_id,
+                    source_run_id=payload.source_run_id,
+                    branch_id=payload.branch_id,
+                    branched_run_id=payload.branched_run_id,
+                    status=payload.status,
+                    summary=payload.summary,
+                    requested_by_agent_id=payload.requested_by_agent_id,
+                    source_decision_id=payload.source_decision_id,
+                    source_step_index=payload.source_step_index,
+                    notes=payload.notes,
+                    created_at=payload.created_at,
+                )
+            )
+            continue
         if event.event_type == "branch_plan":
             payload = event.as_branch_plan()
             branch_plans.append(
@@ -119,6 +161,7 @@ def build_run_debugger(events: list[ACPEvent]) -> RunDebugger:
         decisions=decisions,
         events=events,
         branch_plans=branch_plans,
+        branch_runs=branch_runs,
     )
 
 
@@ -214,6 +257,34 @@ def create_branch_plan_event(
                 "note": plan.overrides.note,
             },
             created_at=plan.created_at,
+        ),
+        options.parent_event_id,
+    )
+
+
+def create_branch_run_event(
+    events: list[ACPEvent],
+    options: CreateBranchRunEventOptions,
+) -> ACPEvent | None:
+    debugger = build_run_debugger(events)
+    plan = next((entry for entry in debugger.branch_plans if entry.branch_id == options.branch_id), None)
+    if plan is None:
+        return None
+
+    branched_run_id = options.branched_run_id or f"{plan.run_id}__{plan.branch_id}"
+    return envelope(
+        options.agent_id,
+        plan.run_id,
+        "branch_run",
+        branch_run(
+            source_run_id=plan.run_id,
+            branch_id=plan.branch_id,
+            branched_run_id=branched_run_id,
+            summary=f"Created branch run {branched_run_id} from {plan.branch_id}.",
+            requested_by_agent_id=options.agent_id,
+            source_decision_id=plan.source_decision_id,
+            source_step_index=plan.source_step_index,
+            notes=options.notes,
         ),
         options.parent_event_id,
     )

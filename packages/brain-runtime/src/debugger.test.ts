@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { decision, envelope, message } from "@maia/acp";
-import { buildRunDebugger, createBranchPlanEvent, getDecisionAt, planBranchFromDecision } from "./debugger";
+import { buildRunDebugger, createBranchPlanEvent, createBranchRunEvent, getDecisionAt, planBranchFromDecision } from "./debugger";
 
 describe("debugger", () => {
   it("builds a decision timeline from ACP events", () => {
@@ -77,5 +77,37 @@ describe("debugger", () => {
     const debuggerState = buildRunDebugger([...events, branchEvent!]);
     expect(debuggerState.branchPlans).toHaveLength(1);
     expect(debuggerState.branchPlans[0].sourceDecisionId).toBe(decisionPayload.decision_id);
+  });
+
+  it("creates and rehydrates a persisted branch run record", () => {
+    const decisionPayload = decision({
+      agentId: "agent://brain",
+      category: "routing",
+      summary: "Route analysis to analyst.",
+      options: [
+        { option_id: "analyst", label: "analyst" },
+        { option_id: "finance", label: "finance" },
+      ],
+      chosenOptionId: "analyst",
+    });
+    const events = [
+      envelope("agent://brain", "run_1", "decision", decisionPayload),
+    ];
+
+    const branchPlanEvent = createBranchPlanEvent(events, {
+      agentId: "agent://brain",
+      sourceDecisionId: decisionPayload.decision_id,
+      overrides: { chosenOptionId: "finance" },
+    });
+    const branchRunEvent = createBranchRunEvent([...events, branchPlanEvent!], {
+      agentId: "agent://brain",
+      branchId: (branchPlanEvent!.payload as { branch_id: string }).branch_id,
+    });
+
+    expect(branchRunEvent?.event_type).toBe("branch_run");
+
+    const debuggerState = buildRunDebugger([...events, branchPlanEvent!, branchRunEvent!]);
+    expect(debuggerState.branchRuns).toHaveLength(1);
+    expect(debuggerState.branchRuns[0].branchId).toBe((branchPlanEvent!.payload as { branch_id: string }).branch_id);
   });
 });

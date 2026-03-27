@@ -22,6 +22,7 @@ import { resolveTheatreTheme } from "../theme";
 import type { TheatreThemeOverride } from "../theme";
 import {
   createDebuggerBranchPlanEvent,
+  createDebuggerBranchRunEvent,
   deriveDebuggerState,
   planDebuggerBranch,
 } from "../panels/deriveDebuggerState";
@@ -36,6 +37,7 @@ export interface TheatreProps {
   className?: string;
   onEvent?: (event: ACPEvent) => void;
   onBranchPlanEvent?: (event: ACPEvent) => void | Promise<void>;
+  onBranchRunEvent?: (event: ACPEvent) => void | Promise<void>;
   height?: string;
   theme?: TheatreThemeOverride;
 }
@@ -52,6 +54,7 @@ export function Theatre({
   className = "",
   onEvent,
   onBranchPlanEvent,
+  onBranchRunEvent,
   height = "100%",
   theme,
 }: TheatreProps) {
@@ -75,20 +78,30 @@ export function Theatre({
   });
 
   const sourceEvents = isReplayMode ? replay.visibleEvents : stream.events;
-  const persistedBranchIds = new Set(
+  const persistedBranchPlanIds = new Set(
     sourceEvents
       .filter((event) => event.event_type === "branch_plan")
       .map((event) => ((event.payload as { branch_id?: string }).branch_id))
       .filter(Boolean),
   );
+  const persistedBranchRunIds = new Set(
+    sourceEvents
+      .filter((event) => event.event_type === "branch_run")
+      .map((event) => ((event.payload as { branch_run_id?: string }).branch_run_id))
+      .filter(Boolean),
+  );
   const events = [
     ...sourceEvents,
     ...localDebugEvents.filter((event) => {
-      if (event.event_type !== "branch_plan") {
-        return true;
+      if (event.event_type === "branch_plan") {
+        const branchId = (event.payload as { branch_id?: string }).branch_id;
+        return !branchId || !persistedBranchPlanIds.has(branchId);
       }
-      const branchId = (event.payload as { branch_id?: string }).branch_id;
-      return !branchId || !persistedBranchIds.has(branchId);
+      if (event.event_type === "branch_run") {
+        const branchRunId = (event.payload as { branch_run_id?: string }).branch_run_id;
+        return !branchRunId || !persistedBranchRunIds.has(branchRunId);
+      }
+      return true;
     }),
   ];
   const communicationEvents = events.filter(
@@ -113,7 +126,23 @@ export function Theatre({
         ? planDebuggerBranch(events, plannedBranchDecisionId)
         : undefined
     );
+  const activeBranchRuns = activeBranchPlan
+    ? debuggerState.branchRuns.filter((branchRun) => branchRun.branchId === activeBranchPlan.branchId)
+    : [];
   const connected = isReplayMode ? true : stream.connected;
+
+  function mergeLocalDebugEvent(nextEvent: ACPEvent, key: "branch_id" | "branch_run_id") {
+    setLocalDebugEvents((current) => {
+      const value = (nextEvent.payload as Record<string, unknown>)[key];
+      const next = current.filter((event) => {
+        if (event.event_type !== nextEvent.event_type) {
+          return true;
+        }
+        return (event.payload as Record<string, unknown>)[key] !== value;
+      });
+      return [...next, nextEvent];
+    });
+  }
 
   function handleCreateBranchPlan(decisionId: string) {
     const decisionNode = debuggerState.decisions.find((node) => node.decision.decision_id === decisionId);
@@ -128,20 +157,36 @@ export function Theatre({
       return;
     }
     const branchId = (branchEvent.payload as { branch_id?: string }).branch_id;
-    setLocalDebugEvents((current) => {
-      const next = current.filter((event) => {
-        if (event.event_type !== "branch_plan") {
-          return true;
-        }
-        return (event.payload as { branch_id?: string }).branch_id !== branchId;
-      });
-      return [...next, branchEvent];
-    });
+    mergeLocalDebugEvent(branchEvent, "branch_id");
     setSelectedBranchId(branchId ?? "");
     setSelectedDecisionId(decisionId);
     setPlannedBranchDecisionId("");
     if (onBranchPlanEvent) {
       void Promise.resolve(onBranchPlanEvent(branchEvent));
+    }
+  }
+
+  function handleCreateBranchRun(branchId: string) {
+    const branchPlan = debuggerState.branchPlans.find((plan) => plan.branchId === branchId);
+    if (!branchPlan) {
+      return;
+    }
+    const sourceDecision =
+      debuggerState.decisions.find((node) => node.decision.decision_id === branchPlan.sourceDecisionId)
+      ?? activeDecision;
+    const branchEvent = createDebuggerBranchRunEvent(events, {
+      agentId: sourceDecision?.decision.agent_id ?? "agent://debugger",
+      branchId,
+      notes: ["Created from Theatre debugger branch-run contract."],
+    });
+    if (!branchEvent) {
+      return;
+    }
+    mergeLocalDebugEvent(branchEvent, "branch_run_id");
+    setSelectedBranchId(branchId);
+    setSelectedDecisionId(branchPlan.sourceDecisionId);
+    if (onBranchRunEvent) {
+      void Promise.resolve(onBranchRunEvent(branchEvent));
     }
   }
 
@@ -253,7 +298,9 @@ export function Theatre({
             <DecisionInspector
               node={activeDecision}
               branchPlan={activeBranchPlan}
+              branchRuns={activeBranchRuns}
               onPlanBranch={handleCreateBranchPlan}
+              onCreateBranchRun={handleCreateBranchRun}
             />
           </div>
         ) : (

@@ -30,11 +30,26 @@ export interface DebuggerBranchPlan {
   createdAt: string;
 }
 
+export interface DebuggerBranchRun {
+  branchRunId: string;
+  sourceRunId: string;
+  branchId: string;
+  branchedRunId: string;
+  status: "created";
+  summary: string;
+  requestedByAgentId: string;
+  sourceDecisionId?: string;
+  sourceStepIndex?: number;
+  notes: string[];
+  createdAt: string;
+}
+
 export interface DebuggerState {
   runId: string;
   decisions: DebuggerDecisionNode[];
   events: ACPEvent[];
   branchPlans: DebuggerBranchPlan[];
+  branchRuns: DebuggerBranchRun[];
 }
 
 function now(): string {
@@ -78,6 +93,19 @@ export function deriveDebuggerState(events: ACPEvent[]): DebuggerState {
         note: plan.overrides.note,
       },
       createdAt: plan.createdAt,
+    })),
+    branchRuns: debuggerState.branchRuns.map((branchRun) => ({
+      branchRunId: branchRun.branchRunId,
+      sourceRunId: branchRun.sourceRunId,
+      branchId: branchRun.branchId,
+      branchedRunId: branchRun.branchedRunId,
+      status: branchRun.status,
+      summary: branchRun.summary,
+      requestedByAgentId: branchRun.requestedByAgentId,
+      sourceDecisionId: branchRun.sourceDecisionId,
+      sourceStepIndex: branchRun.sourceStepIndex,
+      notes: branchRun.notes,
+      createdAt: branchRun.createdAt,
     })),
   };
 }
@@ -147,6 +175,25 @@ export function createDebuggerBranchPlanEvent(
     sourceDecisionId: options.decisionId,
     parentEventId: options.parentEventId,
     overrides: options.overrides,
+  }) as ACPEvent<Record<string, unknown>> | undefined;
+}
+
+export function createDebuggerBranchRunEvent(
+  events: ACPEvent[],
+  options: {
+    agentId: string;
+    branchId: string;
+    parentEventId?: string;
+    branchedRunId?: string;
+    notes?: string[];
+  },
+): ACPEvent<Record<string, unknown>> | undefined {
+  return MaiaBrain.createBranchRunEvent(events, {
+    agentId: options.agentId,
+    branchId: options.branchId,
+    parentEventId: options.parentEventId,
+    branchedRunId: options.branchedRunId,
+    notes: options.notes,
   }) as ACPEvent<Record<string, unknown>> | undefined;
 }
 

@@ -14,6 +14,7 @@ import type {
   ACPChallengeResolution,
   ACPDecision,
   ACPBranchPlan,
+  ACPBranchRun,
   MessageIntent,
   ReviewVerdict,
   ActivityType,
@@ -353,6 +354,34 @@ export function branchPlan(opts: {
     assumptions: opts.assumptions ?? [],
     preview_event_ids: opts.previewEventIds ?? [],
     overrides: opts.overrides ?? {},
+    created_at: opts.createdAt ?? now(),
+  };
+}
+
+export function branchRun(opts: {
+  branchRunId?: string;
+  sourceRunId: string;
+  branchId: string;
+  branchedRunId: string;
+  status?: ACPBranchRun["status"];
+  summary: string;
+  requestedByAgentId: string;
+  sourceDecisionId?: string;
+  sourceStepIndex?: number;
+  notes?: string[];
+  createdAt?: string;
+}): ACPBranchRun {
+  return {
+    branch_run_id: opts.branchRunId ?? `branch_run_${uid()}`,
+    source_run_id: opts.sourceRunId,
+    branch_id: opts.branchId,
+    branched_run_id: opts.branchedRunId,
+    status: opts.status ?? "created",
+    summary: opts.summary,
+    requested_by_agent_id: opts.requestedByAgentId,
+    source_decision_id: opts.sourceDecisionId,
+    source_step_index: opts.sourceStepIndex,
+    notes: opts.notes ?? [],
     created_at: opts.createdAt ?? now(),
   };
 }
