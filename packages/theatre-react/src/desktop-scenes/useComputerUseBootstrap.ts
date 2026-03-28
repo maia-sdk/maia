@@ -42,20 +42,25 @@ function useComputerUseBootstrap({
   const [fallbackComputerUseModel, setFallbackComputerUseModel] = useState("");
   const [fallbackComputerUseMaxIterations, setFallbackComputerUseMaxIterations] = useState<number | null>(null);
   const computerUseBootstrapRef = useRef("");
-
-  const computerUseSessionId =
+  const explicitComputerUseSessionId =
     compactValue(computerUseSessionIdProp) ||
     compactValue(activeSceneData["computer_use_session_id"]) ||
     compactValue(actionMetadata["computer_use_session_id"]) ||
-    compactValue(actionTarget["computer_use_session_id"]) ||
-    compactValue(fallbackComputerUseSessionId);
-  const computerUseTask =
+    compactValue(actionTarget["computer_use_session_id"]);
+  const explicitComputerUseTask =
     compactValue(computerUseTaskProp) ||
     compactValue(activeSceneData["computer_use_task"]) ||
     compactValue(actionMetadata["computer_use_task"]) ||
-    compactValue(actionTarget["computer_use_task"]) ||
+    compactValue(actionTarget["computer_use_task"]);
+  const computerUseSessionId =
+    explicitComputerUseSessionId ||
+    compactValue(fallbackComputerUseSessionId);
+  const computerUseTask =
+    explicitComputerUseTask ||
     compactValue(fallbackComputerUseTask) ||
-    (computerUseSessionId ? compactValue(activeDetail || sceneText || activeTitle) : "");
+    (!explicitComputerUseSessionId && computerUseSessionId
+      ? compactValue(activeDetail || sceneText || activeTitle)
+      : "");
   const computerUseModel =
     compactValue(computerUseModelProp) ||
     compactValue(activeSceneData["computer_use_model"]) ||

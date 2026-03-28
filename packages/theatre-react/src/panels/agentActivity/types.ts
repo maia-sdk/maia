@@ -5,6 +5,7 @@ export type ActivityEventLike = {
   event_index?: number;
   run_id: string;
   event_family?: string;
+  snapshot_ref?: string | null;
   seq?: number;
   stage?: string;
   ts?: string;
